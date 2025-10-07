@@ -3832,7 +3832,7 @@ def build_damage_with_buffs(stacking_uptime_Table: dict, DPSStats: dict, top_sta
 		tid_list	
 	)
 
-def build_stacking_buffs(stacking_uptime_Table: dict, top_stats: dict, tid_date_time: str, tid_list: list) -> None:
+def build_stacking_buffs(stacking_uptime_Table: dict, top_stats: dict, tid_date_time: str, tid_list: list, blacklist: list) -> None:
 	"""
 	Builds tables displaying stacking buff uptimes for players.
 

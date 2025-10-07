@@ -802,7 +802,7 @@ def split_boon_states_by_combat_breakpoints(states, breakpoints, duration):
 
 	return new_states
 
-def get_stacking_uptime_data(player, damagePS, duration, fight_ticks):
+def get_stacking_uptime_data(player, damagePS, duration, fight_ticks, blacklist):
 	"""
 	Get uptime and damage data for stacking buffs like might and stability
 	"""
@@ -814,7 +814,8 @@ def get_stacking_uptime_data(player, damagePS, duration, fight_ticks):
 	}
 
 	player_prof_name = f"{player['name']}|{player['profession']}|{get_player_account(player)}"
-
+	if player["account"] in blacklist:
+		return
 	if player_prof_name not in stacking_uptime_Table:
 		stacking_uptime_Table[player_prof_name] = {}
 		stacking_uptime_Table[player_prof_name]["account"] = get_player_account(player)
@@ -896,7 +897,7 @@ def get_stacking_uptime_data(player, damagePS, duration, fight_ticks):
 		if buff_name in ['Stability', 'Might']:
 			stacking_uptime_Table[player_prof_name]["duration_"+buff_name] += total_time
 
-def calculate_dps_stats(fight_json):
+def calculate_dps_stats(fight_json, blacklist):
 	"""
 	Calculates the various DPS stats from the fight JSON.
 
@@ -950,6 +951,8 @@ def calculate_dps_stats(fight_json):
 
 	for player in fight_json['players']:
 		if player['notInSquad']:
+			continue
+		if player['account'] in blacklist:
 			continue
 		player_prof_name = player['profession'] + " " + player['name']+ " " + get_player_account(player)
 		combat_time = round(sum_breakpoints(get_combat_time_breakpoints(player)) / 1000)
@@ -1007,7 +1010,7 @@ def calculate_dps_stats(fight_json):
 
 				DPSStats[player_prof_name]["coordinationDamage"] += player_damage_on_tick * squad_damage_percent * duration
 			
-			get_stacking_uptime_data(player, player_damage, duration, fight_ticks)
+			get_stacking_uptime_data(player, player_damage, duration, fight_ticks, blacklist)
 
 	# Chunk damage: Damage done within X seconds of target down
 	for index, target in enumerate(fight_json['targets']):
@@ -1029,6 +1032,8 @@ def calculate_dps_stats(fight_json):
 					for player in fight_json['players']:
 						if player['notInSquad']:
 							continue
+						if player['account'] in blacklist:
+							continue
 						combat_time = round(sum_breakpoints(get_combat_time_breakpoints(player)) / 1000)
 						if combat_time:
 							player_prof_name = player['profession'] + " " + player['name'] + " " + get_player_account(player)	
@@ -1045,6 +1050,8 @@ def calculate_dps_stats(fight_json):
 
 					for player in fight_json['players']:
 						if player['notInSquad']:
+							continue
+						if player['account'] in blacklist:
 							continue
 						combat_time = round(sum_breakpoints(get_combat_time_breakpoints(player)) / 1000)
 						if combat_time:
@@ -1067,6 +1074,8 @@ def calculate_dps_stats(fight_json):
 						for player in fight_json['players']:
 							if player['notInSquad']:
 								continue
+							if player['account'] in blacklist:
+								continue
 							combat_time = round(sum_breakpoints(get_combat_time_breakpoints(player)) / 1000)
 							if combat_time:
 								player_prof_name = player['profession'] + " " + player['name'] + " " + get_player_account(player)
@@ -1082,6 +1091,8 @@ def calculate_dps_stats(fight_json):
 						for player in fight_json['players']:
 							if player['notInSquad']:
 								continue
+							if player['account'] in blacklist:
+								continue
 							combat_time = round(sum_breakpoints(get_combat_time_breakpoints(player)) / 1000)
 							if combat_time:
 								player_prof_name = player['profession'] + " " + player['name'] + " " + get_player_account(player)
@@ -1090,6 +1101,8 @@ def calculate_dps_stats(fight_json):
 	# Burst damage: max damage done in n seconds
 	for player in fight_json['players']:
 		if player['notInSquad']:
+			continue
+		if player['account'] in blacklist:
 			continue
 		combat_time = round(sum_breakpoints(get_combat_time_breakpoints(player)) / 1000)
 		if combat_time:
@@ -1103,6 +1116,8 @@ def calculate_dps_stats(fight_json):
 	# Ch5Ca Burst damage: max damage done in n seconds
 	for player in fight_json['players']:
 		if player['notInSquad']:
+			continue
+		if player['account'] in blacklist:
 			continue
 		combat_time = round(sum_breakpoints(get_combat_time_breakpoints(player)) / 1000)
 		if combat_time:
@@ -1352,7 +1367,7 @@ def get_enemy_downed_and_killed_by_fight(fight_num: int, targets: dict, players:
 	top_stats['overall']['enemy_downed'] = top_stats['overall'].get('enemy_downed', 0) + enemy_downed
 	top_stats['overall']['enemy_killed'] = top_stats['overall'].get('enemy_killed', 0) + enemy_killed
 
-def get_parties_by_fight(fight_num: int, players: list) -> None:
+def get_parties_by_fight(fight_num: int, players: list, blacklist: list) -> None:
 	"""
 	Organize players by party for a fight.
 
@@ -1364,6 +1379,8 @@ def get_parties_by_fight(fight_num: int, players: list) -> None:
 		top_stats["parties_by_fight"][fight_num] = {}
 
 	for player in players:
+		if player["account"] in blacklist:
+			continue
 		if player["notInSquad"]:
 			# Count players not in a squad
 			top_stats["fight"][fight_num]["non_squad_count"] += 1
@@ -2765,7 +2782,7 @@ def get_illusion_of_life_data(players: dict, durationMS: int) -> None:
 					IOL_revive[playerName]['casts'] = IOL_revive[playerName].get('casts', 0) + rotationCasts
 					IOL_revive[playerName]['prof'] = playerProf
 
-def parse_file(file_path, fight_num, guild_data, fight_data_charts):
+def parse_file(file_path, fight_num, guild_data, fight_data_charts, blacklist):
 	"""
 	Parses a single log file and stores the data in a global top_stats dictionary.
 
@@ -2825,7 +2842,7 @@ def parse_file(file_path, fight_num, guild_data, fight_data_charts):
 
 	log_type, fight_name = determine_log_type_and_extract_fight_name(fight_name)
 
-	calculate_dps_stats(json_data)
+	calculate_dps_stats(json_data, blacklist)
 
 	top_stats['overall']['last_fight'] = f"{fight_date}-{fight_end}"
 	#Initialize fight_num stats
@@ -2859,7 +2876,7 @@ def parse_file(file_path, fight_num, guild_data, fight_data_charts):
 	commander_tag_positions, dead_tag_mark, dead_tag = get_commander_tag_data(json_data)
 
 	#collect player counts and parties
-	get_parties_by_fight(fight_num, players)
+	get_parties_by_fight(fight_num, players, blacklist)
 
 	get_enemy_downed_and_killed_by_fight(fight_num, targets, players, log_type)
 
@@ -2899,6 +2916,11 @@ def parse_file(file_path, fight_num, guild_data, fight_data_charts):
 		name = player['name']
 		profession = player['profession']
 		account = get_player_account(player)
+
+		#skip blacklisted accounts
+		if account in blacklist:
+			continue
+
 		group = player['group']
 		group_count = len(top_stats['parties_by_fight'][fight_num][group])
 		squad_count = top_stats['fight'][fight_num]['squad_count']

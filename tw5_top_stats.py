@@ -83,7 +83,11 @@ if __name__ == '__main__':
 	else:
 		support_profs = None
 
+	# Get the raw value and convert to list
+	blacklist_raw = config_ini.get('BlackList', 'accounts')
+	blacklist = [account.strip() for account in blacklist_raw.split(',')]
 
+	print("Participation 🏆 Only, Blacklisted accounts:", blacklist)
 
 	# Output filenames
 	if not args.xls_output_filename:
@@ -150,7 +154,7 @@ if __name__ == '__main__':
 
 		fight_num += 1
 		
-		parse_file(file_path, fight_num, guild_data, fight_data_charts)
+		parse_file(file_path, fight_num, guild_data, fight_data_charts, blacklist)
 
 	print("Parsing Complete")
 
@@ -343,7 +347,7 @@ if __name__ == '__main__':
 
 	build_defense_damage_mitigation(player_damage_mitigation, player_minion_damage_mitigation, top_stats, tid_date_time, tid_list)
 	
-	build_stacking_buffs(stacking_uptime_Table, top_stats, tid_date_time, tid_list)
+	build_stacking_buffs(stacking_uptime_Table, top_stats, tid_date_time, tid_list, blacklist)
 
 	build_damage_with_buffs(stacking_uptime_Table, DPSStats, top_stats, tid_date_time, tid_list)
 
