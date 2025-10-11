@@ -759,6 +759,299 @@ def build_category_summary_table(top_stats: dict, category_stats: dict, enable_h
 		tid_list
 		)
 
+def build_boon_focus_summary_test(top_stats: dict, boons: dict, buff_data: dict, tid_date_time: str) -> None:
+	"""
+	Generate TiddlyWiki tables that show Self/Group/Squad/Total Generation
+	for each individual boon across all players.
+	"""
+	rows = []
+	rows.append("""
+<style>
+.btn {
+  display: inline-block;
+  font-weight: 400;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  border: 1px solid transparent;
+  padding: 0.375rem 0.75rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  border-radius: 0.25rem;
+  margin: 1px;
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.btn-dark {
+  color: #fff;
+  background-color: #343a40;
+  border-color: #343a40;
+}
+
+.btn-dark:hover {
+  color: #fff;
+  background-color: #23272b;
+  border-color: #1d2124;
+}
+
+.btn-dark:focus, .btn-dark.focus {
+  box-shadow: 0 0 0 0.2rem rgba(52, 58, 64, 0.5);
+}
+
+.btn-dark.disabled, .btn-dark:disabled {
+  color: #fff;
+  background-color: #343a40;
+  border-color: #343a40;
+}
+.btn-sm{
+  padding: 0.2rem 0.4rem;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  border-radius: 0.2rem;
+}
+</style>
+""")
+	rows.append('<div style="overflow-y:auto; width:100%; overflow-x:auto;">\n\n')
+	for boon_id, boon_name in boons.items():
+		if boon_id not in buff_data:
+			continue
+		skillIcon = buff_data[boon_id]["icon"]
+		stacking = buff_data[boon_id].get('stacking', False)
+		
+		#rows.append(f'<$radio field="boon_selected" value="{boon_name}"> {{{{{boon_name}}}}} {boon_name}</$radio>   ')
+		rows.append(f'<$button class="btn btn-sm btn-dark"> <$action-setfield $field="boon_selected" $value="{boon_name}"/>  {{{{{boon_name}}}}} {boon_name} </$button>')
+	# Iterate each boon as its own table
+	for boon_id, boon_name in boons.items():
+		chart_data = []
+		if boon_id not in buff_data:
+			continue
+		skillIcon = buff_data[boon_id]["icon"]
+		stacking = buff_data[boon_id].get('stacking', False)
+
+		# Section title per boon
+		rows.append(f'<$reveal stateTitle=<<currentTiddler>> stateField="boon_selected" type="match" text="{boon_name}" animate="yes">\n')
+		rows.append(f"! [img width=24 [{boon_name}|{skillIcon}]] {boon_name}\n")
+
+		# Iterate for "Total", "Average", "Uptime" toggle views
+		for toggle in ["Total", "Average", "Uptime"]:
+			rows.append(f'<$reveal stateTitle=<<currentTiddler>> stateField="boon_radio" type="match" text="{toggle}" animate="yes">\n')
+
+			# Header
+			header = "|thead-dark table-caption-top table-hover sortable|k\n"
+			header += f"|!Party |!Name | !Prof | !{{{{FightTime}}}} | !Self Gen | !Group Gen | !Squad Gen | !Total Gen |h"
+			rows.append(header)
+
+			# Rows for each player
+			for player in top_stats["player"].values():
+				chart_row = []
+				if player["active_time"] == 0:
+					continue
+
+				account = player["account"]
+				name = player["name"]
+				tt_name = f'<span data-tooltip="{account}">{name}</span>'
+				row = f"| {player['last_party']} |{tt_name} |{{{{{player['profession']}}}}} {player['profession'][:3]} | {player['active_time']/1000:,.1f}|"
+				chart_row.extend([player['last_party'], name, player['profession'][:3], player['active_time']/1000])
+				# For each category
+				category_order = ["selfBuffs", "groupBuffs", "squadBuffs", "totalBuffs"]
+				player_categories = {category: player.get(category, {}) for category in category_order}
+				for category in category_order:
+					# Skip if missing
+					if boon_id not in player_categories[category] and category != "totalBuffs":
+						entry = '-'
+						chart_row.append(0)
+					else:
+						# Determine if the boon is stacking
+						stacking = buff_data[boon_id].get('stacking', False)                
+						num_fights = player["num_fights"]
+						group_supported = player["group_supported"]
+						squad_supported = player["squad_supported"]
+						active_time = player["active_time"]
+
+						# Calculate generation and uptime percentage based on category
+						if category == "selfBuffs":
+							generation_ms = player[category][boon_id]["generation"]
+							wasted_ms = player[category][boon_id]["wasted"]
+							if stacking:
+								uptime_percentage = round((generation_ms / player['active_time']), 3)
+								wasted_percentage = round((wasted_ms / player['active_time']), 3)
+							else:
+								uptime_percentage = round((generation_ms / player['active_time']) * 100, 3)
+								wasted_percentage = round((wasted_ms / player['active_time']) * 100, 3)
+						elif category == "groupBuffs":
+							generation_ms = player[category][boon_id]["generation"]
+							wasted_ms = player[category][boon_id]["wasted"]
+							if stacking:
+								uptime_percentage = round((generation_ms / player['active_time']) / ((group_supported - num_fights)/num_fights), 3)
+								wasted_percentage = round((wasted_ms / player['active_time']) / ((group_supported - num_fights)/num_fights), 3)
+							else:
+								uptime_percentage = round((generation_ms / player['active_time']) / ((group_supported - num_fights)/num_fights) * 100, 3)
+								wasted_percentage = round((wasted_ms / player['active_time']) / ((group_supported - num_fights)/num_fights) * 100, 3)
+						elif category == "squadBuffs":
+							generation_ms = player[category][boon_id]["generation"]
+							wasted_ms = player[category][boon_id]["wasted"]
+							if stacking:
+								uptime_percentage = round((generation_ms / player['active_time']) / ((squad_supported - num_fights)/num_fights), 3)
+								wasted_percentage = round((wasted_ms / player['active_time']) / ((squad_supported - num_fights)/num_fights), 3)
+							else:
+								uptime_percentage = round((generation_ms / player['active_time']) / ((squad_supported - num_fights)/num_fights) * 100, 3)
+								wasted_percentage = round((wasted_ms / player['active_time']) / ((squad_supported - num_fights)/num_fights) * 100, 3)
+						elif category == "totalBuffs":
+							generation_ms = 0
+							wasted_ms = 0
+							if boon_id in player["selfBuffs"]:
+								generation_ms += player["selfBuffs"][boon_id]["generation"]
+								wasted_ms += player["selfBuffs"][boon_id]["wasted"] 
+							if boon_id in player["squadBuffs"]:
+								generation_ms += player["squadBuffs"][boon_id]["generation"]
+								wasted_ms += player["squadBuffs"][boon_id]["wasted"]
+							if stacking:
+								uptime_percentage = round((generation_ms / player['active_time']) / (squad_supported), 3)
+								wasted_percentage = round((wasted_ms / player['active_time']) / (squad_supported), 3)
+							else:
+								uptime_percentage = round((generation_ms / player['active_time']) / (squad_supported) * 100, 3)
+								wasted_percentage = round((wasted_ms / player['active_time']) / (squad_supported) * 100, 3)
+						else:
+							raise ValueError(f"Invalid category: {category}")
+
+						# Output format based on toggle
+						if toggle == "Total":
+							wasted_total = round(int(wasted_ms)/1000, 5)
+							generated_total = int(generation_ms)/1000
+							entry = f'<span data-tooltip="{wasted_total:,.2f} Wasted">{generated_total:,.2f}</span>'
+							chart_row.append(generated_total)
+						elif toggle == "Average":
+							wasted_average = round(int(wasted_ms)/active_time,5)
+							generated_average = round(int(generation_ms)/active_time,5)
+							entry = f'<span data-tooltip="{wasted_average:,.2f} Wasted">{generated_average:,.2f}</span>'
+							chart_row.append(generated_average)
+						else:  # Uptime
+							if stacking:
+								chart_row.append(uptime_percentage)
+								uptime_percentage = f"{uptime_percentage:.2f}"
+								wasted_percentage = f"{wasted_percentage:.2f}"
+								entry = f'<span data-tooltip="{wasted_percentage} Wasted">{uptime_percentage}</span>'
+													
+							else:
+								chart_row.append(uptime_percentage)
+								uptime_percentage = f"{uptime_percentage:.2f}%"
+								wasted_percentage = f"{wasted_percentage:.2f}%"							
+								entry = f'<span data-tooltip="{wasted_percentage} Wasted">{uptime_percentage}</span>'
+								
+
+					row += f" {entry}|"
+
+				chart_data.append(chart_row)
+				sorted_chart_data = sorted(chart_data, key=lambda x: float(x[6]), reverse=True)
+				json_chart_data = json.dumps(sorted_chart_data)
+				rows.append(row)
+
+			rows.append(f'|<$radio field="boon_radio" value="Total"> Total Gen  </$radio> - <$radio field="boon_radio" value="Average"> Gen/Sec  </$radio> - <$radio field="boon_radio" value="Uptime"> Uptime Gen  </$radio> - {boon_name} Table|c')
+			rows.append("\n</$reveal>")
+
+		boon_chart=f"""
+<$echarts $text=```
+option = {{
+title: {{
+	text: '{boon_name} Generation',
+	subtext: 'selectable legend for Total, Squad, Group, Self generation'
+}},
+legend: {{
+	orient: 'horizontal',
+	top: '10%',
+	selected: {{
+	'Total Gen': false,
+	'Squad Gen': true,
+	'Group Gen': false,
+	'Self Gen': false
+	}}
+}},
+grid:{{
+	top: '15%'
+}},
+tooltip: {{top: "center"}},
+dataset: {{
+    dimensions: ["Party","Name","Prof","Total Fight Time","Self Gen","Group Gen","Squad Gen","Total Gen"],
+	source: {json_chart_data}
+}},
+xAxis: {{}},
+yAxis: {{ 
+	type: 'category',
+	inverse: true, // top player on top 
+	}},
+dataZoom: [
+	{{
+	type: 'slider',
+	yAxisIndex: 0,
+	filterMode: 'none'
+	}},
+	{{
+	type: 'inside',
+	yAxisIndex: 0,
+	filterMode: 'none'
+	}}
+],    
+series: [
+	{{
+	type: 'bar',
+	name: 'Total Gen',
+	encode: {{
+		// Map "amount" column to x-axis.
+		x: 'Total Gen',
+		// Map "product" row to y-axis.
+		y: 'Name'
+	}}
+	}},
+	{{
+	type: 'bar',
+	name: 'Squad Gen',
+	encode: {{
+		// Map "amount" column to x-axis.
+		x: 'Squad Gen',
+		// Map "product" row to y-axis.
+		y: 'Name'
+	}}
+	}},
+	{{
+	type: 'bar',
+	name: 'Group Gen',
+	encode: {{
+		// Map "amount" column to x-axis.
+		x: 'Group Gen',
+		// Map "product" row to y-axis.
+		y: 'Name'
+	}}
+	}},
+	{{
+	type: 'bar',
+	name: 'Self Gen',
+	encode: {{
+		// Map "amount" column to x-axis.
+		x: 'Self Gen',
+		// Map "product" row to y-axis.
+		y: 'Name'
+	}}
+	}}
+]
+}};
+```$height="800px" $width="100%" $theme="dark"/>
+		"""
+		rows.append(boon_chart)
+		rows.append("\n</$reveal>")		
+	rows.append("\n</div>")
+	tid_text = "\n".join(rows)
+
+	temp_title = f"{tid_date_time}-Boon-Generation-By-Boon-TEST"
+	append_tid_for_output(
+		create_new_tid_from_template(temp_title, "Boon Generation Overview TEST", tid_text, fields={"radio": "Total","boon_radio": "Total", "boon_selected": "Might"}),
+		tid_list
+	)
+
+
 def build_boon_summary(top_stats: dict, boons: dict, category: str, buff_data: dict, tid_date_time: str, boon_type = None) -> None:
 	"""Print a table of boon uptime stats for all players in the log."""
 	
@@ -804,7 +1097,7 @@ def build_boon_summary(top_stats: dict, boons: dict, category: str, buff_data: d
 			name = player["name"]
 			tt_name = f'<span data-tooltip="{account}">{name}</span>'
 			# Create a row for the player with basic info
-			row = f"| { player['last_party']} |{tt_name} |"+" {{"+f"{player['profession']}"+"}}"+f" {player['profession'][:3]} "+f"| {player['active_time'] / 1000:,.1f}|"
+			row = f"| { player['last_party']} |{tt_name} | {{{{{player['profession']}}}}} {player['profession'][:3]} | {player['active_time'] / 1000:,.1f}|"
 
 			# Iterate over each boon
 			for boon_id in boons:
@@ -904,9 +1197,10 @@ def build_boon_summary(top_stats: dict, boons: dict, category: str, buff_data: d
 
 	# Append the table to the output list
 	append_tid_for_output(
-		create_new_tid_from_template(temp_title, caption, tid_text, fields={"radio": "Total"}),
+		create_new_tid_from_template(temp_title, caption, tid_text, fields={"boon_radio": "Total", "boon_selected": "Might",}),
 		tid_list
 	)    
+
 
 def build_uptime_summary(top_stats: dict, boons: dict, buff_data: dict, caption: str, tid_date_time: str, boon_type = None) -> None:
 	"""Print a table of boon uptime stats for all players in the log.
@@ -3301,8 +3595,9 @@ def build_condition_generation_bar_chart(top_stats: dict, conditions: dict, weig
 			if boon in ['b5974', 'b13017', 'b10269']:
 				continue
 			generation_ms = player_data['targetBuffs'].get(boon, {}).get('uptime_ms', 0)
+			print(weights['Condition_Weights'])
+			print(f"Looking for {conditions[boon].lower()}")
 			boon_weight = float(weights['Condition_Weights'].get(conditions[boon].lower(), 0))
-			#print(f"Condition Wt Type: {type(boon_weight)}")
 			gen_per_sec = (generation_ms / player_active_time)
 			wt_gen_per_sec = gen_per_sec * boon_weight
 			player_condition_generation.append(f"{wt_gen_per_sec:.3g}")
