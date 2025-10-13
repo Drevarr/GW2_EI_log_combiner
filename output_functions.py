@@ -21,6 +21,7 @@ import sqlite3
 import xlsxwriter
 from glicko2 import Player as GlickoPlayer
 from collections import defaultdict
+from typing import Dict, Any, List, Tuple, Optional
 
 #list of tid files to output
 tid_list = []
@@ -823,7 +824,9 @@ def build_boon_focus_summary_test(top_stats: dict, boons: dict, buff_data: dict,
 		stacking = buff_data[boon_id].get('stacking', False)
 		
 		#rows.append(f'<$radio field="boon_selected" value="{boon_name}"> {{{{{boon_name}}}}} {boon_name}</$radio>   ')
-		rows.append(f'<$button class="btn btn-sm btn-dark"> <$action-setfield $field="boon_selected" $value="{boon_name}"/>  {{{{{boon_name}}}}} {boon_name} </$button>')
+		#<$button setTitle="$:/state/boon_selected" setTo="{boon_name}" selectedClass="" class="btn btn-sm btn-dark" style=""> Fight Review </$button>
+		#rows.append(f'<$button class="btn btn-sm btn-dark"> <$action-setfield $field="boon_selected" $value="{boon_name}"/>  {{{{{boon_name}}}}} {boon_name} </$button>')
+		rows.append(f'<$button class="btn btn-sm btn-dark" set="$:/temp/boon_selected" setTo="{boon_name}">  {{{{{boon_name}}}}} {boon_name} </$button>')
 	# Iterate each boon as its own table
 	for boon_id, boon_name in boons.items():
 		chart_data = []
@@ -833,7 +836,9 @@ def build_boon_focus_summary_test(top_stats: dict, boons: dict, buff_data: dict,
 		stacking = buff_data[boon_id].get('stacking', False)
 
 		# Section title per boon
-		rows.append(f'<$reveal stateTitle=<<currentTiddler>> stateField="boon_selected" type="match" text="{boon_name}" animate="yes">\n')
+		#<$reveal type="match" state="$:/state/MenuTab" text="'+item+'">
+		#rows.append(f'<$reveal stateTitle=<<currentTiddler>> stateField="boon_selected" type="match" text="{boon_name}" animate="yes">\n')
+		rows.append(f'<$reveal type="match" state="$:/temp/boon_selected" text="{boon_name}" animate="yes">\n')
 		rows.append(f"! [img width=24 [{boon_name}|{skillIcon}]] {boon_name}\n")
 
 		# Iterate for "Total", "Average", "Uptime" toggle views
@@ -1051,6 +1056,433 @@ series: [
 		tid_list
 	)
 
+CATEGORY_ORDER = ["selfBuffs", "groupBuffs", "squadBuffs", "totalBuffs"]
+CATEGORY_CAPTIONS = {
+    "selfBuffs": "Self Generation",
+    "groupBuffs": "Group Generation",
+    "squadBuffs": "Squad Generation",
+    "totalBuffs": "Total Generation",
+}
+TOGGLES = ["Total", "Average", "Uptime"]
+
+
+
+def safe_div(a: float, b: float, default: float = 0.0) -> float:
+    try:
+        return a / b if b != 0 else default
+    except Exception:
+        return default
+
+
+def compute_boon_metrics(
+    player: Dict[str, Any],
+    boon_id: str,
+    category: str,
+    buff_data: Dict[str, Any],
+) -> Tuple[float, float, float, float]:
+    """
+    Returns a tuple (generation_ms, wasted_ms, uptime_pct_raw, wasted_pct_raw)
+    - uptime_pct_raw/wasted_pct_raw are *raw numeric* values (not formatted strings).
+    The caller decides how to format for stacking vs not-stacking and toggle.
+    """
+    stacking = buff_data.get(boon_id, {}).get("stacking", False)
+    active_time = player.get("active_time", 0)
+    num_fights = player.get("num_fights", 1)
+    group_supported = player.get("group_supported", 1)
+    squad_supported = player.get("squad_supported", 1)
+
+    # When category is missing, treat as zero
+    generation_ms = 0
+    wasted_ms = 0
+
+    if category == "totalBuffs":
+        # accumulate from self and squad
+        if boon_id in player.get("selfBuffs", {}):
+            generation_ms += player["selfBuffs"][boon_id].get("generation", 0)
+            wasted_ms += player["selfBuffs"][boon_id].get("wasted", 0)
+        if boon_id in player.get("squadBuffs", {}):
+            generation_ms += player["squadBuffs"][boon_id].get("generation", 0)
+            wasted_ms += player["squadBuffs"][boon_id].get("wasted", 0)
+    else:
+        # normal single-category lookup (self/group/squad)
+        generation_ms = player.get(category, {}).get(boon_id, {}).get("generation", 0)
+        wasted_ms = player.get(category, {}).get(boon_id, {}).get("wasted", 0)
+
+    # Compute uptime / wasted percentages
+    if category == "selfBuffs":
+        if stacking:
+            uptime_raw = safe_div(generation_ms, active_time)
+            wasted_raw = safe_div(wasted_ms, active_time)
+        else:
+            uptime_raw = safe_div(generation_ms, active_time) * 100
+            wasted_raw = safe_div(wasted_ms, active_time) * 100
+
+    elif category == "groupBuffs":
+        denom = safe_div((group_supported - num_fights), num_fights, default=0)
+        if denom == 0:
+            denom = 1
+        if stacking:
+            uptime_raw = safe_div(generation_ms, active_time) / denom
+            wasted_raw = safe_div(wasted_ms, active_time) / denom
+        else:
+            uptime_raw = safe_div(generation_ms, active_time) / denom * 100
+            wasted_raw = safe_div(wasted_ms, active_time) / denom * 100
+
+    elif category == "squadBuffs":
+        denom = safe_div((squad_supported - num_fights), num_fights, default=0)
+        if denom == 0:
+            denom = 1
+        if stacking:
+            uptime_raw = safe_div(generation_ms, active_time) / denom
+            wasted_raw = safe_div(wasted_ms, active_time) / denom
+        else:
+            uptime_raw = safe_div(generation_ms, active_time) / denom * 100
+            wasted_raw = safe_div(wasted_ms, active_time) / denom * 100
+
+    elif category == "totalBuffs":
+        denom = squad_supported if squad_supported != 0 else 1
+        if stacking:
+            uptime_raw = safe_div(generation_ms, active_time) / denom
+            wasted_raw = safe_div(wasted_ms, active_time) / denom
+        else:
+            uptime_raw = safe_div(generation_ms, active_time) / denom * 100
+            wasted_raw = safe_div(wasted_ms, active_time) / denom * 100
+
+    else:
+        raise ValueError(f"Invalid category: {category}")
+
+    return generation_ms, wasted_ms, uptime_raw, wasted_raw
+
+
+def format_entry(
+    generation_ms: float,
+    wasted_ms: float,
+    uptime_raw: float,
+    wasted_raw: float,
+    toggle: str,
+    stacking: bool,
+    active_time: int,
+) -> Tuple[str, float]:
+    """
+    Return (html_cell, numeric_value_for_chart)
+    - html_cell: the HTML string to put in the table cell
+    - numeric_value_for_chart: numeric value to add to chart dataset (Total/Avg/Uptime)
+    """
+    if toggle == "Total":
+        wasted_total = wasted_ms / 1000.0
+        generated_total = generation_ms / 1000.0
+        entry = f'<span data-tooltip="{wasted_total:,.2f} Wasted">{generated_total:,.2f}</span>'
+        chart_val = generated_total
+    elif toggle == "Average":
+        # generation per ms of active time
+        active_time_safe = active_time if active_time != 0 else 1
+        wasted_average = safe_div(int(wasted_ms), active_time_safe)
+        generated_average = safe_div(int(generation_ms), active_time_safe)
+        entry = f'<span data-tooltip="{wasted_average:,.2f} Wasted">{generated_average:,.2f}</span>'
+        chart_val = generated_average
+    else:  # Uptime
+        if stacking:
+            chart_val = uptime_raw
+            uptime_display = f"{uptime_raw:.2f}"
+            wasted_display = f"{wasted_raw:.2f}"
+            entry = f'<span data-tooltip="{wasted_display} Wasted">{uptime_display}</span>'
+        else:
+            chart_val = uptime_raw
+            uptime_display = f"{uptime_raw:.2f}%"
+            wasted_display = f"{wasted_raw:.2f}%"
+            entry = f'<span data-tooltip="{wasted_display} Wasted">{uptime_display}</span>'
+
+    return entry, chart_val
+
+
+def build_table_header(
+    boons_meta: Dict[str, Dict[str, Any]],
+    include_icons: bool = False,
+    single_boon: bool = False,
+) -> str:
+    """
+    Construct the table header.
+    - boons_meta: mapping boon_id -> {name, icon, stacking}
+    - include_icons: when True, use icon img markup for each boon (used in single-boon table)
+    - single_boon: if True, header includes the boon as a single column (used by per-boon tables)
+    """
+    header = "|thead-dark table-caption-top table-hover sortable|k\n"
+    header += "|!Party |!Name | !Prof | !{{FightTime}} |"
+    if single_boon:
+        # one column for the single boon (header built elsewhere if needed)
+        # We'll still append a placeholder column marker; the caller will insert caption text
+        header += "!Boons|"
+    else:
+        for boon_id, meta in boons_meta.items():
+            if include_icons:
+                skillIcon = meta.get("icon", "")
+                boon_name = meta.get("name", "")
+                header += f" ![img width=24 [{boon_name}|{skillIcon}]] |"
+            else:
+                header += "!{{" + f"{meta.get('name','')}" + "}}|"
+    header += "h"
+    return header
+
+
+def build_player_basic_cells(player: Dict[str, Any]) -> Tuple[str, List[Any]]:
+    """
+    Return the initial row fragment (party/name/prof/time) and a chart-row list seed.
+    """
+    account = player.get("account", "")
+    name = player.get("name", "")
+    tt_name = f'<span data-tooltip="{account}">{name}</span>'
+    row_prefix = f"| {player.get('last_party','')} |{tt_name} |{{{{{player.get('profession','')}}}}} {player.get('profession','')[:3]} | {player.get('active_time',0)/1000:,.1f}|"
+    chart_seed = [player.get("last_party", ""), name, player.get("profession", "")[:3], player.get("active_time", 0)/1000]
+    return row_prefix, chart_seed
+
+
+def build_player_row(
+    player: Dict[str, Any],
+    boons_meta: Dict[str, Dict[str, Any]],
+    category: str,
+    toggle: str,
+    buff_data: Dict[str, Any],
+    single_boon_id: Optional[str] = None,
+) -> Tuple[str, Optional[List[Any]]]:
+    """
+    Build a single player's row for the given set of boons.
+    - If single_boon_id is provided, boons_meta should contain just that boon and we return a chart row.
+    Returns (row_html, chart_row or None)
+    """
+    if player.get("active_time", 0) == 0:
+        return "", None
+
+    row, chart_row = build_player_basic_cells(player)
+    chart_values_for_sort = []
+
+    # decide boons to iterate
+    if single_boon_id:
+        iterate_boons = [single_boon_id]
+    else:
+        iterate_boons = list(boons_meta.keys())
+
+    for boon_id in iterate_boons:
+        # if the player's category doesn't include the boon (for non-total category), mark as '-'
+        if category != "totalBuffs" and boon_id not in player.get(category, {}):
+            entry = " - "
+            chart_val = 0
+        else:
+            stacking = buff_data.get(boon_id, {}).get("stacking", False)
+            generation_ms, wasted_ms, uptime_raw, wasted_raw = compute_boon_metrics(player, boon_id, category, buff_data)
+            entry, chart_val = format_entry(generation_ms, wasted_ms, uptime_raw, wasted_raw, toggle, stacking, player.get("active_time",0))
+        row += f" {entry}|"
+        chart_row.append(chart_val)
+        chart_values_for_sort.append(chart_val)
+
+    return row, chart_row
+
+
+def build_boon_report(
+    top_stats: Dict[str, Any],
+    boons: Dict[str, str],
+    buff_data: Dict[str, Any],
+    tid_date_time: str,
+    tid_list,
+    layout: str = "focus",  # "focus" or "summary"
+    category: Optional[str] = None,  # required if layout="summary"
+    boon_type: Optional[str] = None,
+) -> None:
+    """
+    Generator for boon reports.
+
+    layout="focus"  → per-boon tables, toggles, and ECharts blocks.
+    layout="summary" → single big table (boons as columns) for given category.
+
+    Args:
+        top_stats: player data.
+        boons: mapping boon_id -> boon_name.
+        buff_data: metadata (icon, stacking flag).
+        tid_date_time: prefix for tiddler title.
+        tid_list: mutable list of tiddlers to append to.
+        layout: "focus" or "summary".
+        category: which generation type to show if summary (e.g. "selfBuffs").
+        boon_type: optional label for summary output.
+    """
+    rows: List[str] = []
+    rows.append('<div style="overflow-y: auto; width: 100%; overflow-x:auto;">\n\n')
+
+    if layout == "focus":
+        # --- Focus Layout (per-boon tables + charts) ---
+        rows.append("""
+<style>
+.btn {
+  display:inline-block; font-weight:400; text-align:center; white-space:nowrap;
+  border:1px solid transparent; padding:0.375rem 0.75rem; font-size:1rem;
+  line-height:1.5; border-radius:0.25rem; margin:1px;
+  transition:color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out;
+}
+.btn-dark { color:#fff; background-color:#343a40; border-color:#343a40; }
+.btn-dark:hover { background-color:#23272b; border-color:#1d2124; }
+.btn-sm { padding:0.2rem 0.4rem; font-size:0.75rem; border-radius:0.2rem; }
+</style>
+""")
+
+        # Button bar
+        for boon_id, boon_name in boons.items():
+            if boon_id not in buff_data:
+                continue
+            rows.append(
+                f'<$button class="btn btn-sm btn-dark"'
+                f' set="$:/temp/boon_selected" setTo="{boon_name}"> '
+                f'{{{{{boon_name}}}}} {boon_name}'
+                f' </$button>'
+            )
+
+        # Per-boon sections
+        for boon_id, boon_name in boons.items():
+            if boon_id not in buff_data:
+                continue
+
+            skillIcon = buff_data[boon_id].get("icon", "")
+            stacking = buff_data[boon_id].get("stacking", False)
+
+            rows.append(f'<$reveal state="$:/temp/boon_selected" stateField="boon_selected" '
+                        f'type="match" text="{boon_name}" animate="yes">\n')
+            rows.append('\n<div class="flex-row">\n<div class="flex-col border">\n\n')
+            rows.append(f"! [img width=24 [{boon_name}|{skillIcon}]] {boon_name}\n")
+
+            for toggle in TOGGLES:
+                rows.append(f'<$reveal stateTitle=<<currentTiddler>> stateField="boon_radio" '
+                            f'type="match" text="{toggle}" animate="yes">\n')
+
+                header = "|thead-dark table-caption-top table-hover sortable|k\n"
+                header += "|!Party |!Name | !Prof | !{{FightTime}} | !Self Gen | !Group Gen | !Squad Gen | !Total Gen |h"
+                rows.append(header)
+
+                chart_data: List[List[Any]] = []
+                for player in top_stats.get("player", {}).values():
+                    if player.get("active_time", 0) == 0:
+                        continue
+                    row_prefix, chart_seed = build_player_basic_cells(player)
+                    per_row_chart = chart_seed.copy()
+                    row = row_prefix
+                    for cat in ["selfBuffs", "groupBuffs", "squadBuffs", "totalBuffs"]:
+                        if cat != "totalBuffs" and boon_id not in player.get(cat, {}):
+                            entry, val = " - ", 0
+                        else:
+                            gen, waste, up, wastep = compute_boon_metrics(player, boon_id, cat, buff_data)
+                            entry, val = format_entry(gen, waste, up, wastep, toggle, stacking, player["active_time"])
+                        row += f" {entry}|"
+                        per_row_chart.append(val)
+                    chart_data.append(per_row_chart)
+                    rows.append(row)
+                try:
+                    sorted_pairs = sorted(
+						zip(chart_data, rows[-len(chart_data):]),  # last chart_data rows belong to this boon
+						key=lambda x: float(x[0][6]) if len(x[0]) > 6 else 0,
+						reverse=True
+					)
+                    chart_data, table_rows = zip(*sorted_pairs)
+                    rows[-len(chart_data):] = table_rows  # replace unsorted rows
+                except Exception as e:
+                    print(f"Sorting failed: {e}")
+
+                rows.append(
+                    f'|<$radio field="boon_radio" value="Total"> Total Gen  </$radio>'
+                    f' - <$radio field="boon_radio" value="Average"> Gen/Sec  </$radio>'
+                    f' - <$radio field="boon_radio" value="Uptime"> Uptime Gen  </$radio>'
+                    f' - {boon_name} Table|c'
+                )
+                rows.append("\n</$reveal>")
+
+            # Sorted data for chart
+            try:
+                sorted_chart = sorted(chart_data, key=lambda x: float(x[6]) if len(x) > 6 else 0, reverse=True)
+            except Exception:
+                sorted_chart = chart_data
+
+            json_chart = json.dumps(sorted_chart)
+            boon_chart = f"""
+<$echarts $text=```
+option = {{
+title: {{ text: '{boon_name} Uptime Generation', subtext: 'selectable legend for generation types' }},
+legend: {{ orient:'horizontal', top:'10%', selected:{{'Total Gen':false,'Squad Gen':true,'Group Gen':false,'Self Gen':false}} }},
+grid:{{top:'15%', containLabel:true}},
+tooltip:{{top:'center'}},
+dataset:{{dimensions:["Party","Name","Prof","Total Fight Time","Self Gen","Group Gen","Squad Gen","Total Gen"],source:{json_chart}}},
+xAxis:{{}}, yAxis:{{type:'category',inverse:true}},
+dataZoom:[{{type:'slider',yAxisIndex:0,filterMode:'none', start:0, end:60}},{{type:'inside',yAxisIndex:0,filterMode:'none'}}],
+series:[{{type:'bar',name:'Total Gen',encode:{{x:'Total Gen',y:'Name'}}}},
+{{type:'bar',name:'Squad Gen',encode:{{x:'Squad Gen',y:'Name'}}}},
+{{type:'bar',name:'Group Gen',encode:{{x:'Group Gen',y:'Name'}}}},
+{{type:'bar',name:'Self Gen',encode:{{x:'Self Gen',y:'Name'}}}}]
+}};
+```$height="800px" $width="100%" $theme="dark"/>
+"""
+            rows.append('  </div>\n  <div class="flex-col border">\n\n')
+            rows.append(boon_chart)
+            rows.append("\n  </div>\n</div>\n")
+            rows.append("\n</$reveal>")
+
+        rows.append("\n</div>")
+        tid_text = "\n".join(rows)
+        temp_title = f"{tid_date_time}-Boon-Generation-Detailed"
+        append_tid_for_output(
+            create_new_tid_from_template(
+                temp_title,
+                "Boons - Detailed",
+                tid_text,
+                fields={"boon_radio": "Total", "boon_selected": next(iter(boons.values()), "")},
+            ),
+            tid_list,
+        )
+
+    elif layout == "summary":
+        # --- Summary Layout (one big table with all boons as columns) ---
+        if category not in CATEGORY_ORDER:
+            raise ValueError(f"Invalid category for summary layout: {category}")
+
+        boons_meta = {
+            bid: {
+                "name": name,
+                "icon": buff_data.get(bid, {}).get("icon", ""),
+                "stacking": buff_data.get(bid, {}).get("stacking", False),
+            }
+            for bid, name in boons.items()
+            if bid in buff_data
+        }
+
+        for toggle in TOGGLES:
+            rows.append(f'<$reveal stateTitle=<<currentTiddler>> stateField="boon_radio" '
+                        f'type="match" text="{toggle}" animate="yes">\n')
+            rows.append(build_table_header(boons_meta, include_icons=bool(boon_type)))
+
+            for player in top_stats.get("player", {}).values():
+                if player.get("active_time", 0) == 0:
+                    continue
+                row_html, _ = build_player_row(player, boons_meta, category, toggle, buff_data)
+                rows.append(row_html)
+
+            caption = CATEGORY_CAPTIONS.get(category, category)
+            rows.append(
+                f'|<$radio field="boon_radio" value="Total"> Total Gen  </$radio>'
+                f' - <$radio field="boon_radio" value="Average"> Gen/Sec  </$radio>'
+                f' - <$radio field="boon_radio" value="Uptime"> Uptime Gen  </$radio>'
+                f' - {caption} Table|c'
+            )
+            rows.append("\n</$reveal>")
+
+        rows.append("\n</div>")
+        tid_text = "\n".join(rows)
+        caption_out = f"{boon_type+'-' if boon_type else ''}{CATEGORY_CAPTIONS.get(category, category)}"
+        temp_title = f"{tid_date_time}-{caption_out.replace(' ','-')}"
+        append_tid_for_output(
+            create_new_tid_from_template(
+                temp_title,
+                caption_out,
+                tid_text,
+                fields={"boon_radio": "Total", "boon_selected": next(iter(boons.values()), "")},
+            ),
+            tid_list,
+        )
+
+    else:
+        raise ValueError("layout must be 'focus' or 'summary'")
 
 def build_boon_summary(top_stats: dict, boons: dict, category: str, buff_data: dict, tid_date_time: str, boon_type = None) -> None:
 	"""Print a table of boon uptime stats for all players in the log."""
@@ -2053,7 +2485,7 @@ def build_buffs_stats_tid(datetime):
 	caption = "Buffs"
 	creator = "Drevarr@github.com"
 
-	text = (f"<<tabs '[[{datetime}-Boons]] [[{datetime}-Stacking-Buffs]] [[{datetime}-Personal-Buffs]] [[{datetime}-Offensive-Buffs]] [[{datetime}-Support-Buffs]] [[{datetime}-Defensive-Buffs]]"
+	text = (f"<<tabs '[[{datetime}-Boons]] [[{datetime}-Boon-Generation-Detailed]] [[{datetime}-Stacking-Buffs]] [[{datetime}-Personal-Buffs]] [[{datetime}-Offensive-Buffs]] [[{datetime}-Support-Buffs]] [[{datetime}-Defensive-Buffs]]"
 			f" [[{datetime}-Gear-Buff-Uptimes]] [[{datetime}-Gear-Skill-Damage]]"
 			f"[[{datetime}-Conditions-In]] [[{datetime}-Debuffs-In]] [[{datetime}-Conditions-Out]] [[{datetime}-Debuffs-Out]]' "
 			f"'{datetime}-Boons' '$:/temp/tab1'>>")
@@ -3595,8 +4027,6 @@ def build_condition_generation_bar_chart(top_stats: dict, conditions: dict, weig
 			if boon in ['b5974', 'b13017', 'b10269']:
 				continue
 			generation_ms = player_data['targetBuffs'].get(boon, {}).get('uptime_ms', 0)
-			print(weights['Condition_Weights'])
-			print(f"Looking for {conditions[boon].lower()}")
 			boon_weight = float(weights['Condition_Weights'].get(conditions[boon].lower(), 0))
 			gen_per_sec = (generation_ms / player_active_time)
 			wt_gen_per_sec = gen_per_sec * boon_weight
