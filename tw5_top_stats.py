@@ -199,10 +199,15 @@ if __name__ == '__main__':
 
 	boons = config_output.boons
 	build_uptime_summary(top_stats, boons, buff_data, "Uptimes", tid_date_time)
+	#testing expanded boon focus
+	#build_boon_report(top_stats, boons, buff_data, tid_date_time, tid_list)
+	#build_boon_focus_summary_test(top_stats, boons, buff_data, tid_date_time, tid_list, layout="focus")
+	build_boon_report(top_stats, boons, buff_data, tid_date_time, tid_list)
 
 	boon_categories = {"selfBuffs", "groupBuffs", "squadBuffs"}
 	for boon_category in boon_categories:
-		build_boon_summary(top_stats, boons, boon_category, buff_data, tid_date_time)
+		#build_boon_summary(top_stats, boons, boon_category, buff_data, tid_date_time)
+		build_boon_report(top_stats, boons, buff_data, tid_date_time, tid_list, layout="summary", category=boon_category)
 
 	#get incoming condition uptimes on Squad Players
 	conditions = config_output.buffs_conditions
