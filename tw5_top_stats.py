@@ -190,12 +190,16 @@ if __name__ == '__main__':
 		
 	defense_stats = config_output.defenses_table
 	build_category_summary_table(top_stats, defense_stats, enable_hide_columns, "Defenses", tid_date_time)
+	build_category_summary_table_test(top_stats, defense_stats, enable_hide_columns, "Defenses", tid_date_time, tid_list, layout="focus", sort_mode="Stat/1s")
 
 	support_stats = config_output.support_table
 	build_category_summary_table(top_stats, support_stats, enable_hide_columns, "Support", tid_date_time)
+	build_category_summary_table_test(top_stats, support_stats, enable_hide_columns, "Support", tid_date_time, tid_list, layout="focus", sort_mode="Stat/1s")
 
 	offensive_stats = config_output.offensive_table
-	build_category_summary_table(top_stats, offensive_stats, enable_hide_columns, "Offensive", tid_date_time)
+	#build_category_summary_table(top_stats, offensive_stats, enable_hide_columns, "Offensive", tid_date_time)
+	build_category_summary_table_test(top_stats, offensive_stats, enable_hide_columns, "Offensive", tid_date_time, tid_list, layout="summary", sort_mode="Stat/1s")
+	build_category_summary_table_test(top_stats, offensive_stats, enable_hide_columns, "Offensive", tid_date_time, tid_list, layout="focus", sort_mode="Stat/1s")
 
 	boons = config_output.boons
 	build_uptime_summary(top_stats, boons, buff_data, "Uptimes", tid_date_time)
