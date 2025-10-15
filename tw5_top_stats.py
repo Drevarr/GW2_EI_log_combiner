@@ -84,8 +84,11 @@ if __name__ == '__main__':
 		support_profs = None
 
 	# Get the raw value and convert to list
-	blacklist_raw = config_ini.get('BlackList', 'accounts')
-	blacklist = [account.strip() for account in blacklist_raw.split(',')]
+	if "BlackList" in config_ini:
+		blacklist_raw = config_ini.get('BlackList', 'accounts')
+		blacklist = [account.strip() for account in blacklist_raw.split(',')]
+	else:
+		blacklist = []
 
 	print("Participation 🏆 Only, Blacklisted accounts:", blacklist)
 
@@ -410,3 +413,5 @@ if __name__ == '__main__':
 			print("No support professions found")
 		if not webhook_url:
 			print("No webhook URL found")
+
+	input("Press Enter to exit...")
