@@ -106,7 +106,11 @@ if __name__ == '__main__':
 	guild_name = config_ini.get('TopStatsCfg', 'guild_name', fallback=None)
 	guild_id = config_ini.get('TopStatsCfg', 'guild_id', fallback=None)
 	api_key = config_ini.get('TopStatsCfg', 'api_key', fallback=None)
-
+	boons_detailed = config_ini.getboolean('TopStatsCfg', 'Boons_Detailed', fallback=False)
+	offensive_detailed = config_ini.getboolean('TopStatsCfg', 'Offensive_Detailed', fallback=False)
+	defenses_detailed = config_ini.getboolean('TopStatsCfg', 'Defenses_Detailed', fallback=False)
+	support_detailed = config_ini.getboolean('TopStatsCfg', 'Support_Detailed', fallback=False)
+	sort_mode = config_ini.get('TopStatsCfg', 'Sort_Mode', fallback='Total')
 	write_all_data_to_json = config_ini.getboolean('TopStatsCfg', 'write_all_data_to_json', fallback=False)
 	fight_data_charts = config_ini.getboolean('TopStatsCfg', 'fight_data_charts', fallback=False)
 	db_update = config_ini.getboolean('TopStatsCfg', 'db_update', fallback=False)
@@ -174,9 +178,9 @@ if __name__ == '__main__':
 
 	build_dashboard_menu_tid(tid_date_time)
 	
-	build_general_stats_tid(tid_date_time)
+	build_general_stats_tid(tid_date_time, offensive_detailed, defenses_detailed, support_detailed)
 
-	build_buffs_stats_tid(tid_date_time)
+	build_buffs_stats_tid(tid_date_time, boons_detailed)
 
 	build_boon_stats_tid(tid_date_time)
 	for boon_other in ["Defensive", "Offensive", "Support"]:
@@ -193,23 +197,27 @@ if __name__ == '__main__':
 		
 	defense_stats = config_output.defenses_table
 	build_category_summary_table(top_stats, defense_stats, enable_hide_columns, "Defenses", tid_date_time)
-	build_category_summary_table_test(top_stats, defense_stats, enable_hide_columns, "Defenses", tid_date_time, tid_list, layout="focus", sort_mode="Stat/1s")
+	if defenses_detailed:
+		build_category_summary_report(top_stats, defense_stats, enable_hide_columns, "Defenses", tid_date_time, tid_list, layout="detailed", sort_mode=sort_mode)
 
 	support_stats = config_output.support_table
 	build_category_summary_table(top_stats, support_stats, enable_hide_columns, "Support", tid_date_time)
-	build_category_summary_table_test(top_stats, support_stats, enable_hide_columns, "Support", tid_date_time, tid_list, layout="focus", sort_mode="Stat/1s")
+	if support_detailed:
+		build_category_summary_report(top_stats, support_stats, enable_hide_columns, "Support", tid_date_time, tid_list, layout="detailed", sort_mode=sort_mode)
 
 	offensive_stats = config_output.offensive_table
 	#build_category_summary_table(top_stats, offensive_stats, enable_hide_columns, "Offensive", tid_date_time)
-	build_category_summary_table_test(top_stats, offensive_stats, enable_hide_columns, "Offensive", tid_date_time, tid_list, layout="summary", sort_mode="Stat/1s")
-	build_category_summary_table_test(top_stats, offensive_stats, enable_hide_columns, "Offensive", tid_date_time, tid_list, layout="focus", sort_mode="Stat/1s")
+	build_category_summary_report(top_stats, offensive_stats, enable_hide_columns, "Offensive", tid_date_time, tid_list, layout="summary", sort_mode=sort_mode)
+	if offensive_detailed:
+		build_category_summary_report(top_stats, offensive_stats, enable_hide_columns, "Offensive", tid_date_time, tid_list, layout="detailed", sort_mode=sort_mode)
 
 	boons = config_output.boons
 	build_uptime_summary(top_stats, boons, buff_data, "Uptimes", tid_date_time)
 	#testing expanded boon focus
 	#build_boon_report(top_stats, boons, buff_data, tid_date_time, tid_list)
 	#build_boon_focus_summary_test(top_stats, boons, buff_data, tid_date_time, tid_list, layout="focus")
-	build_boon_report(top_stats, boons, buff_data, tid_date_time, tid_list)
+	if boons_detailed:
+		build_boon_report(top_stats, boons, buff_data, tid_date_time, tid_list)
 
 	boon_categories = {"selfBuffs", "groupBuffs", "squadBuffs"}
 	for boon_category in boon_categories:

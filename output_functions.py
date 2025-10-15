@@ -549,21 +549,21 @@ def build_damage_summary_table(top_stats: dict, caption: str, tid_date_time: str
 		)
 
 
-def build_category_summary_table_test(
+def build_category_summary_report(
     top_stats: Dict[str, Any],
     category_stats: Dict[str, str],
     enable_hide_columns: bool,
     caption: str,
     tid_date_time: str,
     tid_list: list,
-    layout: str = "summary",  # "summary" or "focus"
-    sort_mode: str = "Total",  # which column to sort by in focus layout
+    layout: str = "summary",  # "summary" or "detailed"
+    sort_mode: str = "Stat/1s",  # which column to sort by in detailed layout
 ) -> None:
     """
     Unified generator for category summary tables.
 
-    layout="summary" → single large table (all stats as columns)
-    layout="focus"   → one table+chart per stat with Total/Stat/1s/60s columns
+    layout="summary" - single large table (all stats as columns)
+    layout="detailed" - one table+chart per stat with Total/Stat/1s/60s columns
     """
 
     TOGGLES = ["Total", "Stat/1s", "Stat/60s"]
@@ -620,7 +620,7 @@ def build_category_summary_table_test(
         rows.append("</div>\n")
 
     # === Focus Layout (table + 3-bar chart per stat) ===
-    if layout == "focus":
+    if layout == "detailed":
         rows.append("""
 <style>
 .btn {
@@ -694,7 +694,7 @@ def build_category_summary_table_test(
                 })
 
             # Sort by Stat/1s descending
-            chart_data.sort(key=lambda x: x["Stat/1s"], reverse=True)
+            chart_data.sort(key=lambda x: x[sort_mode], reverse=True)
 
             # === Build table ===
             rows.append(f'<$reveal stateTitle=<<currentTiddler>> stateField="{caption}_selected" type="match" text="{stat}" animate="yes">')
@@ -702,12 +702,12 @@ def build_category_summary_table_test(
             format_stat = stat[0].upper() + stat[1:]
             rows.append(f"!! {format_stat}\n")
             rows.append("|thead-dark table-caption-top table-hover sortable|k\n")
-            rows.append("|!Party |!Name |!Prof |!FightTime |!Total |!Stat/1s |!Stat/60s |h")
+            rows.append("|!Party |!Name |!Prof |!{{FightTime}} |!Total|!Stat/1s|!Stat/60s|h")
 
             for p in chart_data:
                 rows.append(
                     f"| {p['Party']} | {p['Name']} | {{{{{p['Prof']}}}}} {p['Prof'][:3]} | "
-                    f"{p['FightTime']:,.1f} | {p['Total']:,.2f} | {p['Stat/1s']:,.2f} | {p['Stat/60s']:,.2f} |"
+                    f"{p['FightTime']:,.1f} | {p['Total']:,.2f}| {p['Stat/1s']:,.2f}| {p['Stat/60s']:,.2f}|"
                 )
 
             rows.append("\n    </div>\n    <div class='flex-col border'>\n\n")
@@ -765,7 +765,7 @@ option = {{
                         f'type="match" text="{toggle}" animate="yes">\n')
 
             header = "|thead-dark table-caption-top table-hover sortable|k\n"
-            header += "|!Party |!Name | !Prof | !FightTime |"
+            header += "|!Party |!Name | !Prof | !{{FightTime}} |"
             for stat in category_stats.keys():
                 stat_icon = alt_stat_icon.get(stat, "{{"+stat+"}}")
                 header += f" !{stat_icon} |"
@@ -781,7 +781,7 @@ option = {{
                        f"{fight_time:,.1f} |")
                 for stat, category in category_stats.items():
                     val = compute_values(player, stat, category)[toggle]
-                    row += f" {val:,.2f} |"
+                    row += f" {val:,.2f}|"
                 rows.append(row)
 
             rows.append(f'|<$radio field="category_radio" value="Total"> Total  </$radio>'
@@ -804,7 +804,7 @@ option = {{
             tid_list,
         )
     else:
-        raise ValueError("layout must be 'summary' or 'focus'")
+        raise ValueError("layout must be 'summary' or 'detailed'")
 	
 
 def build_category_summary_table(top_stats: dict, category_stats: dict, enable_hide_columns: bool, caption: str, tid_date_time: str) -> None:
@@ -2690,7 +2690,7 @@ def build_menu_tid(datetime: str, db_update: bool) -> None:
 		tid_list
 	)
 
-def build_general_stats_tid(datetime):
+def build_general_stats_tid(datetime, offensive_detailed, defenses_detailed, support_detailed):
 	"""
 	Build a TID for general stats menu.
 	"""
@@ -2698,9 +2698,27 @@ def build_general_stats_tid(datetime):
 	title = f"{datetime}-General-Stats"
 	caption = "General Stats"
 	creator = "Drevarr@github.com"
-	text = (f"<<tabs '[[{datetime}-Damage]] [[{datetime}-Damage-With-Buffs]] [[{datetime}-Offensive-Summary]] [[{datetime}-Offensive-Detailed]]"
-			f"[[{datetime}-Defenses]] [[{datetime}-Defenses-Detailed]] [[{datetime}-Support]] [[{datetime}-Support-Detailed]] [[{datetime}-Heal-Stats]] [[{datetime}-Healers]] [[{datetime}-Combat-Resurrect]] [[{datetime}-FB-Pages]] [[{datetime}-Mesmer-Clone-Usage]] [[{datetime}-Pull-Skills]]' "
-			f"'{datetime}-Offensive-Summary' '$:/temp/tab1'>>")
+
+	text_parts = []
+	text_parts .append(f"<<tabs '[[{datetime}-Damage]] [[{datetime}-Damage-With-Buffs]]")
+	if offensive_detailed:
+		text_parts.append(f"[[{datetime}-Offensive-Summary]] [[{datetime}-Offensive-Detailed]]")
+	else:
+		text_parts.append(f"[[{datetime}-Offensive-Summary]]")
+
+	if defenses_detailed:
+		text_parts.append(f"[[{datetime}-Defenses]] [[{datetime}-Defenses-Detailed]]")
+	else:
+		text_parts.append(f"[[{datetime}-Defenses]]")
+
+	if support_detailed:
+		text_parts.append(f"[[{datetime}-Support]] [[{datetime}-Support-Detailed]]")
+	else:
+		text_parts.append(f"[[{datetime}-Support]]")
+
+	text = " ".join(text_parts)
+	text += f"[[{datetime}-Heal-Stats]] [[{datetime}-Healers]] [[{datetime}-Combat-Resurrect]] [[{datetime}-FB-Pages]] [[{datetime}-Mesmer-Clone-Usage]]"
+	text += f"[[{datetime}-Pull-Skills]]' '{datetime}-Offensive-Summary' '$:/temp/tab1'>>"
 
 	append_tid_for_output(
 		create_new_tid_from_template(title, caption, text, tags, creator=creator, fields={'radio': 'Total', 'damage_with_buff': 'might', 'boon_selected':'Might', 'Support_selected': 'condiCleanse', 'Offensive_selected': 'downContribution', 'Defenses_selected': 'damageTaken'}),
@@ -2743,7 +2761,7 @@ def build_damage_modifiers_menu_tid(datetime: str) -> None:
 		tid_list
 	)
 
-def build_buffs_stats_tid(datetime):
+def build_buffs_stats_tid(datetime, boons_detailed):
 	"""
 	Build a TID for buffs menu.
 	"""
@@ -2751,11 +2769,16 @@ def build_buffs_stats_tid(datetime):
 	title = f"{datetime}-Buffs"
 	caption = "Buffs"
 	creator = "Drevarr@github.com"
-
-	text = (f"<<tabs '[[{datetime}-Boons]] [[{datetime}-Boon-Generation-Detailed]] [[{datetime}-Stacking-Buffs]] [[{datetime}-Personal-Buffs]] [[{datetime}-Offensive-Buffs]] [[{datetime}-Support-Buffs]] [[{datetime}-Defensive-Buffs]]"
-			f" [[{datetime}-Gear-Buff-Uptimes]] [[{datetime}-Gear-Skill-Damage]]"
-			f"[[{datetime}-Conditions-In]] [[{datetime}-Debuffs-In]] [[{datetime}-Conditions-Out]] [[{datetime}-Debuffs-Out]]' "
-			f"'{datetime}-Boons' '$:/temp/tab1'>>")
+	if boons_detailed:
+		text = (f"<<tabs '[[{datetime}-Boons]] [[{datetime}-Boon-Generation-Detailed]] [[{datetime}-Stacking-Buffs]] [[{datetime}-Personal-Buffs]] [[{datetime}-Offensive-Buffs]] [[{datetime}-Support-Buffs]] [[{datetime}-Defensive-Buffs]]"
+				f" [[{datetime}-Gear-Buff-Uptimes]] [[{datetime}-Gear-Skill-Damage]]"
+				f"[[{datetime}-Conditions-In]] [[{datetime}-Debuffs-In]] [[{datetime}-Conditions-Out]] [[{datetime}-Debuffs-Out]]' "
+				f"'{datetime}-Boons' '$:/temp/tab1'>>")
+	else:
+		text = (f"<<tabs '[[{datetime}-Boons]] [[{datetime}-Stacking-Buffs]] [[{datetime}-Personal-Buffs]] [[{datetime}-Offensive-Buffs]] [[{datetime}-Support-Buffs]] [[{datetime}-Defensive-Buffs]]"
+				f" [[{datetime}-Gear-Buff-Uptimes]] [[{datetime}-Gear-Skill-Damage]]"
+				f"[[{datetime}-Conditions-In]] [[{datetime}-Debuffs-In]] [[{datetime}-Conditions-Out]] [[{datetime}-Debuffs-Out]]' "
+				f"'{datetime}-Boons' '$:/temp/tab1'>>")
 
 	append_tid_for_output(
 		create_new_tid_from_template(title, caption, text, tags, creator=creator),
