@@ -61,8 +61,8 @@ if __name__ == '__main__':
 		'Boon_Weights': ['Aegis', 'Alacrity', 'Fury', 'Might', 'Protection', 'Quickness',
 						 'Regeneration', 'Resistance', 'Resolution', 'Stability',
 						 'Swiftness', 'Vigor', 'Superspeed'],
-		'Condition_Weights': ['Bleed', 'Burning', 'Confusion', 'Poisoned', 'Torment',
-							  'Blinded', 'Chilled', 'Crippled', 'Fear', 'Immobilized',
+		'Condition_Weights': ['Bleed', 'Burning', 'Confusion', 'Poison', 'Torment',
+							  'Blind', 'Chilled', 'Crippled', 'Fear', 'Immobile',
 							  'Slow', 'Taunt', 'Weakness', 'Vulnerability']
 	}
 
