@@ -597,6 +597,8 @@ def build_category_summary_report(
             val = round((player[category].get(stat, 0) / divisor_value) * 100, 2)
             return {"Total": val, "Stat/1s": val, "Stat/60s": val}
         val = player[category].get(stat, 0)
+        if stat in ["receivedCrowdControlDuration","appliedCrowdControlDuration", "appliedCrowdControlDurationDownContribution"]:
+            val = val / 1000
         return {
             "Total": val,
             "Stat/1s": val / fight_time,
