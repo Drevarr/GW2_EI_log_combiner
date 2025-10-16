@@ -106,7 +106,7 @@ offensive_table = {
     "criticalRate": 'statsTargets',
     "criticalDmg": 'statsTargets',
     "flankingRate": 'statsTargets',
-    "againstMovingRate": 'statsTargets',
+    #"againstMovingRate": 'statsTargets',
     "glanceRate": 'statsTargets',
     "missed": 'statsTargets',
     "evaded": 'statsTargets',
