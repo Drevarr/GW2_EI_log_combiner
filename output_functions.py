@@ -580,12 +580,22 @@ def build_category_summary_report(
 		"downedDamageTakenCount": '{{downedDamageTaken}}[img width=16 [Hits|hits.png]]',
 		"damageBarrierCount": '{{damageBarrier}}[img width=16 [Hits|hits.png]]'
 		}
-	
+    pct_stats = {
+		"criticalRate": "critableDirectDamageCount", "flankingRate":"connectedDirectDamageCount", "glanceRate":"connectedDirectDamageCount", "againstMovingRate": "connectedDamageCount"
+	}
+    time_stats = ["resurrectTime", "condiCleanseTime", "condiCleanseTimeSelf", "boonStripsTime", "removedStunDuration", "boonStripDownContributionTime"]
+
     # === Helper to compute per-player values ===
     def compute_values(player, stat, category):
         fight_time = player.get("active_time", 0) / 1000
         if fight_time == 0:
             return {"Total": 0, "Stat/1s": 0, "Stat/60s": 0}
+        if stat in pct_stats:
+            divisor_value = player[category].get(pct_stats[stat], 0)
+            if divisor_value == 0:
+                return {"Total": 0, "Stat/1s": 0, "Stat/60s": 0}
+            val = round((player[category].get(stat, 0) / divisor_value) * 100, 2)
+            return {"Total": val, "Stat/1s": val, "Stat/60s": val}
         val = player[category].get(stat, 0)
         return {
             "Total": val,
