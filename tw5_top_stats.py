@@ -196,26 +196,22 @@ if __name__ == '__main__':
 	build_shared_damage_modifier_summary(top_stats, damage_mod_data, "Shared Damage Mods", tid_date_time)
 		
 	defense_stats = config_output.defenses_table
-	build_category_summary_table(top_stats, defense_stats, enable_hide_columns, "Defenses", tid_date_time)
+	build_category_summary_report(top_stats, defense_stats, enable_hide_columns, "Defenses", tid_date_time, tid_list, layout="summary", sort_mode=sort_mode)
 	if defenses_detailed:
 		build_category_summary_report(top_stats, defense_stats, enable_hide_columns, "Defenses", tid_date_time, tid_list, layout="detailed", sort_mode=sort_mode)
 
 	support_stats = config_output.support_table
-	build_category_summary_table(top_stats, support_stats, enable_hide_columns, "Support", tid_date_time)
+	build_category_summary_report(top_stats, support_stats, enable_hide_columns, "Support", tid_date_time, tid_list, layout="summary", sort_mode=sort_mode)
 	if support_detailed:
 		build_category_summary_report(top_stats, support_stats, enable_hide_columns, "Support", tid_date_time, tid_list, layout="detailed", sort_mode=sort_mode)
 
 	offensive_stats = config_output.offensive_table
-	#build_category_summary_table(top_stats, offensive_stats, enable_hide_columns, "Offensive", tid_date_time)
 	build_category_summary_report(top_stats, offensive_stats, enable_hide_columns, "Offensive", tid_date_time, tid_list, layout="summary", sort_mode=sort_mode)
 	if offensive_detailed:
 		build_category_summary_report(top_stats, offensive_stats, enable_hide_columns, "Offensive", tid_date_time, tid_list, layout="detailed", sort_mode=sort_mode)
 
 	boons = config_output.boons
 	build_uptime_summary(top_stats, boons, buff_data, "Uptimes", tid_date_time)
-	#testing expanded boon focus
-	#build_boon_report(top_stats, boons, buff_data, tid_date_time, tid_list)
-	#build_boon_focus_summary_test(top_stats, boons, buff_data, tid_date_time, tid_list, layout="focus")
 	if boons_detailed:
 		build_boon_report(top_stats, boons, buff_data, tid_date_time, tid_list)
 
@@ -421,5 +417,3 @@ if __name__ == '__main__':
 			print("No support professions found")
 		if not webhook_url:
 			print("No webhook URL found")
-
-	input("Press Enter to exit...")
