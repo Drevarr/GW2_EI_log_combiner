@@ -90,7 +90,7 @@ if __name__ == '__main__':
 	else:
 		blacklist = []
 
-	print("Participation 🏆 Only, Blacklisted accounts:", blacklist)
+	print("Blacklisted accounts:", blacklist)
 
 	# Output filenames
 	if not args.xls_output_filename:
