@@ -610,8 +610,14 @@ def build_category_summary_report(
 
     # Optional column toggles for summary layout
     if enable_hide_columns and layout == "summary":
+        rows.append('<style>')
+        col_count = 26
+        for i in range(4, col_count):
+            if i == col_count - 1:
+                rows.append(f".col-toggle:has(#toggle-col{i}:not(:checked)) tr > *:nth-child({i}) {{\n  display: none;}}")
+            else:
+                rows.append(f".col-toggle:has(#toggle-col{i}:not(:checked)) tr > *:nth-child({i}),")
         rows.append("""
-<style>
 .col-controls {
   display:flex;flex-wrap:wrap;gap:0.3em 0.5em;align-items:center;
   background:#343a40;color:#eee;border-radius:0.5em;
@@ -625,10 +631,14 @@ def build_category_summary_report(
 .col-controls label:hover{background:#444;}
 .col-controls input[type="checkbox"]{accent-color:#6cf;}
 </style>
+					
 <div class='col-toggle'>
-<div class="col-controls">""")
+<div class="col-controls">
+Uncheck to Hide: """)
+        rows.append
         for i, stat in enumerate(category_stats.keys(), start=5):
-            rows.append(f"<label><input type='checkbox' id='toggle-col{i}' checked> {{{{{stat}}}}}</label>")
+            stat_icon = alt_stat_icon.get(stat, "{{"+stat+"}}")
+            rows.append(f"<label><input type='checkbox' id='toggle-col{i}' checked> {stat_icon}</label>")
         rows.append("</div>\n")
 
     # === Focus Layout (table + 3-bar chart per stat) ===
@@ -802,7 +812,7 @@ option = {{
                         f' - {caption} Table|c\n</$reveal>')
 
         if enable_hide_columns:
-            rows.append("</div>\n")
+            rows.append("</div>\n</div>")
 
         tid_text = "\n".join(rows)
         temp_title = f"{tid_date_time}-{caption}-Summary"
