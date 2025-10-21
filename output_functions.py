@@ -695,10 +695,11 @@ Uncheck to Hide: """)
 """)
 
         # Radio buttons for selecting stat focus
+        default_stat = list(category_stats.keys())[0]
         for stat in category_stats:
             stat_icon = alt_stat_icon.get(stat, "{{"+stat+"}}")
             rows.append(
-                f'<$radio class="btn btn-sm btn-dark" field="{caption}_selected" value="{stat}"> {stat_icon} </$radio>'
+                f'<$radio class="btn btn-sm btn-dark" tiddler="$:/temp/detailed_state" default="{default_stat}" field="{caption}_selected" value="{stat}"> {stat_icon} </$radio>'
             )
 
         # One table and chart per stat
@@ -719,7 +720,7 @@ Uncheck to Hide: """)
             chart_data.sort(key=lambda x: x[sort_mode], reverse=True)
 
             # === Build table ===
-            rows.append(f'<$reveal stateTitle=<<currentTiddler>> stateField="{caption}_selected" type="match" text="{stat}" animate="yes">')
+            rows.append(f'<$reveal stateTitle="$:/temp/detailed_state" stateField="{caption}_selected" default="{default_stat}" type="match" text="{stat}" animate="yes">')
             rows.append('<div class="flex-row">\n    <div class="flex-col border">\n\n')
             format_stat = stat[0].upper() + stat[1:]
             rows.append(f"!! {format_stat}\n")
@@ -783,7 +784,7 @@ option = {{
     # === Summary Layout (one large table) ===
     elif layout == "summary":
         for toggle in TOGGLES:
-            rows.append(f'<$reveal stateTitle=<<currentTiddler>> stateField="category_radio" '
+            rows.append(f'<$reveal stateTitle="$:/temp/detailed_state" default="Total" stateField="category_radio" '
                         f'type="match" text="{toggle}" animate="yes">\n')
 
             header = "|thead-dark table-caption-top table-hover sortable|k\n"
@@ -806,9 +807,9 @@ option = {{
                     row += f" {val:,.2f}|"
                 rows.append(row)
 
-            rows.append(f'|<$radio field="category_radio" value="Total"> Total  </$radio>'
-                        f' - <$radio field="category_radio" value="Stat/1s"> Stat/1s  </$radio>'
-                        f' - <$radio field="category_radio" value="Stat/60s"> Stat/60s  </$radio>'
+            rows.append(f'|<$radio tiddler="$:/temp/detailed_state" field="category_radio" default="Total" value="Total"> Total  </$radio>'
+                        f' - <$radio  tiddler="$:/temp/detailed_state" field="category_radio" value="Stat/1s"> Stat/1s  </$radio>'
+                        f' - <$radio  tiddler="$:/temp/detailed_state" field="category_radio" value="Stat/60s"> Stat/60s  </$radio>'
                         f' - {caption} Table|c\n</$reveal>')
 
         if enable_hide_columns:
@@ -1101,6 +1102,7 @@ def build_boon_report(
                 continue
             rows.append(
                 f'<$radio class="btn btn-sm btn-dark"'
+				f' tiddler="$:/temp/selectedBoon" default="Might"'
                 f' field="boon_selected" value="{boon_name}"> '
                 f'{{{{{boon_name}}}}} {boon_name}'
                 f' </$radio>'
@@ -1114,13 +1116,13 @@ def build_boon_report(
             skillIcon = buff_data[boon_id].get("icon", "")
             stacking = buff_data[boon_id].get("stacking", False)
 
-            rows.append(f'<$reveal stateTitle=<<currentTiddler>> stateField="boon_selected" '
+            rows.append(f'<$reveal stateTitle="$:/temp/selectedBoon" stateField="boon_selected" default="Might"'
                         f'type="match" text="{boon_name}" animate="yes">\n')
             rows.append('\n<div class="flex-row">\n<div class="flex-col border">\n\n')
             rows.append(f"! [img width=24 [{boon_name}|{skillIcon}]] {boon_name}\n")
 
             for toggle in TOGGLES:
-                rows.append(f'<$reveal stateTitle=<<currentTiddler>> stateField="boon_radio" '
+                rows.append(f'<$reveal stateTitle="$:/temp/selectedBoon" default="Total" stateField="boon_radio" '
                             f'type="match" text="{toggle}" animate="yes">\n')
 
                 header = "|thead-dark table-caption-top table-hover sortable|k\n"
@@ -1156,9 +1158,9 @@ def build_boon_report(
                     print(f"Sorting failed: {e}")
 
                 rows.append(
-                    f'|<$radio field="boon_radio" value="Total"> Total Gen  </$radio>'
-                    f' - <$radio field="boon_radio" value="Average"> Gen/Sec  </$radio>'
-                    f' - <$radio field="boon_radio" value="Uptime"> Uptime Gen  </$radio>'
+                    f'|<$radio tiddler="$:/temp/selectedBoon" default="Total" field="boon_radio" value="Total"> Total Gen  </$radio>'
+                    f' - <$radio tiddler="$:/temp/selectedBoon" default="Total" field="boon_radio" value="Average"> Gen/Sec  </$radio>'
+                    f' - <$radio tiddler="$:/temp/selectedBoon" default="Total" field="boon_radio" value="Uptime"> Uptime Gen  </$radio>'
                     f' - {boon_name} Table|c'
                 )
                 rows.append("\n</$reveal>")
@@ -1221,7 +1223,7 @@ series:[{{type:'bar',name:'Total Gen',encode:{{x:'Total Gen',y:'Name'}}}},
         }
 
         for toggle in TOGGLES:
-            rows.append(f'<$reveal stateTitle=<<currentTiddler>> stateField="boon_radio" '
+            rows.append(f'<$reveal stateTitle="$:/temp/selectedBoon" default="Total" stateField="boon_radio" '
                         f'type="match" text="{toggle}" animate="yes">\n')
             rows.append(build_table_header(boons_meta, include_icons=bool(boon_type)))
 
@@ -1233,9 +1235,9 @@ series:[{{type:'bar',name:'Total Gen',encode:{{x:'Total Gen',y:'Name'}}}},
 
             caption = CATEGORY_CAPTIONS.get(category, category)
             rows.append(
-                f'|<$radio field="boon_radio" value="Total"> Total Gen  </$radio>'
-                f' - <$radio field="boon_radio" value="Average"> Gen/Sec  </$radio>'
-                f' - <$radio field="boon_radio" value="Uptime"> Uptime Gen  </$radio>'
+                f'|<$radio tiddler="$:/temp/selectedBoon" default="Total" field="boon_radio" value="Total"> Total Gen  </$radio>'
+                f' - <$radio tiddler="$:/temp/selectedBoon" default="Total" field="boon_radio" value="Average"> Gen/Sec  </$radio>'
+                f' - <$radio tiddler="$:/temp/selectedBoon" default="Total" field="boon_radio" value="Uptime"> Uptime Gen  </$radio>'
                 f' - {caption} Table|c'
             )
             rows.append("\n</$reveal>")
