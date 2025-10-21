@@ -5362,7 +5362,7 @@ def write_high_scores_to_db(highscores, fights, skill_data, db_path):
 			profession, player = prof_player.split("}}")
 			profession += "}}"
 			fight_time = (
-				f"{fights[int(fight_num)]["fight_date"]} - Fight #{fight_num}"
+				f'{fights[int(fight_num)]["fight_date"]} - Fight #{fight_num}'
 			)
 			fight_link = fights[int(fight_num)]["fight_link"]
 			save_high_score(
