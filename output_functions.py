@@ -730,7 +730,7 @@ Uncheck to Hide: """)
             for p in chart_data:
                 rows.append(
                     f"| {p['Party']} | {p['Name']} | {{{{{p['Prof']}}}}} {p['Prof'][:3]} | "
-                    f"{p['FightTime']:,.1f} | {p['Total']:,.2f}| {p['Stat/1s']:,.2f}| {p['Stat/60s']:,.2f}|"
+                    f"{p['FightTime']:,.1f} | {p['Total']:,}| {p['Stat/1s']:,}| {p['Stat/60s']:,}|"
                 )
 
             rows.append("\n    </div>\n    <div class='flex-col border'>\n\n")
@@ -804,7 +804,13 @@ option = {{
                        f"{fight_time:,.1f} |")
                 for stat, category in category_stats.items():
                     val = compute_values(player, stat, category)[toggle]
-                    row += f" {val:,.2f}|"
+                    if stat in pct_stats:
+                        val = f" {val:,.2f}%"
+                    elif stat in time_stats:
+                        val = f" {val:,.1f}"
+                    else:
+                        val = f" {val:,.0f}"
+                    row += f" {val}|"
                 rows.append(row)
 
             rows.append(f'|<$radio tiddler="$:/temp/detailed_state" field="category_radio" default="Total" value="Total"> Total  </$radio>'
