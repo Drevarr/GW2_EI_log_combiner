@@ -1193,7 +1193,11 @@ def get_buffs_data(buff_map: dict) -> None:
 				'icon': icon,
 				'classification': classification
 			}
-		
+		elif buff_data[buff_id]['icon'] in ("https://render.guildwars2.com/file/1D55D34FB4EE20B1962E315245E40CA5E1042D0E/62248.png", "unknown.png"):
+			if icon not in ("https://render.guildwars2.com/file/1D55D34FB4EE20B1962E315245E40CA5E1042D0E/62248.png", "unknown.png"):
+				buff_data[buff_id]['icon'] = icon
+
+				
 def get_skills_data(skill_map: dict) -> None:
 	"""
 	Collect skill data across all fights.
@@ -1212,6 +1216,9 @@ def get_skills_data(skill_map: dict) -> None:
 				'auto': auto_attack,
 				'icon': icon
 			}
+		elif skill_data[skill_id]['icon'] in ("https://render.guildwars2.com/file/1D55D34FB4EE20B1962E315245E40CA5E1042D0E/62248.png", "unknown.png"):
+			if icon not in ("https://render.guildwars2.com/file/1D55D34FB4EE20B1962E315245E40CA5E1042D0E/62248.png", "unknown.png"):
+				skill_data[skill_id]['icon'] = icon
 
 def get_damage_mods_data(damage_mod_map: dict, personal_damage_mod_data: dict) -> None:
 	"""
