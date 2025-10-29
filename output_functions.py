@@ -5233,12 +5233,16 @@ def generate_leaderboard(stat: str, db_path: str, top_n: int = 25) -> str:
 
 		if avg in ('-', None) or avg == 0:
 			continue
+		
+		membership = member_bucket.get(player_key, '-')
+		if membership == "❌":
+			continue
 
 		if stat in ('kills', 'downs', 'downed', 'killed', 'resurrects'):
 			avg = f"{avg:,.2f}/min"
 		else:
 			avg = f"{avg:,.2f}/sec"
-		membership = member_bucket.get(player_key, '-')
+
 		tt_name = f'<span data-tooltip="{acc}">{name}</span>'
 		table += f"| {rank} |{tt_name} |{{{{{prof}}}}} {prof} | {round(rating, 1)} | {delta_str(delta)}| {raids} | {membership} | {avg}|\n"
 		rank += 1
