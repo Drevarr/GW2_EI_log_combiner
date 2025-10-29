@@ -55,6 +55,7 @@ team_colors = {
     0: "Unk",
     705: "Red",
     706: "Red",
+    707: "Red",
     882: "Red",
     885: "Red",
     2520: "Red",
@@ -62,7 +63,9 @@ team_colors = {
     2741: "Green",
     2752: "Green",
     2763: "Green",
+    2767: "Green",
     432: "Blue",
+    433: "Blue",
     1277: "Blue",
 }
 

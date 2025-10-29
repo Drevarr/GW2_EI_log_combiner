@@ -809,7 +809,13 @@ option = {{
                     elif stat in time_stats:
                         val = f" {val:,.1f}"
                     else:
-                        val = f" {val:,.0f}"
+                        if toggle == "Stat/60s":
+                            val = f" {val:,.2f}"
+                        elif toggle == "Stat/1s":
+                            val = f" {val:,.3f}"
+                        else:
+                            val = f" {val:,.0f}"
+
                     row += f" {val}|"
                 rows.append(row)
 
