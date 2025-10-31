@@ -5210,6 +5210,8 @@ def generate_leaderboard(stat: str, db_path: str, top_n: int = 25) -> str:
 	for player_key, member_status in guild_members.items():
 		if member_status in (None, 0, "--==Non Member==--"):
 			member_bucket[player_key] = "❌"
+		elif member_status in ("-"):
+			member_bucket[player_key] = "❓"
 		else:
 			member_bucket[player_key] = "✅"
 			
