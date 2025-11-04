@@ -712,6 +712,7 @@ Uncheck to Hide: """)
                     "Party": player["last_party"],
                     "Name": player["name"],
                     "Prof": player["profession"],
+					"Acct": player["account"],
                     "FightTime": player["active_time"] / 1000,
                     **{k: round(v, 2) for k, v in vals.items()},
                 })
@@ -728,8 +729,9 @@ Uncheck to Hide: """)
             rows.append("|!Party |!Name |!Prof |!{{FightTime}} |!Total|!Stat/1s|!Stat/60s|h")
 
             for p in chart_data:
+                tt_name = f'<span data-tooltip="{p['Acct']}">{p['Name']}</span>'
                 rows.append(
-                    f"| {p['Party']} | {p['Name']} | {{{{{p['Prof']}}}}} {p['Prof'][:3]} | "
+                    f"| {p['Party']} |{tt_name} | {{{{{p['Prof']}}}}} {p['Prof'][:3]} | "
                     f"{p['FightTime']:,.1f} | {p['Total']:,}| {p['Stat/1s']:,}| {p['Stat/60s']:,}|"
                 )
 
@@ -762,7 +764,7 @@ option = {{
     {{ type: 'inside', yAxisIndex: 0 }}
   ]
 }};
-```$height="700px" $theme="dark"/>
+```$height="900px" $theme="dark"/>
 """
             rows.append(chart_block)
             rows.append("\n    </div>\n</div>\n\n")
@@ -799,7 +801,8 @@ option = {{
                 fight_time = player.get("active_time", 0) / 1000
                 if fight_time == 0:
                     continue
-                row = (f"| {player['last_party']} |{player['name']} | "
+                tt_name = f'<span data-tooltip="{player['account']}">{player['name']}</span>'
+                row = (f"| {player['last_party']} |{tt_name} | "
                        f"{{{{{player['profession']}}}}} {player['profession'][:3]} | "
                        f"{fight_time:,.1f} |")
                 for stat, category in category_stats.items():
@@ -1199,7 +1202,7 @@ series:[{{type:'bar',name:'Total Gen',encode:{{x:'Total Gen',y:'Name'}}}},
 {{type:'bar',name:'Group Gen',encode:{{x:'Group Gen',y:'Name'}}}},
 {{type:'bar',name:'Self Gen',encode:{{x:'Self Gen',y:'Name'}}}}]
 }};
-```$height="800px" $width="100%" $theme="dark"/>
+```$height="900px" $width="100%" $theme="dark"/>
 """
             rows.append('  </div>\n  <div class="flex-col border">\n\n')
             rows.append(boon_chart)
