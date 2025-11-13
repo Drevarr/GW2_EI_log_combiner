@@ -248,12 +248,17 @@ if __name__ == '__main__':
 	build_debuff_uptime_summary(top_stats, condition_list, buff_data, "Conditions-Out", tid_date_time)
 
 	#get support buffs found and output table
-	support_buffs = config_output.buffs_support
+	#support_buffs = config_output.buffs_support
+	support_buffs = {}
+	for buff, data in buff_data.items():
+		if data['classification'] == 'Support':
+			support_buffs[buff] = data['name']	
 	support_buff_list = {}
 	for buff in support_buffs:
 		if buff in top_stats["overall"]["buffUptimes"]:
 			if top_stats["overall"]["buffUptimes"][buff]["uptime_ms"] > 0:
 				support_buff_list[buff] = support_buffs[buff]
+	support_buff_list = dict(sorted(support_buff_list.items(), key=lambda item: item[1]))
 	build_uptime_summary(top_stats, support_buff_list, buff_data, "Support Uptimes", tid_date_time)
 	boon_categories = {"selfBuffs", "groupBuffs", "squadBuffs"}
 	for boon_category in boon_categories:
@@ -261,24 +266,36 @@ if __name__ == '__main__':
 
 
 	#get defensive buffs found and output table
-	defensive_buffs = config_output.buffs_defensive
+	#defensive_buffs = config_output.buffs_defensive
+	defensive_buffs = {}
+	for buff, data in buff_data.items():
+		if data['classification'] == 'Defensive':
+			defensive_buffs[buff] = data['name']
+
 	defensive_buff_list = {}
 	for buff in defensive_buffs:
 		if buff in top_stats["overall"]["buffUptimes"]:
 			if top_stats["overall"]["buffUptimes"][buff]["uptime_ms"] > 0:
 				defensive_buff_list[buff] = defensive_buffs[buff]
+	defensive_buff_list = dict(sorted(defensive_buff_list.items(), key=lambda item: item[1]))
 	build_uptime_summary(top_stats, defensive_buff_list, buff_data, "Defensive Uptimes", tid_date_time)
 	boon_categories = {"selfBuffs", "groupBuffs", "squadBuffs"}
 	for boon_category in boon_categories:
 		build_boon_summary(top_stats, defensive_buff_list, boon_category, buff_data, tid_date_time, boon_type="Defensive")
 
 	#get offensive buffs found and output table
-	offensive_buffs = config_output.buffs_offensive
+	#offensive_buffs = config_output.buffs_offensive
+	offensive_buffs = {}
+	for buff, data in buff_data.items():
+		if data['classification'] == 'Offensive':
+			offensive_buffs[buff] = data['name']	
+	
 	offensive_buff_list = {}
 	for buff in offensive_buffs:
 		if buff in top_stats["overall"]["buffUptimes"]:
 			if top_stats["overall"]["buffUptimes"][buff]["uptime_ms"] > 0:
 				offensive_buff_list[buff] = offensive_buffs[buff]
+	offensive_buff_list = dict(sorted(offensive_buff_list.items(), key=lambda item: item[1]))
 	build_uptime_summary(top_stats, offensive_buff_list, buff_data, "Offensive Uptimes", tid_date_time)
 	boon_categories = {"selfBuffs", "groupBuffs", "squadBuffs"}
 	for boon_category in boon_categories:
