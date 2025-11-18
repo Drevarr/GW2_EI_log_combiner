@@ -116,6 +116,7 @@ offensive_table = {
     "killed": 'statsTargets',
     "downed": 'statsTargets',
     "downContribution": 'statsTargets',
+    "downContribPct": 'statsTargets',
     #"connectedPowerCount": 'statsTargets',
     #"connectedPowerAbove90HPCount": 'statsTargets',
     #"connectedConditionCount": 'statsTargets',

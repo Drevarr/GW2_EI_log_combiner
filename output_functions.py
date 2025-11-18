@@ -578,7 +578,8 @@ def build_category_summary_report(
 		"conditionDamageTakenCount": '{{conditionDamageTaken}}[img width=16 [Hits|hits.png]]',
 		"powerDamageTakenCount": '{{powerDamageTaken}}[img width=16 [Hits|hits.png]]',
 		"downedDamageTakenCount": '{{downedDamageTaken}}[img width=16 [Hits|hits.png]]',
-		"damageBarrierCount": '{{damageBarrier}}[img width=16 [Hits|hits.png]]'
+		"damageBarrierCount": '{{damageBarrier}}[img width=16 [Hits|hits.png]]',
+		"downContribPct": '{{downContribution}} %'
 		}
     pct_stats = {
 		"criticalRate": "critableDirectDamageCount", "flankingRate":"connectedDirectDamageCount", "glanceRate":"connectedDirectDamageCount", "againstMovingRate": "connectedDamageCount"
@@ -599,6 +600,12 @@ def build_category_summary_report(
         val = player[category].get(stat, 0)
         if stat in ["receivedCrowdControlDuration","appliedCrowdControlDuration", "appliedCrowdControlDurationDownContribution"]:
             val = val / 1000
+        if stat == "downContribPct":
+            divisor_value = player[category].get("totalDmg", 0)
+            if divisor_value == 0:
+                return {"Total": 0, "Stat/1s": 0, "Stat/60s": 0}
+            val = round((player[category].get("downContribution", 0) / divisor_value) * 100,2)
+            return {"Total": val, "Stat/1s": val, "Stat/60s": val}
         return {
             "Total": val,
             "Stat/1s": val / fight_time,
@@ -729,7 +736,7 @@ Uncheck to Hide: """)
             rows.append("|!Party |!Name |!Prof |!{{FightTime}} |!Total|!Stat/1s|!Stat/60s|h")
 
             for p in chart_data:
-                tt_name = f'<span data-tooltip="{p['Acct']}">{p['Name']}</span>'
+                tt_name = f"<span data-tooltip=\"{p['Acct']}\">{p['Name']}</span>"
                 rows.append(
                     f"| {p['Party']} |{tt_name} | {{{{{p['Prof']}}}}} {p['Prof'][:3]} | "
                     f"{p['FightTime']:,.1f} | {p['Total']:,}| {p['Stat/1s']:,}| {p['Stat/60s']:,}|"
@@ -801,13 +808,13 @@ option = {{
                 fight_time = player.get("active_time", 0) / 1000
                 if fight_time == 0:
                     continue
-                tt_name = f'<span data-tooltip="{player['account']}">{player['name']}</span>'
+                tt_name = f"<span data-tooltip=\"{player['account']}\">{player['name']}</span>"
                 row = (f"| {player['last_party']} |{tt_name} | "
                        f"{{{{{player['profession']}}}}} {player['profession'][:3]} | "
                        f"{fight_time:,.1f} |")
                 for stat, category in category_stats.items():
                     val = compute_values(player, stat, category)[toggle]
-                    if stat in pct_stats:
+                    if stat in pct_stats or stat == "downContribPct":
                         val = f" {val:,.2f}%"
                     elif stat in time_stats:
                         val = f" {val:,.1f}"
