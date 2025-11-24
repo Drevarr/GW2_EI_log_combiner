@@ -1325,6 +1325,7 @@ def build_boon_summary(top_stats: dict, boons: dict, category: str, buff_data: d
 			account = player["account"]
 			name = player["name"]
 			tt_name = f'<span data-tooltip="{account}">{name}</span>'
+			print(f"Check Logs for {account} {name} with ActiveTime: {player['active_time']} and Num_Fights: {player['num_fights']}")
 			# Create a row for the player with basic info
 			row = f"| { player['last_party']} |{tt_name} | {{{{{player['profession']}}}}} {player['profession'][:3]} | {player['active_time'] / 1000:,.1f}|"
 
@@ -1353,7 +1354,10 @@ def build_boon_summary(top_stats: dict, boons: dict, category: str, buff_data: d
 					elif category == "groupBuffs":
 						generation_ms = player[category][boon_id]["generation"]
 						wasted_ms = player[category][boon_id]["wasted"]
-						if stacking:
+						if group_supported == num_fights:
+							uptime_percentage = 0
+							wasted_percentage = 0
+						elif stacking:
 							uptime_percentage = round((generation_ms / player['active_time']) / ((group_supported - num_fights)/num_fights), 3)
 							wasted_percentage = round((wasted_ms / player['active_time']) / ((group_supported - num_fights)/num_fights), 3)
 						else:
