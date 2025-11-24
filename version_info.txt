@@ -5,8 +5,8 @@
 
 VSVersionInfo(
   ffi=FixedFileInfo(
-  filevers=(1, 4, 9, 0),
-  prodvers=(1, 4, 9, 0),
+  filevers=(1, 4, 10, 0),
+  prodvers=(1, 4, 10, 0),
   mask=0x3f,
   flags=0x0,
   OS=0x4,
@@ -17,10 +17,10 @@ VSVersionInfo(
   u'040904B0',
   [StringStruct('CompanyName', 'Drevarr@github.com'),
   StringStruct('FileDescription', 'TopStats combines multiple GW2 Elite Insight json logs and provides a Raid Overview as a drag and drop package for importing into a TW5 wiki.'),
-  StringStruct('FileVersion', '1.4.9'),
+  StringStruct('FileVersion', '1.4.10'),
   StringStruct('InternalName', 'topstats'),
   StringStruct('LegalCopyright', 'https://github.com/Drevarr/GW2_EI_log_combiner?tab=GPL-3.0-1-ov-file#readme'),
   StringStruct('ProductName', 'TopStats'),
-  StringStruct('ProductVersion', '1.4.9')])]), 
+  StringStruct('ProductVersion', '1.4.10')])]), 
   VarFileInfo([VarStruct(u'Translation', [1033, 1200])])]
   )
