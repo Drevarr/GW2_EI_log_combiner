@@ -5567,7 +5567,7 @@ def build_boon_support_data(top_stats: dict, support_profs: dict, boon_dict: dic
 	return boon_support_data
 
 
-def send_profession_boon_support_embed(webhook_url: str, profession: str, prof_icon: str, prof_color: str, tid_date_time: str, data: list) -> None:
+def send_profession_boon_support_embed(webhook_url: str, discord_additional_notes: str, profession: str, prof_icon: str, prof_color: str, tid_date_time: str, data: list) -> None:
     """
     Build and send a Discord embed containing a profession name and ASCII table.
     """
@@ -5631,8 +5631,15 @@ def send_profession_boon_support_embed(webhook_url: str, profession: str, prof_i
         "footer": {
             "text": "TopStats - GW2_EI_Log_Combiner",
             "icon_url": "https://avatars.githubusercontent.com/u/16168556?s=48&v=4"
-		
-    }
+    },
+	"fields": [
+        {
+            "name": "Additional Note",        # You can change this title
+            "value": discord_additional_notes or "*No note provided*",  # Fallback if empty/None
+            "inline": False                   # Full width field at the bottom
+        }
+    ]
+
 	}
 
     # Send to Discord
