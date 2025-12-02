@@ -5567,7 +5567,7 @@ def build_boon_support_data(top_stats: dict, support_profs: dict, boon_dict: dic
 	return boon_support_data
 
 
-def send_profession_boon_support_embed(webhook_url: str, discord_additional_notes: str, profession: str, prof_icon: str, prof_color: str, tid_date_time: str, data: list) -> None:
+def send_profession_boon_support_embed(webhook_url: str, profession: str, prof_icon: str, prof_color: str, tid_date_time: str, data: list) -> None:
     """
     Build and send a Discord embed containing a profession name and ASCII table.
     """
@@ -5631,15 +5631,7 @@ def send_profession_boon_support_embed(webhook_url: str, discord_additional_note
         "footer": {
             "text": "TopStats - GW2_EI_Log_Combiner",
             "icon_url": "https://avatars.githubusercontent.com/u/16168556?s=48&v=4"
-    },
-	"fields": [
-        {
-            "name": "Log Summaries posted here:",        # You can change this title
-            "value": discord_additional_notes,  # Fallback if empty/None
-            "inline": False                   # Full width field at the bottom
-        }
-    ]
-
+    }
 	}
 
     # Send to Discord
@@ -5649,6 +5641,33 @@ def send_profession_boon_support_embed(webhook_url: str, discord_additional_note
     if response.status_code != 204:
         raise Exception(f"Failed to send embed: {response.status_code}, {response.text}")
 
+
+def send_additional_data_embed(webhook_url: str, discord_additional_notes: str, tid_date_time: str) -> None:
+    """
+    Build and send a Discord embed containing an additional data note.
+    """
+    
+    embed = {
+        "author": {
+        "name": 'TopStats',
+        "icon_url": 'https://wiki.guildwars2.com/images/5/54/Commander_tag_%28blue%29.png'
+    	},
+        "title": f"Additional Notes: {tid_date_time}",
+        "description": f"\n{discord_additional_notes}\n",
+            "color": 0x6DB6DA,
+        "footer": {
+            "text": "TopStats - GW2_EI_Log_Combiner",
+            "icon_url": "https://avatars.githubusercontent.com/u/16168556?s=48&v=4"
+    	}
+        }
+
+    # Send to Discord
+    payload = {"embeds": [embed]}
+    response = requests.post(webhook_url, json=payload)
+
+    if response.status_code != 204:
+        raise Exception(f"Failed to send embed: {response.status_code}, {response.text}")
+	
 
 def write_data_to_excel(top_stats: dict, last_fight: str, excel_path: str = "Top_Stats.xlsx") -> None:
     """
