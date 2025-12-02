@@ -5634,8 +5634,8 @@ def send_profession_boon_support_embed(webhook_url: str, discord_additional_note
     },
 	"fields": [
         {
-            "name": "Additional Note",        # You can change this title
-            "value": discord_additional_notes or "*No note provided*",  # Fallback if empty/None
+            "name": "Log Summaries posted here:",        # You can change this title
+            "value": discord_additional_notes,  # Fallback if empty/None
             "inline": False                   # Full width field at the bottom
         }
     ]

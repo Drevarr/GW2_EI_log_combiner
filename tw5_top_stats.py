@@ -125,7 +125,7 @@ if __name__ == '__main__':
 	enable_hide_columns = config_ini.getboolean('TopStatsCfg', 'hide_columns', fallback=False)
 
 	webhook_url = config_ini.get('DiscordCfg', 'webhook_url', fallback=False)
-	discord_additional_notes = config_ini.get('DiscordCfg', 'discord_additional_notes', fallback='None')
+	discord_additional_notes = config_ini.get('DiscordCfg', 'discord_additional_notes', fallback=False)
 	
 	# Ensure output directories exist
 	os.makedirs(db_path, exist_ok=True)
