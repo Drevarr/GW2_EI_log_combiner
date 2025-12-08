@@ -146,6 +146,7 @@ pull_skills = [
     "s13020",   #Scorpion Wire
     "s10620",   #Spectral Grasp
     "s30273",   #"Dragon's Maw"
+    "s76993",   #Flux State
     "s63275",   #Shadowfall
     "s5602",    #Whirlpool
     "s30359",   #Gravity Well
