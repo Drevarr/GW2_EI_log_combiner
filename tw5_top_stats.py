@@ -125,7 +125,7 @@ if __name__ == '__main__':
 	enable_hide_columns = config_ini.getboolean('TopStatsCfg', 'hide_columns', fallback=False)
 
 	webhook_url = config_ini.get('DiscordCfg', 'webhook_url', fallback=False)
-	discord_additional_notes = config_ini.get('DiscordCfg', 'discord_additional_notes', fallback='None')
+	discord_additional_notes = config_ini.get('DiscordCfg', 'discord_additional_notes', fallback=None)
 	
 	# Ensure output directories exist
 	os.makedirs(db_path, exist_ok=True)
@@ -429,7 +429,9 @@ if __name__ == '__main__':
 
 		for profession, support_data in boon_support_data.items():
 			print("Sending boon support data for " + profession)
-			send_profession_boon_support_embed(webhook_url, discord_additional_notes, profession, profession_icons[profession], discord_colors[profession], tid_date_time, support_data)
+			send_profession_boon_support_embed(webhook_url, profession, profession_icons[profession], discord_colors[profession], tid_date_time, support_data)
+		if discord_additional_notes:
+			send_additional_data_embed(webhook_url, discord_additional_notes, tid_date_time)
 	else:
 		if not support_profs: 
 			print("No support professions found")
