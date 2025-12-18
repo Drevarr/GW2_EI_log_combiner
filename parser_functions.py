@@ -556,55 +556,53 @@ def get_player_death_on_tag(
     player_downs = dict(combat_data.get("down", {}))
     player_offset = math.floor(combat_data.get("start", 0) / polling_rate)
 
-    if not (player_deaths and player_downs and commander_tag_positions):
-        return  # no useful data
-
     # Process deaths
-    for death_key, death_value in player_deaths.items():
-        if death_key < 0:
-            continue  # before squad combat log starts
+    if player_deaths and player_downs and commander_tag_positions:
+        for death_key, death_value in player_deaths.items():
+            if death_key < 0:
+                continue  # before squad combat log starts
 
-        position_mark = max(0, math.floor(death_key / polling_rate)) - player_offset
+            position_mark = max(0, math.floor(death_key / polling_rate)) - player_offset
 
-        for down_key, down_value in player_downs.items():
-			
-            if death_key != down_value:
-                continue
+            for down_key, down_value in player_downs.items():
+    			
+                if death_key != down_value:
+                    continue
 
-            # Player & Tag positions at death
-            x1, y1 = safe_position(player_positions, position_mark)
-            x2, y2 = safe_position(commander_tag_positions, position_mark)
+                # Player & Tag positions at death
+                x1, y1 = safe_position(player_positions, position_mark)
+                x2, y2 = safe_position(commander_tag_positions, position_mark)
 
-            # Distance at death
-            death_distance = math.hypot(x1 - x2, y1 - y2)
-            death_range = round(death_distance / inch_to_pixel)
-            entry["Total"] += 1
+                # Distance at death
+                death_distance = math.hypot(x1 - x2, y1 - y2)
+                death_range = round(death_distance / inch_to_pixel)
+                entry["Total"] += 1
 
-            # Average distance calculation
-            if int(down_key) > int(dead_tag_mark) and dead_tag:
-                # After commander tag death
-                player_dead_poll = max(1, int(dead_tag_mark / polling_rate))
-                player_dist_to_tag = avg_distance(
-                    player_positions, commander_tag_positions, player_dead_poll, inch_to_pixel
-                )
-                entry["After_Tag_Death"] += 1
-            else:
-                # Before tag death
-                player_dead_poll = position_mark
-                player_dist_to_tag = avg_distance(
-                    player_positions, commander_tag_positions, player_dead_poll, inch_to_pixel
-                )
+                # Average distance calculation
+                if int(down_key) > int(dead_tag_mark) and dead_tag:
+                    # After commander tag death
+                    player_dead_poll = max(1, int(dead_tag_mark / polling_rate))
+                    player_dist_to_tag = avg_distance(
+                        player_positions, commander_tag_positions, player_dead_poll, inch_to_pixel
+                    )
+                    entry["After_Tag_Death"] += 1
+                else:
+                    # Before tag death
+                    player_dead_poll = position_mark
+                    player_dist_to_tag = avg_distance(
+                        player_positions, commander_tag_positions, player_dead_poll, inch_to_pixel
+                    )
 
-            # Classification
-            if death_range <= On_Tag:
-                entry["On_Tag"] += 1
-            elif death_range <= Run_Back:
-                entry["Off_Tag"] += 1
-                entry["Ranges"].append(death_range)
-            else:
-                entry["Run_Back"] += 1
+                # Classification
+                if death_range <= On_Tag:
+                    entry["On_Tag"] += 1
+                elif death_range <= Run_Back:
+                    entry["Off_Tag"] += 1
+                    entry["Ranges"].append(death_range)
+                else:
+                    entry["Run_Back"] += 1
 
-    # Record static distance
+    # Record distance
     if player_dist_to_tag <= Run_Back:
         entry["distToTag"].append(player_dist_to_tag)
 
