@@ -2259,7 +2259,7 @@ def build_general_stats_tid(datetime, offensive_detailed, defenses_detailed, sup
 
 	text = " ".join(text_parts)
 	text += f"[[{datetime}-Heal-Stats]] [[{datetime}-Healers]] [[{datetime}-Combat-Resurrect]] [[{datetime}-FB-Pages]] [[{datetime}-Mesmer-Clone-Usage]]"
-	text += f"[[{datetime}-Pull-Skills]]' '{datetime}-Offensive-Summary' '$:/temp/tab1'>>"
+	text += f"[[{datetime}-Pull-Skills]] [[{datetime}-Squad-Health-Pct]]' '{datetime}-Offensive-Summary' '$:/temp/tab1'>>"
 
 	append_tid_for_output(
 		create_new_tid_from_template(title, caption, text, tags, creator=creator, fields={'radio': 'Total', 'damage_with_buff': 'might', 'boon_selected':'Might', 'Support_selected': 'condiCleanse', 'Offensive_selected': 'downContribution', 'Defenses_selected': 'damageTaken'}),
@@ -3983,6 +3983,52 @@ option = {{
 		tid_list
 	)
 
+def build_squad_healthpct_table(health_data: dict, tid_date_time: str, tid_list: list) -> None:
+	bucket_list = [
+		"100-90",
+		"90-80",
+		"80-70",
+		"70-60",
+		"60-50",
+		"50-40",
+		"40-30",
+		"30-20",
+		"20-10",
+		"10-0"
+	]
+
+	rows=[]
+
+	tid_title = f"{tid_date_time}-Squad-Health-Pct"
+	tid_caption = "Squad HP% Review"
+	tid_tags = tid_date_time
+
+	rows.append("|thead-dark table-caption-top sortable|k")
+	rows.append("|Accumulated Time per 10% Health Bucket|c")
+	header="|!Player | !Prof | !Group | !Fights |"
+
+	for bucket in bucket_list:
+		header += f" !{bucket}|"
+	header += "h"
+	rows.append(header)
+
+	for player, pData in health_data.items():
+		prof="{{"+pData['Profession']+"}}-"+pData['Profession'][:3]
+		total_sum = sum(pData['Health_Buckets'].values())
+		player_row = f"|{pData['Name']} | {prof} | {pData['Group']} | {pData['Fights']} |"
+		for bucket in bucket_list:
+			pct = pData['Health_Buckets'].get(bucket, 0)
+			pct = pct/total_sum*100
+			pct = f"{pct:.2f}%" if pct else "-" 
+			player_row += f" {pct}|"
+
+		rows.append(player_row)
+
+	chart_text = "\n".join(rows)
+	append_tid_for_output(
+		create_new_tid_from_template(tid_title, tid_caption, chart_text, tid_tags),
+		tid_list
+	)
 
 def build_mesmer_clone_usage(mesmer_clone_usage: dict, tid_date_time: str, tid_list: list) -> None: 
 	"""
@@ -5832,7 +5878,7 @@ def write_data_to_db(top_stats: dict, last_fight: str, db_path: str = "Top_Stats
 	conn.close()
 	print("Database updated.")
 
-def output_top_stats_json(top_stats: dict, buff_data: dict, skill_data: dict, damage_mod_data: dict, high_scores: dict, personal_damage_mod_data: dict, personal_buff_data: dict, fb_pages: dict, mechanics: dict, minions: dict, mesmer_clone_usage: dict, death_on_tag: dict, DPSStats: dict, commander_summary_data: dict, enemy_avg_damage_per_skill: dict, player_damage_mitigation: dict, player_minion_damage_mitigation: dict, stacking_uptime_Table: dict, IOL_revive: dict, fight_data: dict, outfile: str) -> None:
+def output_top_stats_json(top_stats: dict, buff_data: dict, skill_data: dict, damage_mod_data: dict, high_scores: dict, personal_damage_mod_data: dict, personal_buff_data: dict, fb_pages: dict, mechanics: dict, minions: dict, mesmer_clone_usage: dict, death_on_tag: dict, DPSStats: dict, commander_summary_data: dict, enemy_avg_damage_per_skill: dict, player_damage_mitigation: dict, player_minion_damage_mitigation: dict, stacking_uptime_Table: dict, IOL_revive: dict, fight_data: dict, health_data: dict, outfile: str) -> None:
 	"""Print the top_stats dictionary as a JSON object to the console."""
 
 	json_dict = {}
@@ -5862,6 +5908,7 @@ def output_top_stats_json(top_stats: dict, buff_data: dict, skill_data: dict, da
 	json_dict["stacking_uptime_Table"] = {key: value for key, value in stacking_uptime_Table.items()}
 	json_dict["IOL_revive"] = {key: value for key, value in IOL_revive.items()}
 	json_dict["fight_data"] = {key: value for key, value in fight_data.items()}
+	json_dict["health_data"] = {key: value for key, value in health_data.items()}
 
 	with open(outfile, 'w') as json_file:
 		json.dump(json_dict, json_file, indent=4)

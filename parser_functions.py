@@ -23,6 +23,7 @@ import requests
 import time
 from typing import Optional, Dict
 from requests.exceptions import RequestException, HTTPError, Timeout, ConnectionError
+from collections import OrderedDict, defaultdict
 
 # Top stats dictionary to store combined log data
 top_stats = config.top_stats
@@ -68,6 +69,7 @@ killing_blow_rallies = {
 	'kb_players': {}
 }
 
+health_data = {}
 
 def get_player_account(player):
 	"""
@@ -2787,6 +2789,57 @@ def get_illusion_of_life_data(players: dict, durationMS: int) -> None:
 					IOL_revive[playerName]['casts'] = IOL_revive[playerName].get('casts', 0) + rotationCasts
 					IOL_revive[playerName]['prof'] = playerProf
 
+
+def get_health_percent_data(player, name_prof, name, prof, group) -> None:
+
+	BUCKET_SIZE = 10
+
+	def health_bucket(h):
+		# Clamp 100% into the 90–100 bucket
+		bucket_start = int(h // BUCKET_SIZE) * BUCKET_SIZE
+		bucket_start = min(bucket_start, 90)
+		bucket_end = bucket_start + BUCKET_SIZE
+
+		return f"{bucket_end}-{bucket_start}"
+
+	def accumulate_health_time(data):
+		"""
+		data: list of [timeMS, healthPercent]
+		returns: dict { "bucket_range": time_ms }
+		"""
+		bucket_time = defaultdict(int)
+
+		for (t1, h1), (t2, _) in zip(data[:-1], data[1:]):
+			dt = t2 - t1
+			if dt <= 0:
+				continue
+
+			bucket = health_bucket(h1)
+			bucket_time[bucket] += dt
+
+		return dict(bucket_time)
+
+	if 'healthPercents' in player:
+		data = player['healthPercents']
+		if name_prof not in health_data:
+			health_data[name_prof] = {
+				"Name": name,
+				"Profession": prof,
+				"Group": group,
+				"Fights": 0,
+				"Health_Buckets": {}
+				}
+		health_data[name_prof]["Fights"] += 1
+		health_data[name_prof]["Group"] = group
+		player_health_data = accumulate_health_time(data)
+
+		for item in player_health_data:
+			if item not in health_data[name_prof]['Health_Buckets']:
+				health_data[name_prof]['Health_Buckets'][item]=player_health_data[item]
+			else:
+				health_data[name_prof]['Health_Buckets'][item]+=player_health_data[item]
+
+
 def parse_file(file_path, fight_num, guild_data, fight_data_charts, blacklist):
 	"""
 	Parses a single log file and stores the data in a global top_stats dictionary.
@@ -2973,6 +3026,7 @@ def parse_file(file_path, fight_num, guild_data, fight_data_charts, blacklist):
 				'minions': {},
 			}
 
+		get_health_percent_data(player, name_prof, name, profession, group)
 
 		# store last party the player was a member
 		top_stats['player'][name_prof]['last_party'] = group

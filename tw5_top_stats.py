@@ -346,6 +346,8 @@ if __name__ == '__main__':
 
 	build_minions_tid(minions, top_stats['player'], skill_data, "Minions", tid_date_time)
 
+	build_squad_healthpct_table(health_data, tid_date_time, tid_list)
+
 	build_top_damage_by_skill(top_stats['overall']['totalDamageTaken'], top_stats['overall']['targetDamageDist'], skill_data, buff_data, "Top Damage By Skill", tid_date_time)
 
 
@@ -397,7 +399,7 @@ if __name__ == '__main__':
 		build_commander_summary_menu(commander_summary_data, tid_date_time, tid_list)
 
 	if write_all_data_to_json:
-		output_top_stats_json(top_stats, buff_data, skill_data, damage_mod_data, high_scores, personal_damage_mod_data, personal_buff_data, fb_pages, mechanics, minions, mesmer_clone_usage, death_on_tag, DPSStats, commander_summary_data, enemy_avg_damage_per_skill, player_damage_mitigation, player_minion_damage_mitigation, stacking_uptime_Table, IOL_revive, fight_data, args.json_output_filename)
+		output_top_stats_json(top_stats, buff_data, skill_data, damage_mod_data, high_scores, personal_damage_mod_data, personal_buff_data, fb_pages, mechanics, minions, mesmer_clone_usage, death_on_tag, DPSStats, commander_summary_data, enemy_avg_damage_per_skill, player_damage_mitigation, player_minion_damage_mitigation, stacking_uptime_Table, IOL_revive, fight_data, health_data, args.json_output_filename)
 
 	if write_excel:
 		write_data_to_excel(top_stats, top_stats['overall']['last_fight'], excel_output_full_path)
