@@ -4018,7 +4018,10 @@ def build_squad_healthpct_table(health_data: dict, tid_date_time: str, tid_list:
 		player_row = f"|{pData['Name']} | {prof} | {pData['Group']} | {pData['Fights']} |"
 		for bucket in bucket_list:
 			pct = pData['Health_Buckets'].get(bucket, 0)
-			pct = pct/total_sum*100
+			if total_sum:
+				pct = pct/total_sum*100
+			else:
+				pct = 0
 			pct = f"{pct:.2f}%" if pct else "-" 
 			player_row += f" {pct}|"
 
