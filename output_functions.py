@@ -5881,7 +5881,7 @@ def write_data_to_db(top_stats: dict, last_fight: str, db_path: str = "Top_Stats
 	conn.close()
 	print("Database updated.")
 
-def output_top_stats_json(top_stats: dict, buff_data: dict, skill_data: dict, damage_mod_data: dict, high_scores: dict, personal_damage_mod_data: dict, personal_buff_data: dict, fb_pages: dict, mechanics: dict, minions: dict, mesmer_clone_usage: dict, death_on_tag: dict, DPSStats: dict, commander_summary_data: dict, enemy_avg_damage_per_skill: dict, player_damage_mitigation: dict, player_minion_damage_mitigation: dict, stacking_uptime_Table: dict, IOL_revive: dict, fight_data: dict, health_data: dict, outfile: str) -> None:
+def output_top_stats_json(top_stats: dict, buff_data: dict, skill_data: dict, damage_mod_data: dict, high_scores: dict, personal_damage_mod_data: dict, personal_buff_data: dict, fb_pages: dict, mechanics: dict, minions: dict, mesmer_clone_usage: dict, death_on_tag: dict, DPSStats: dict, commander_summary_data: dict, enemy_avg_damage_per_skill: dict, player_damage_mitigation: dict, player_minion_damage_mitigation: dict, stacking_uptime_Table: dict, IOL_revive: dict, fight_data: dict, health_data: dict, stats_per_fight: dict, outfile: str) -> None:
 	"""Print the top_stats dictionary as a JSON object to the console."""
 
 	json_dict = {}
@@ -5912,6 +5912,7 @@ def output_top_stats_json(top_stats: dict, buff_data: dict, skill_data: dict, da
 	json_dict["IOL_revive"] = {key: value for key, value in IOL_revive.items()}
 	json_dict["fight_data"] = {key: value for key, value in fight_data.items()}
 	json_dict["health_data"] = {key: value for key, value in health_data.items()}
+	json_dict['stats_per_fight'] = {key: value for key, value in stats_per_fight.items()}
 
 	with open(outfile, 'w') as json_file:
 		json.dump(json_dict, json_file, indent=4)

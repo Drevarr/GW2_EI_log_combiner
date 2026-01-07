@@ -44,6 +44,7 @@ top_stats = {
     "overall": {"last_fight": "", "group_data": {}},
     "fight": {},
     "player": {},
+    "stats_per_fight": {},
     "parties_by_fight": {},
     "enemies_by_fight": {},
     "skill_casts_by_role": {},
@@ -104,6 +105,7 @@ old_mesmer_shatter_skills = [
 "Zeitfresser",
 "Kontinuum-Spaltung"
 ]
+
 mesmer_shatter_skills = [
     "s56930",#: "Split Second"
     "s56925",#: "Split Second"

@@ -28,6 +28,13 @@ from collections import OrderedDict, defaultdict
 # Top stats dictionary to store combined log data
 top_stats = config.top_stats
 
+stats_per_fight = defaultdict(
+	lambda: defaultdict(          # name_prof
+		lambda: defaultdict(list) # stat → [values]
+	)
+)			
+
+
 team_colors = config.team_colors
 team_code_missing = []
 mesmer_shatter_skills = config.mesmer_shatter_skills
@@ -1431,6 +1438,7 @@ def get_stat_by_key(fight_num: int, player: dict, stat_category: str, name_prof:
 				high_score_value
 			)
 		top_stats['player'][name_prof][stat_category][stat] = top_stats['player'][name_prof][stat_category].get(stat, 0) + value
+		stats_per_fight[name_prof][stat_category][stat].append(value)
 		top_stats['fight'][fight_num][stat_category][stat] = top_stats['fight'][fight_num][stat_category].get(stat, 0) + value
 		top_stats['overall'][stat_category][stat] = top_stats['overall'][stat_category].get(stat, 0) + value
 
@@ -1441,7 +1449,6 @@ def get_stat_by_key(fight_num: int, player: dict, stat_category: str, name_prof:
 			elif stat_category not in commander_summary_data[commander_name]:
 				commander_summary_data[commander_name][stat_category] = {}
 			commander_summary_data[commander_name][stat_category][stat] = commander_summary_data[commander_name][stat_category].get(stat, 0) + value
-
 
 def get_defense_hits_and_glances(fight_num: int, player: dict, stat_category: str, name_prof: str) -> None:
 	"""
@@ -1799,7 +1806,7 @@ def get_buff_generation(fight_num: int, player: dict, stat_category: str, name_p
 				
 		top_stats['player'][name_prof][stat_category][buff_id]['generation'] = top_stats['player'][name_prof][stat_category][buff_id].get('generation', 0) + buff_generation
 		top_stats['player'][name_prof][stat_category][buff_id]['wasted'] = top_stats['player'][name_prof][stat_category][buff_id].get('wasted', 0) + buff_wasted
-
+		stats_per_fight[name_prof][stat_category][buff_id].append(buff_generation)
 		top_stats['fight'][fight_num][stat_category][buff_id]['generation'] = top_stats['fight'][fight_num][stat_category][buff_id].get('generation', 0) + buff_generation
 		top_stats['fight'][fight_num][stat_category][buff_id]['wasted'] = top_stats['fight'][fight_num][stat_category][buff_id].get('wasted', 0) + buff_wasted
 
@@ -3074,7 +3081,7 @@ def parse_file(file_path, fight_num, guild_data, fight_data_charts, blacklist):
 			top_stats['player'].setdefault(name_prof, {}).setdefault(stat_cat, {})
 			#top_stats['fight'][fight_num].setdefault(stat_cat, {})
 			#top_stats['overall'].setdefault(stat_cat, {})
-
+			
 			# format: player[stat_category][0][stat]
 			if stat_cat in ['defenses', 'support', 'statsAll']:
 				get_stat_by_key(fight_num, player, stat_cat, name_prof)
