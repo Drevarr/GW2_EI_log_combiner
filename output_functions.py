@@ -269,6 +269,33 @@ def get_total_shield_damage(fight_data: dict) -> int:
 		total_shield_damage += skill_data["shieldDamage"]
 	return total_shield_damage
 
+def get_boxplot_data(players, stats_per_fight, category, stat):
+    """
+    Extract the boxplot data for the given category and stat.
+
+    Args:
+        players (dict): The players data.
+        stats_per_fight (dict): The stats per fight data.
+        category (str): The category of stats to extract.
+        stat (str): The stat to extract.
+
+    Returns:
+        tuple: A tuple containing the names, professions, and boxplot data.
+
+    """
+    names = []
+    profs = []
+    boxplot_data = []
+
+    for player, pData in players.items():
+        
+        if player in stats_per_fight[category][stat]:
+            names.append(pData["name"])
+            profs.append(pData["profession"])
+            boxplot_data.append(stats_per_fight[category][stat][player])
+            
+    return names, profs, boxplot_data
+
 def build_tag_summary(top_stats):
 	"""Build a summary of tags from the top stats data.
 
