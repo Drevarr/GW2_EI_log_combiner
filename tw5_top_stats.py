@@ -17,6 +17,7 @@
 
 import argparse
 import configparser
+import ctypes
 import sys
 import os
 import datetime
@@ -27,6 +28,43 @@ import config_output
 from parser_functions import *
 from output_functions import *
 
+CURRENT_VERSION = "1.4.12"  
+REPO = "Drevarr/GW2_EI_log_combiner"
+
+def get_latest_github_version(repo: str) -> str | None:
+    url = f"https://api.github.com/repos/{repo}/releases/latest"
+    try:
+        response = requests.get(url, timeout=5)
+        response.raise_for_status()
+        data = response.json()
+        return data.get("tag_name") or data.get("name")
+    except Exception as e:
+        print(f"⚠️ Could not check for updates: {e}")
+        return None
+
+def check_for_update(show_popup=False):
+    latest = get_latest_github_version(REPO)
+    if latest is None:
+        return
+
+    if latest.strip().lstrip("v") != CURRENT_VERSION.strip().lstrip("v"):
+        if show_popup:
+            show_update_popup(latest, CURRENT_VERSION, REPO)		
+
+def show_update_popup(latest_version: str, current_version: str, repo: str):
+    message = (
+        f"A newer version of GW2 EI Log Combiner is available.\n\n"
+        f"Current version: {current_version}\n"
+        f"Latest version: {latest_version}\n\n"
+        f"Download it from:\nhttps://github.com/{repo}/releases/latest"
+    )
+
+    ctypes.windll.user32.MessageBoxW(
+        0,
+        message,
+        "Update Available",
+        0x40 | 0x0  # MB_ICONINFORMATION | MB_OK
+    )
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(
@@ -439,3 +477,5 @@ if __name__ == '__main__':
 			print("No support professions found")
 		if not webhook_url:
 			print("No webhook URL found")
+
+	check_for_update(show_popup=True)
