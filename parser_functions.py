@@ -1438,7 +1438,7 @@ def get_stat_by_key(fight_num: int, player: dict, stat_category: str, name_prof:
 				high_score_value
 			)
 		top_stats['player'][name_prof][stat_category][stat] = top_stats['player'][name_prof][stat_category].get(stat, 0) + value
-		stats_per_fight[stat_category][stat][name_prof].append(value)
+		stats_per_fight[stat_category][stat][name_prof].append(round(value/active_time_seconds,2) if active_time_seconds > 0 else 0)
 		top_stats['fight'][fight_num][stat_category][stat] = top_stats['fight'][fight_num][stat_category].get(stat, 0) + value
 		top_stats['overall'][stat_category][stat] = top_stats['overall'][stat_category].get(stat, 0) + value
 
@@ -1978,6 +1978,7 @@ def get_healStats_data(fight_num: int, player: dict, players: dict, stat_categor
 					top_stats['overall'][stat_category].get('downed_healing', 0) + downed_healing
 				)
 		update_high_score(f"{stat_category}_Healing", "{{"+player["profession"]+"}}"+player["name"]+"-"+get_player_account(player)+"-"+str(fight_num)+" | Healing", round(fight_healing/(fight_time/1000), 2))	
+		stats_per_fight['extHealingStats']['squad_healing'][name_prof].append(round(fight_healing/(fight_time/1000), 2) if fight_time > 0 else 0)
 
 	fight_barrier = 0
 	if stat_category == 'extBarrierStats' and 'extBarrierStats' in player:
@@ -2052,6 +2053,7 @@ def get_healStats_data(fight_num: int, player: dict, players: dict, stat_categor
 					top_stats['overall'][stat_category].get('outgoing_barrier', 0) + outgoing_barrier
 				)
 		update_high_score(f"{stat_category}_Barrier", "{{"+player["profession"]+"}}"+player["name"]+"-"+get_player_account(player)+"-"+str(fight_num)+" | Barrier", round(fight_barrier/(fight_time/1000), 2))
+		stats_per_fight['extBarrierStats']['squad_barrier'][name_prof].append(round(fight_barrier/(fight_time/1000), 2) if fight_time > 0 else 0)
 
 def get_healing_skill_data(player: dict, stat_category: str, name_prof: str) -> None:
 	"""
