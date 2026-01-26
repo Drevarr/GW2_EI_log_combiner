@@ -22,6 +22,7 @@ import xlsxwriter
 from glicko2 import Player as GlickoPlayer
 from collections import defaultdict
 from typing import Dict, Any, List, Tuple, Optional
+from requests.exceptions import RequestException, Timeout, ConnectionError
 
 #list of tid files to output
 tid_list = []
@@ -5712,10 +5713,28 @@ def send_profession_boon_support_embed(webhook_url: str, profession: str, prof_i
 
     # Send to Discord
     payload = {"embeds": [embed]}
-    response = requests.post(webhook_url, json=payload)
+    try:
+        response = requests.post(
+            webhook_url,
+            json=payload,
+            timeout=10  # prevents hanging forever
+        )
 
-    if response.status_code != 204:
-        raise Exception(f"Failed to send embed: {response.status_code}, {response.text}")
+        if response.status_code != 204:
+            print(
+                f"[Discord] Webhook failed: "
+                f"{response.status_code} {response.text}"
+            )
+
+    except Timeout:
+        print("[Discord] Webhook timeout — internet may be unstable")
+
+    except ConnectionError:
+        print("[Discord] Connection error — likely offline")
+
+    except RequestException as e:
+        print(f"[Discord] Unexpected request error: {e}")
+
 
 
 def send_additional_data_embed(webhook_url: str, discord_additional_notes: str, tid_date_time: str) -> None:
@@ -5739,10 +5758,27 @@ def send_additional_data_embed(webhook_url: str, discord_additional_notes: str, 
 
     # Send to Discord
     payload = {"embeds": [embed]}
-    response = requests.post(webhook_url, json=payload)
+    try:
+        response = requests.post(
+            webhook_url,
+            json=payload,
+            timeout=10
+        )
 
-    if response.status_code != 204:
-        raise Exception(f"Failed to send embed: {response.status_code}, {response.text}")
+        if response.status_code != 204:
+            print(
+                f"[Discord] Additional notes webhook failed: "
+                f"{response.status_code} {response.text}"
+            )
+
+    except Timeout:
+        print("[Discord] Additional notes webhook timeout")
+
+    except ConnectionError:
+        print("[Discord] Additional notes webhook connection error (offline?)")
+
+    except RequestException as e:
+        print(f"[Discord] Additional notes webhook error: {e}")
 	
 
 def write_data_to_excel(top_stats: dict, last_fight: str, excel_path: str = "Top_Stats.xlsx") -> None:
