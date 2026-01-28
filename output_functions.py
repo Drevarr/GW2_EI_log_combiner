@@ -1353,7 +1353,7 @@ def build_boon_summary(top_stats: dict, boons: dict, category: str, buff_data: d
 			account = player["account"]
 			name = player["name"]
 			tt_name = f'<span data-tooltip="{account}">{name}</span>'
-			print(f"Check Logs for {account} {name} with ActiveTime: {player['active_time']} and Num_Fights: {player['num_fights']}")
+			#print(f"Check Logs for {account} {name} with ActiveTime: {player['active_time']} and Num_Fights: {player['num_fights']}")
 			# Create a row for the player with basic info
 			row = f"| { player['last_party']} |{tt_name} | {{{{{player['profession']}}}}} {player['profession'][:3]} | {player['active_time'] / 1000:,.1f}|"
 
