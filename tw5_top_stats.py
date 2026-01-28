@@ -28,7 +28,7 @@ import config_output
 from parser_functions import *
 from output_functions import *
 
-CURRENT_VERSION = "1.4.13"  
+CURRENT_VERSION = "1.5.0"  
 REPO = "Drevarr/GW2_EI_log_combiner"
 
 def get_latest_github_version(repo: str) -> str | None:

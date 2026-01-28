@@ -3751,48 +3751,22 @@ def build_boon_generation_bar_chart(top_stats: dict, boons: dict, weights: dict,
 			#print(f"Boon Wt Type: {type(boon_weight)}")
 			gen_per_sec = (generation_ms / player_active_time)
 			wt_gen_per_sec = gen_per_sec * boon_weight
-			player_boon_generation.append(f"{wt_gen_per_sec:.3g}")
+			#player_boon_generation.append(f"{wt_gen_per_sec:.3g}")
+			player_boon_generation.append(round(wt_gen_per_sec,3))
 			player_total += (wt_gen_per_sec)
-		player_boon_generation.append(f"{player_total:.3g}")
+		#player_boon_generation.append(f"{player_total:.3g}")
+		player_boon_generation.append(round(player_total,3))
 		player_boon_generation.append(profession)
 
 		total_boon_generation.append(player_boon_generation)
 
 	calcHeight = str(playerCount*25)
+	sorted_total_boon_generation = sorted(total_boon_generation, key=lambda x: x[13])
+	key_list = ['Player',"Might", "Fury", "Quickness", "Alacrity", "Protection", "Regeneration", "Vigor", "Aegis", "Stability", "Swiftness", "Resistance", "Resolution",'Total','Profession']
+	chart_dataset = [key_list] + sorted_total_boon_generation
+
 	chart_text = f"""
 <$echarts $text=```
-const dataset = [
-  {{
-    dimensions: [
-      'Player',"Might", "Fury", "Quickness", "Alacrity", "Protection", "Regeneration", "Vigor", "Aegis", "Stability", "Swiftness", "Resistance", "Resolution",'Total','Profession'
-    ],
-    source: {total_boon_generation}
-  }}
-];
-function buildSeries(datasetIndex = 1) {{
-  // List of dimensions we don't want as boons
-  const skip = ['Player', 'Total', 'Profession'];
-
-  // Grab dimensions from your dataset
-  const dimensions = dataset[0].dimensions;
-
-  // Capitalize helper
-  const capitalize = str => str.charAt(0).toUpperCase() + str.slice(1);
-
-  // Build the series for each boon
-  return dimensions
-    .filter(dim => !skip.includes(dim)) // skip unwanted dimensions
-    .map(dim => ({{
-      type: 'bar',
-      stack: 'totalBoons',
-      name: capitalize(dim),
-      encode: {{ y: 'Player', x: dim }},
-      datasetIndex
-    }}));
-}}
-
-boonSeries = buildSeries(1);
-
 const boonColors = [
     '#e69f00',  // Orange
     '#56b4e9',  // Sky blue
@@ -3827,23 +3801,11 @@ option = {{
   grid: {{left: '25%', top: '10%'}},
   dataset: [
     {{
-      dimensions: dataset[0].dimensions,
-      source: dataset[0].source
+      source: {chart_dataset}
     }},
-    {{
-      transform: {{
-        type: 'sort',
-        config: [
-          {{ dimension: 'Total', order: 'asc' }},
-          {{ dimension: 'Profession', order: 'desc' }}
-          
-        ]
-      }}
-    }}
   ],
   yAxis: {{
     type: 'category',
-    axisLabel: {{ interval: 0, rotate: 0 }}
   }},
   xAxis: {{}},
   dataZoom: [
@@ -3858,7 +3820,12 @@ option = {{
       filterMode: 'none'
     }}
   ],    
-  series: boonSeries
+  series: [
+    {{ type: 'bar', stack:'Total'}}, {{ type: 'bar', stack:'Total'}}, {{ type: 'bar', stack:'Total'}},
+    {{ type: 'bar', stack:'Total'}}, {{ type: 'bar', stack:'Total'}}, {{ type: 'bar', stack:'Total'}},
+    {{ type: 'bar', stack:'Total'}}, {{ type: 'bar', stack:'Total'}}, {{ type: 'bar', stack:'Total'}},
+    {{ type: 'bar', stack:'Total'}}, {{ type: 'bar', stack:'Total'}}, {{ type: 'bar', stack:'Total'}}
+    ]
 }};
 ```$height="{calcHeight}px" $width="100%" $theme="dark"/>
 """
@@ -3893,60 +3860,36 @@ def build_condition_generation_bar_chart(top_stats: dict, conditions: dict, weig
 			boon_weight = float(weights['Condition_Weights'].get(conditions[boon].lower(), 0))
 			gen_per_sec = (generation_ms / player_active_time)
 			wt_gen_per_sec = gen_per_sec * boon_weight
-			player_condition_generation.append(f"{wt_gen_per_sec:.3g}")
+			#player_condition_generation.append(f"{wt_gen_per_sec:.3g}")
+			player_condition_generation.append(round(wt_gen_per_sec,3))
 			player_total += (wt_gen_per_sec)
-		player_condition_generation.append(f"{player_total:.3g}")
+		#player_condition_generation.append(f"{player_total:.3g}")
+		player_condition_generation.append(round(player_total,3))
 		player_condition_generation.append(profession)
 
 		total_condition_generation.append(player_condition_generation)
+
 	calcHeight = str(playerCount*25)
+	sorted_total_condition_generation = sorted(total_condition_generation, key=lambda x: x[15])		
+	key_list = ['Player',"Bleeding", "Burning", "Confusion", "Poison", "Torment", "Blind", "Chilled", "Crippled", "Fear", "Immobile", "Slow", "Weakness", "Taunt",  "Vulnerability",'Total','Profession']
+	chart_dataset = [key_list] + sorted_total_condition_generation	
 	chart_text = f"""
 <$echarts $text=```
-const dataset = [
-  {{
-    dimensions: [
-      'Player',"Bleeding", "Burning", "Confusion", "Poison", "Torment", "Blind", "Chilled", "Crippled", "Fear", "Immobile", "Slow", "Weakness", "Taunt",  "Vulnerability",'Total','Profession'
-    ],
-    source: {total_condition_generation}
-  }}
-];
-function buildSeries(datasetIndex = 1) {{
-  // List of dimensions we don't want as boons
-  const skip = ['Player', 'Total', 'Profession'];
-
-  // Grab dimensions from your dataset
-  const dimensions = dataset[0].dimensions;
-
-  // Capitalize helper
-  const capitalize = str => str.charAt(0).toUpperCase() + str.slice(1);
-
-  // Build the series for each boon
-  return dimensions
-    .filter(dim => !skip.includes(dim)) // skip unwanted dimensions
-    .map(dim => ({{
-      type: 'bar',
-      stack: 'totalBoons',
-      name: capitalize(dim),
-      encode: {{ y: 'Player', x: dim }},
-      datasetIndex
-    }}));
-}}
-
-boonSeries = buildSeries(1);
-
 const boonColors = [
-	'#b22222', //Might
-	'#FD6124', //Fury
-	'#800000', //Quickness
-	'#710193', //Alacrity
-	'#848482', //Protection
-	'#228B22', //Regeneration
-	'#00008B', //Vigor
-	'#0095B6', //Aegis
-	'#494F55', //Stability
-	'#F1C40F', //Swiftness
-	'#d3d3d3', //Resistance
-	'#D891EF', //Resolution
+	'#b22222',  // red
+	'#FD6124',  // orange-red
+	'#800000',  // maroon
+	'#710193',  // purple
+	'#848482',  // gray
+	'#228B22',  // forest green
+	'#00008B',  // dark blue
+	'#0095B6',  // teal blue
+	'#494F55',  // dark gray
+	'#F1C40F',  // yellow
+	'#d3d3d3',  // light gray
+	'#D891EF',  // lavender
+	'#FF7F50',  // coral
+	'#00CED1',  // dark turquoise
 ];
 
 option = {{
@@ -3968,19 +3911,8 @@ option = {{
   grid: {{left: '25%', top: '10%'}},
   dataset: [
     {{
-      dimensions: dataset[0].dimensions,
-      source: dataset[0].source
+		source: {chart_dataset}
     }},
-    {{
-      transform: {{
-        type: 'sort',
-        config: [
-          {{ dimension: 'Total', order: 'asc' }},
-          {{ dimension: 'Profession', order: 'desc' }}
-          
-        ]
-      }}
-    }}
   ],
   yAxis: {{
     type: 'category',
@@ -3999,7 +3931,13 @@ option = {{
       filterMode: 'none'
     }}
   ],    
-  series: boonSeries
+  series: [
+    {{ type: 'bar', stack:'Total'}}, {{ type: 'bar', stack:'Total'}}, {{ type: 'bar', stack:'Total'}},
+    {{ type: 'bar', stack:'Total'}}, {{ type: 'bar', stack:'Total'}}, {{ type: 'bar', stack:'Total'}},
+    {{ type: 'bar', stack:'Total'}}, {{ type: 'bar', stack:'Total'}}, {{ type: 'bar', stack:'Total'}},
+    {{ type: 'bar', stack:'Total'}}, {{ type: 'bar', stack:'Total'}}, {{ type: 'bar', stack:'Total'}},
+	{{ type: 'bar', stack:'Total'}}, {{ type: 'bar', stack:'Total'}}
+    ]
 }};
 ```$height="{calcHeight}px" $width="100%" $theme="dark"/>
 """
