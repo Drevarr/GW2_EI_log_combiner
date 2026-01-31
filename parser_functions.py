@@ -1508,7 +1508,7 @@ def get_stat_by_target_and_skill(fight_num: int, player: dict, stat_category: st
 						top_stats['fight'][fight_num][stat_category][skill_id][stat] = top_stats['fight'][fight_num][stat_category][skill_id].get(
 							stat, 0) + value
 						top_stats['overall'][stat_category][skill_id][stat] = top_stats['overall'][stat_category][skill_id].get(stat, 0) + value
-
+	
 def get_stat_by_target(fight_num: int, player: dict, stat_category: str, name_prof: str) -> None:
 	"""
 	Add player stats by target to top_stats dictionary
@@ -1528,6 +1528,8 @@ def get_stat_by_target(fight_num: int, player: dict, stat_category: str, name_pr
 				top_stats['player'][name_prof][stat_category][stat] = top_stats['player'][name_prof][stat_category].get(stat, 0) + value
 				top_stats['fight'][fight_num][stat_category][stat] = top_stats['fight'][fight_num][stat_category].get(stat, 0) + value
 				top_stats['overall'][stat_category][stat] = top_stats['overall'][stat_category].get(stat, 0) + value
+			player_value = top_stats['player'][name_prof][stat_category].get(stat, 0)
+			stats_per_fight[stat_category][stat][name_prof].append(round(player_value/player['activeTimes'][0],2) if player['activeTimes'][0] > 0 else 0)
 
 def get_stat_by_skill(fight_num: int, player: dict, stat_category: str, name_prof: str) -> None:
 	"""

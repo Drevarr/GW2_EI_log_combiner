@@ -28,7 +28,7 @@ import config_output
 from parser_functions import *
 from output_functions import *
 
-CURRENT_VERSION = "1.5.0"  
+CURRENT_VERSION = "1.6.0"  
 REPO = "Drevarr/GW2_EI_log_combiner"
 
 def get_latest_github_version(repo: str) -> str | None:
@@ -39,7 +39,7 @@ def get_latest_github_version(repo: str) -> str | None:
         data = response.json()
         return data.get("tag_name") or data.get("name")
     except Exception as e:
-        print(f"⚠️ Could not check for updates: {e}")
+        print(f"Could not check for updates: {e}")
         return None
 
 def check_for_update(show_popup=False):
@@ -353,10 +353,12 @@ if __name__ == '__main__':
 	#get squad comp and output table
 	build_squad_composition(top_stats, tid_date_time, tid_list)
 
-
+	profession_color = config_output.profession_color
 	#get heal stats found and output table
 	build_healing_summary(top_stats, "Heal Stats", tid_date_time)
-
+	#tid_title = f"{tid_date_time}-{stat_category}-{stat_name}-boxplot"
+	render_boxplot_echart(stats_per_fight, "extBarrierStats", "squad_barrier", profession_color, tid_date_time, tid_list)
+	render_boxplot_echart(stats_per_fight, "extHealingStats", "squad_healing", profession_color, tid_date_time, tid_list)
 	#get personal buffs found and output table
 	build_personal_buff_summary(top_stats, buff_data, personal_buff_data, "Personal Buffs", tid_date_time)
 
@@ -404,7 +406,7 @@ if __name__ == '__main__':
 
 	build_mesmer_clone_usage(mesmer_clone_usage, tid_date_time, tid_list)
 
-	profession_color = config_output.profession_color
+	
 	build_support_bubble_chart(top_stats, buff_data, weights, tid_date_time, tid_list, profession_color)
 	build_DPS_bubble_chart(top_stats, tid_date_time, tid_list, profession_color)
 	build_utility_bubble_chart(top_stats, buff_data, weights, tid_date_time, tid_list, profession_color)
@@ -412,7 +414,12 @@ if __name__ == '__main__':
 	build_boon_generation_bar_chart(top_stats, boons, weights, tid_date_time, tid_list)
 	conditions = config_output.buffs_conditions
 	build_condition_generation_bar_chart(top_stats, conditions, weights, tid_date_time, tid_list)
-
+	for stat, stat_category in config_output.support_table.items():
+		render_boxplot_echart(stats_per_fight, stat_category, stat, profession_color, tid_date_time, tid_list)
+	for stat, stat_category in config_output.defenses_table.items():
+		render_boxplot_echart(stats_per_fight, stat_category, stat, profession_color, tid_date_time, tid_list)
+	for stat, stat_category in config_output.offensive_table.items():
+		render_boxplot_echart(stats_per_fight, stat_category, stat, profession_color, tid_date_time, tid_list)
 	build_dps_stats_tids(DPSStats, tid_date_time, tid_list)
 	build_dps_stats_menu(tid_date_time)
 
