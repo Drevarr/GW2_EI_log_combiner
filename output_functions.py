@@ -347,11 +347,13 @@ def build_tag_summary(top_stats):
 
 	return tag_summary, tag_list
 
-def output_tag_summary(tag_summary: dict, tid_date_time) -> None:
+def output_tag_summary(LATEST_VERSION, tag_summary: dict, tid_date_time) -> None:
 	"""Output a summary of the tag data in a human-readable format."""
 	rows = []
 	
 	rows.append('<div style="overflow-y: auto; width: 100%; overflow-x:auto;">\n\n')
+	if LATEST_VERSION:
+		rows.append(f'New version available: {LATEST_VERSION} \n\n')
 	rows.append("|thead-dark table-caption-top table-hover sortable|k")
 	rows.append("| Summary by Command Tag |c")
 	rows.append(
