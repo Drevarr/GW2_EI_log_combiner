@@ -141,7 +141,7 @@ if __name__ == '__main__':
 	db_update = config_ini.getboolean('TopStatsCfg', 'db_update', fallback=False)
 	db_output_filename = config_ini.get('TopStatsCfg', 'db_output_filename', fallback='Top_Stats.db')
 	db_path = config_ini.get('TopStatsCfg', 'db_path', fallback='.')
-
+	chart_mode = config_ini.get('TopStatsCfg', 'Chart_Mode', fallback='Bar')
 	write_excel = config_ini.getboolean('TopStatsCfg', 'write_excel', fallback=False)
 	excel_output_filename = config_ini.get('TopStatsCfg', 'excel_output_filename', fallback='Top_Stats.xlsx')
 	excel_path = config_ini.get('TopStatsCfg', 'excel_path', fallback='.')
@@ -151,6 +151,8 @@ if __name__ == '__main__':
 
 	webhook_url = config_ini.get('DiscordCfg', 'webhook_url', fallback=False)
 	discord_additional_notes = config_ini.get('DiscordCfg', 'discord_additional_notes', fallback=None)
+
+	profession_color = config_output.profession_color
 	
 	LATEST_VERSION = check_for_update()
 
@@ -224,19 +226,19 @@ if __name__ == '__main__':
 	build_shared_damage_modifier_summary(top_stats, damage_mod_data, "Shared Damage Mods", tid_date_time)
 		
 	defense_stats = config_output.defenses_table
-	build_category_summary_report(top_stats, defense_stats, enable_hide_columns, "Defenses", tid_date_time, tid_list, layout="summary", sort_mode=sort_mode)
+	build_category_summary_report(top_stats, stats_per_fight, profession_color, defense_stats, enable_hide_columns, "Defenses", tid_date_time, tid_list, layout="summary", sort_mode=sort_mode)
 	if defenses_detailed:
-		build_category_summary_report(top_stats, defense_stats, enable_hide_columns, "Defenses", tid_date_time, tid_list, layout="detailed", sort_mode=sort_mode)
-
+		build_category_summary_report(top_stats, stats_per_fight, profession_color,  defense_stats, enable_hide_columns, "Defenses", tid_date_time, tid_list, layout="detailed", sort_mode=sort_mode, chart_mode=chart_mode)
+	
 	support_stats = config_output.support_table
-	build_category_summary_report(top_stats, support_stats, enable_hide_columns, "Support", tid_date_time, tid_list, layout="summary", sort_mode=sort_mode)
+	build_category_summary_report(top_stats, stats_per_fight, profession_color, support_stats, enable_hide_columns, "Support", tid_date_time, tid_list, layout="summary", sort_mode=sort_mode)
 	if support_detailed:
-		build_category_summary_report(top_stats, support_stats, enable_hide_columns, "Support", tid_date_time, tid_list, layout="detailed", sort_mode=sort_mode)
+		build_category_summary_report(top_stats, stats_per_fight, profession_color, support_stats, enable_hide_columns, "Support", tid_date_time, tid_list, layout="detailed", sort_mode=sort_mode, chart_mode=chart_mode)
 
 	offensive_stats = config_output.offensive_table
-	build_category_summary_report(top_stats, offensive_stats, enable_hide_columns, "Offensive", tid_date_time, tid_list, layout="summary", sort_mode=sort_mode)
+	build_category_summary_report(top_stats, stats_per_fight, profession_color, offensive_stats, enable_hide_columns, "Offensive", tid_date_time, tid_list, layout="summary", sort_mode=sort_mode)
 	if offensive_detailed:
-		build_category_summary_report(top_stats, offensive_stats, enable_hide_columns, "Offensive", tid_date_time, tid_list, layout="detailed", sort_mode=sort_mode)
+		build_category_summary_report(top_stats, stats_per_fight, profession_color, offensive_stats, enable_hide_columns, "Offensive", tid_date_time, tid_list, layout="detailed", sort_mode=sort_mode, chart_mode=chart_mode)
 
 	boons = config_output.boons
 	build_uptime_summary(top_stats, boons, buff_data, "Uptimes", tid_date_time)
@@ -342,7 +344,7 @@ if __name__ == '__main__':
 	#get squad comp and output table
 	build_squad_composition(top_stats, tid_date_time, tid_list)
 
-	profession_color = config_output.profession_color
+	
 	#get heal stats found and output table
 	build_healing_summary(top_stats, "Heal Stats", tid_date_time)
 	#tid_title = f"{tid_date_time}-{stat_category}-{stat_name}-boxplot"
@@ -403,12 +405,13 @@ if __name__ == '__main__':
 	build_boon_generation_bar_chart(top_stats, boons, weights, tid_date_time, tid_list)
 	conditions = config_output.buffs_conditions
 	build_condition_generation_bar_chart(top_stats, conditions, weights, tid_date_time, tid_list)
-	for stat, stat_category in config_output.support_table.items():
-		render_boxplot_echart(stats_per_fight, stat_category, stat, profession_color, tid_date_time, tid_list)
-	for stat, stat_category in config_output.defenses_table.items():
-		render_boxplot_echart(stats_per_fight, stat_category, stat, profession_color, tid_date_time, tid_list)
-	for stat, stat_category in config_output.offensive_table.items():
-		render_boxplot_echart(stats_per_fight, stat_category, stat, profession_color, tid_date_time, tid_list)
+	if chart_mode.lower() == "boxplot":
+		for stat, stat_category in config_output.support_table.items():
+			render_boxplot_echart(stats_per_fight, stat_category, stat, profession_color, tid_date_time, tid_list)
+		for stat, stat_category in config_output.defenses_table.items():
+			render_boxplot_echart(stats_per_fight, stat_category, stat, profession_color, tid_date_time, tid_list)
+		for stat, stat_category in config_output.offensive_table.items():
+			render_boxplot_echart(stats_per_fight, stat_category, stat, profession_color, tid_date_time, tid_list)
 	build_dps_stats_tids(DPSStats, tid_date_time, tid_list)
 	build_dps_stats_menu(tid_date_time)
 

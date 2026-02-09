@@ -1522,14 +1522,35 @@ def get_stat_by_target(fight_num: int, player: dict, stat_category: str, name_pr
 	if stat_category not in top_stats['player'][name_prof]:
 		top_stats['player'][name_prof][stat_category] = {}
 
+	fight_totals = {}  
+
 	for target in player[stat_category]:
-		if target[0]:
-			for stat, value in target[0].items():
-				top_stats['player'][name_prof][stat_category][stat] = top_stats['player'][name_prof][stat_category].get(stat, 0) + value
-				top_stats['fight'][fight_num][stat_category][stat] = top_stats['fight'][fight_num][stat_category].get(stat, 0) + value
-				top_stats['overall'][stat_category][stat] = top_stats['overall'][stat_category].get(stat, 0) + value
-			player_value = top_stats['player'][name_prof][stat_category].get(stat, 0)
-			stats_per_fight[stat_category][stat][name_prof].append(round(player_value/player['activeTimes'][0],2) if player['activeTimes'][0] > 0 else 0)
+		if not target[0]:
+			continue
+
+		for stat, value in target[0].items():
+			# player lifetime
+			top_stats['player'][name_prof][stat_category][stat] = \
+				top_stats['player'][name_prof][stat_category].get(stat, 0) + value
+
+			# fight total
+			top_stats['fight'][fight_num][stat_category][stat] = \
+				top_stats['fight'][fight_num][stat_category].get(stat, 0) + value
+
+			# overall
+			top_stats['overall'][stat_category][stat] = \
+				top_stats['overall'][stat_category].get(stat, 0) + value
+
+			# local fight-only
+			fight_totals[stat] = fight_totals.get(stat, 0) + value
+
+	# derive per-fight values from fight_totals
+	active_time = player['activeTimes'][0] / 1000
+	for stat, value in fight_totals.items():
+		stats_per_fight[stat_category][stat][name_prof].append(
+			round(value / active_time, 2) if active_time > 0 else 0
+		)
+
 
 def get_stat_by_skill(fight_num: int, player: dict, stat_category: str, name_prof: str) -> None:
 	"""

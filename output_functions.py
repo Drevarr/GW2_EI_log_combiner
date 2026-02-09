@@ -581,6 +581,8 @@ def build_damage_summary_table(top_stats: dict, caption: str, tid_date_time: str
 
 def build_category_summary_report(
     top_stats: Dict[str, Any],
+	StatsPerFight: Dict[str, Any],
+	profession_color: Dict[str, Any],
     category_stats: Dict[str, str],
     enable_hide_columns: bool,
     caption: str,
@@ -588,6 +590,7 @@ def build_category_summary_report(
     tid_list: list,
     layout: str = "summary",  # "summary" or "detailed"
     sort_mode: str = "Stat/1s",  # which column to sort by in detailed layout
+	chart_mode: str = "Bar",
 ) -> None:
     """
     Unified generator for category summary tables.
@@ -778,8 +781,13 @@ Uncheck to Hide: """)
             #json_chart = json.dumps(sorted_chart)
 
             # Chart: Echart Bar or Boxplot future state
-            chart_block = build_bar_echart(sorted_chart, format_stat, caption)
-            rows.append(chart_block)
+            if chart_mode.lower() == "bar":
+                chart_block = build_bar_echart(sorted_chart, format_stat, caption)
+                rows.append(chart_block)
+            elif chart_mode.lower() == "boxplot":
+                render_boxplot_echart(StatsPerFight, stat, format_stat, profession_color, tid_date_time, tid_list)
+                boxplot_title = f"{tid_date_time}-{category}-{stat}-boxplot"
+                rows.append("\n\n{{"+boxplot_title+"}}\n\n")
             rows.append("\n    </div>\n</div>\n\n")
             rows.append("</$reveal>\n")
 
@@ -1198,25 +1206,9 @@ def build_boon_report(
                 sorted_chart = sorted(chart_data, key=lambda x: float(x[6]) if len(x) > 6 else 0, reverse=True)
             except Exception:
                 sorted_chart = chart_data
+				
+            boon_chart = build_boon_bar_echart(sorted_chart, boon_name)
 
-            json_chart = json.dumps(sorted_chart)
-            boon_chart = f"""
-<$echarts $text=```
-option = {{
-title: {{ text: '{boon_name} Uptime Generation', subtext: 'selectable legend for generation types' }},
-legend: {{ orient:'horizontal', top:'10%', selected:{{'Total Gen':false,'Squad Gen':true,'Group Gen':false,'Self Gen':false}} }},
-grid:{{top:'15%', containLabel:true}},
-tooltip:{{top:'center'}},
-dataset:{{dimensions:["Party","Name","Prof","Total Fight Time","Self Gen","Group Gen","Squad Gen","Total Gen"],source:{json_chart}}},
-xAxis:{{}}, yAxis:{{type:'category',inverse:true}},
-dataZoom:[{{type:'slider',yAxisIndex:0,filterMode:'none', start:0, end:60}},{{type:'inside',yAxisIndex:0,filterMode:'none'}}],
-series:[{{type:'bar',name:'Total Gen',encode:{{x:'Total Gen',y:'Name'}}}},
-{{type:'bar',name:'Squad Gen',encode:{{x:'Squad Gen',y:'Name'}}}},
-{{type:'bar',name:'Group Gen',encode:{{x:'Group Gen',y:'Name'}}}},
-{{type:'bar',name:'Self Gen',encode:{{x:'Self Gen',y:'Name'}}}}]
-}};
-```$height="900px" $width="100%" $theme="dark"/>
-"""
             rows.append('  </div>\n  <div class="flex-col border">\n\n')
             rows.append(boon_chart)
             rows.append("\n  </div>\n</div>\n")
@@ -3228,6 +3220,7 @@ def build_damage_outgoing_by_player_skill_tids(top_stats: dict, skill_data: dict
 		for player, data in top_stats['player'].items()
 		if data['statsTargets']['critableDirectDamageCount'] > 0
 		and (data['statsTargets']['criticalRate'] / data['statsTargets']['critableDirectDamageCount']) > 0.45
+		and data['dpsTargets']['damage'] > 0
 	}	
 
 	sorted_damage_totals = sorted(damage_totals.items(), key=lambda x: x[1], reverse=True)
@@ -3932,7 +3925,7 @@ option = {{
 		tid_list
 	)
 
-def build_and_sort_stat(stat_dict, sort_key="avgStat", reverse=False):
+def build_and_sort_stat(stat_dict, sort_key="totalStat", reverse=False):
     built = {
         name: {
             "numFights": len(data),
@@ -3965,7 +3958,7 @@ def build_boxplot_echart(
     #    title_text = f"{stat_name} per Second for all Fights Present"
     #else:
 
-    title_text = f"{stat_name.upper()} per Second for all Fights Present"
+    title_text = f"{stat_name.title()}"
 
     short_prof = {
         "Guardian": "Gdn", "Dragonhunter": "Dgh", "Firebrand": "Fbd", "Willbender": "Wbd",
@@ -3998,7 +3991,7 @@ const short_Prof = {short_prof_js};
 
 option = {{
   title: [
-    {{ text: '{title_text}', left: 'center' }},
+    {{ text: '{title_text}', subtext: '{stat}', left: 'center' }},
     {{
       text: 'Output in seconds across all fights\\nupper: Q3 + 1.5 * IQR\\nlower: Q1 - 1.5 * IQR',
       borderColor: '#999',
@@ -4083,9 +4076,38 @@ option = {{
       encode: {{ x: 1, y: 0 }}
     }}
   ]
-}};"""$height="500px" $width="100%" $theme="dark"/>
+}};"""$height="600px" $width="100%" $theme="dark"/>
 '''
+def build_boon_bar_echart(sorted_chart, boon_name):
+	json_chart = json.dumps(sorted_chart)
 
+	# Chart: 3 bars per player with legend toggle
+	chart_block = f"""
+<$echarts $text=```
+option = {{
+title: {{ text: '{boon_name} Uptime Generation', subtext: 'selectable legend for generation types' }},
+legend: {{ orient:'horizontal', top:'10%', selected:{{'Total Gen':false,'Squad Gen':true,'Group Gen':false,'Self Gen':false}} }},
+grid:{{top:'15%', containLabel:true}},
+tooltip:{{top:'center'}},
+dataset:{{
+	dimensions:["Party","Name","Prof","Total Fight Time","Self Gen","Group Gen","Squad Gen","Total Gen"],
+	source:{json_chart}}},
+xAxis:{{}}, 
+yAxis:{{type:'category',inverse:true}},
+dataZoom:[
+	{{type:'slider',yAxisIndex:0,filterMode:'none', start:0, end:60}},
+	{{type:'inside',yAxisIndex:0,filterMode:'none'}}],
+series:[
+	{{type:'bar',name:'Total Gen',encode:{{x:'Total Gen',y:'Name'}}}},
+	{{type:'bar',name:'Squad Gen',encode:{{x:'Squad Gen',y:'Name'}}}},
+	{{type:'bar',name:'Group Gen',encode:{{x:'Group Gen',y:'Name'}}}},
+	{{type:'bar',name:'Self Gen',encode:{{x:'Self Gen',y:'Name'}}}}]
+}};
+```$height="900px" $width="100%" $theme="dark"/>
+"""
+
+	return chart_block
+	
 def build_bar_echart(sorted_chart, format_stat, caption):
     json_chart = json.dumps(sorted_chart)
 
@@ -4119,25 +4141,26 @@ option = {{
     return chart_block
 
 def render_boxplot_echart(StatsPerFight, stat_category, stat_name, profession_color, tid_date_time: str, tid_list: list):
-  sorted_stats = build_and_sort_stat(StatsPerFight[stat_category][stat_name], sort_key="totalStat", reverse=False)
-  stat_boxplot_data = list([]) 
-  stat_boxplot_names = list([]) 
-  stat_boxplot_profs = list([])
-  for name, data in sorted_stats.items():
-      playerName, Profession, Account = name.split("|")
-      stat_boxplot_names.append(playerName)
-      stat_boxplot_profs.append(Profession)
-      stat_boxplot_data.append(data['fightData'])
-    
-  echart_text = build_boxplot_echart(stat_category, stat_name, stat_boxplot_data, stat_boxplot_names, stat_boxplot_profs, profession_color)
+	sorted_stats = build_and_sort_stat(StatsPerFight[stat_category][stat_name], sort_key="totalStat", reverse=False)
+	stat_boxplot_data = list([]) 
+	stat_boxplot_names = list([]) 
+	stat_boxplot_profs = list([])
+	for name, data in sorted_stats.items():
+		playerName, Profession, Account = name.split("|")
+		stat_boxplot_names.append(playerName)
+		stat_boxplot_profs.append(Profession)
+		stat_boxplot_data.append(data['fightData'])
 
-  tid_title = f"{tid_date_time}-{stat_category}-{stat_name}-boxplot"
-  tid_caption = f"{stat_category} {stat_name} Boxplot"
-  tid_tags = tid_date_time
-  append_tid_for_output(
-    create_new_tid_from_template(tid_title, tid_caption, echart_text, tid_tags),
-    tid_list
-  )    
+	echart_text = build_boxplot_echart(stat_category, stat_name, stat_boxplot_data, stat_boxplot_names, stat_boxplot_profs, profession_color)
+
+	tid_title = f"{tid_date_time}-{stat_category}-{stat_name}-boxplot"
+	tid_caption = f"{stat_category} {stat_name} Boxplot"
+	tid_tags = tid_date_time
+	append_tid_for_output(
+	create_new_tid_from_template(tid_title, tid_caption, echart_text, tid_tags),
+	tid_list
+	)    
+
 
 def build_squad_healthpct_table(health_data: dict, tid_date_time: str, tid_list: list) -> None:
 	bucket_list = [
