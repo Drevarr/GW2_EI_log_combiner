@@ -1217,12 +1217,19 @@ def get_skills_data(skill_map: dict) -> None:
 		name = skill_map[skill]['name']
 		auto_attack = skill_map[skill]['autoAttack']
 		icon = skill_map[skill].get('icon', 'unknown.png')
+		is_proc = False
+
+		if skill_map[skill].get('isTraitProc', False) or skill_map[skill].get('isGearProc', False) or skill_map[skill].get('isUnconditionalProc', False):
+			is_proc = True
+
 		if skill_id not in skill_data:
 			skill_data[skill_id] = {
 				'name': name,
 				'auto': auto_attack,
+				'isProc': is_proc,
 				'icon': icon
 			}
+			
 		elif skill_data[skill_id]['icon'] in ("https://render.guildwars2.com/file/1D55D34FB4EE20B1962E315245E40CA5E1042D0E/62248.png", "unknown.png"):
 			if icon not in ("https://render.guildwars2.com/file/1D55D34FB4EE20B1962E315245E40CA5E1042D0E/62248.png", "unknown.png"):
 				skill_data[skill_id]['icon'] = icon
