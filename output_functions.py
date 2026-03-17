@@ -1951,7 +1951,7 @@ def build_skill_cast_summary(skill_casts_by_role: dict, skill_data: dict, captio
 		header = "|thead-dark table-caption-top table-hover sortable|k\n"
 		header += f"| {caption} |c\n"
 		header += "|!Name | !Prof |!Account | !{{FightTime}} |!"
-		apm_entry = f'<div class="xtooltip"> APM <span class="xtooltiptext" style="padding-left: 5px">Total Actions per Minute /<br>APM without Autos</span></div>'
+		apm_entry = f'<div class="xtooltip"> APM <span class="xtooltiptext" style="padding-left: 5px">Total Actions per Minute /<br>APM without Autos /<br>APM without Autos & Procs</span></div>'
 		header += f" {apm_entry}|"
 		# Add the skill names to the header
 		i = 0
@@ -1981,8 +1981,9 @@ def build_skill_cast_summary(skill_casts_by_role: dict, skill_data: dict, captio
 			time_mins = time_secs / 60
 			apm = round(player_data['total']/time_mins)
 			apm_no_auto = round(player_data['total_no_auto']/time_mins)
+			apm_no_auto_no_procs = round(player_data['total_no_auto_no_proc']/time_mins)
 		
-			row = f"|{name} |" + " " + f"{profession} " + f"|{account} |" + f"{time_secs:,.1f}|" + f" {apm}/{apm_no_auto} |"
+			row = f"|{name} |" + " " + f"{profession} " + f"|{account} |" + f"{time_secs:,.1f}|" + f" {apm}/{apm_no_auto}/{apm_no_auto_no_procs} |"
 			# Add the skill casts per minute to the row
 			i = 0
 			for skill, count in sorted_cast_skills:
