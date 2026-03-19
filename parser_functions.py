@@ -1836,7 +1836,7 @@ def get_buff_generation(fight_num: int, player: dict, stat_category: str, name_p
 				
 		top_stats['player'][name_prof][stat_category][buff_id]['generation'] = top_stats['player'][name_prof][stat_category][buff_id].get('generation', 0) + buff_generation
 		top_stats['player'][name_prof][stat_category][buff_id]['wasted'] = top_stats['player'][name_prof][stat_category][buff_id].get('wasted', 0) + buff_wasted
-		stats_per_fight[stat_category][buff_id][name_prof].append(buff_generation)
+		stats_per_fight[stat_category][buff_id][name_prof].append(round(buff_generation/duration, 2))
 		top_stats['fight'][fight_num][stat_category][buff_id]['generation'] = top_stats['fight'][fight_num][stat_category][buff_id].get('generation', 0) + buff_generation
 		top_stats['fight'][fight_num][stat_category][buff_id]['wasted'] = top_stats['fight'][fight_num][stat_category][buff_id].get('wasted', 0) + buff_wasted
 

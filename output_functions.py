@@ -3942,6 +3942,30 @@ def build_and_sort_stat(stat_dict, sort_key="totalStat", reverse=False):
         sorted(built.items(), key=lambda i: i[1][sort_key], reverse=reverse)
     )
     
+def build_boon_boxplot_echart(stats_per_fight, boon_id, boon_name, profession_color):
+	names = {
+		"selfBuffs": [],
+		"groupBuffs":[],
+		"squadBuffs":[]
+		}
+	professions = {
+		"selfBuffs": [],
+		"groupBuffs":[],
+		"squadBuffs":[]
+		}
+	raw_stats = {
+		"selfBuffs": [],
+		"groupBuffs":[],
+		"squadBuffs":[]
+		}
+	
+	for cat in raw_stats:
+		for player, player_data in stats_per_fight[cat][boon_id].items():
+			name, profession, account = player.split("|")
+			
+			names[cat].append(name)
+			professions[cat].append(profession)
+			raw_stats[cat].append(player_data)
 
 def build_boxplot_echart(
     stat,

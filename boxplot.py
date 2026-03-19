@@ -13,6 +13,7 @@ def build_and_sort_stat(stat_dict, sort_key="totalStat", reverse=False):
     return dict(
         sorted(built.items(), key=lambda i: i[1][sort_key], reverse=reverse)
     )
+    
 
 def build_boxplot_echart(
     stat,
@@ -21,11 +22,10 @@ def build_boxplot_echart(
     stat_boxplot_names,
     stat_boxplot_profs,
     profession_color,
-    chart_per_fight,
     chart_per_second,
 ):
     """
-    Returns an ECharts boxplot.
+    Returns a string containing the ECharts boxplot option JS.
     """
 
     if stat in chart_per_second:
