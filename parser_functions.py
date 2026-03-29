@@ -823,6 +823,8 @@ def get_stacking_uptime_data(player, damagePS, duration, fight_ticks, blacklist)
 	player_prof_name = f"{player['name']}|{player['profession']}|{get_player_account(player)}"
 	if player["account"] in blacklist:
 		return
+	if player['activeTimes'][0] == 0:
+		return
 	if player_prof_name not in stacking_uptime_Table:
 		stacking_uptime_Table[player_prof_name] = {}
 		stacking_uptime_Table[player_prof_name]["account"] = get_player_account(player)
@@ -3041,6 +3043,8 @@ def parse_file(file_path, fight_num, guild_data, fight_data_charts, blacklist):
 		else:
 			team = None
 		active_time = player['activeTimes'][0]
+		if not active_time:
+			continue
 
 		if name in players_running_healing_addon:
 			if name_prof not in top_stats['players_running_healing_addon']:
@@ -3144,12 +3148,17 @@ def parse_file(file_path, fight_num, guild_data, fight_data_charts, blacklist):
 			# format: player[stat_category][buff][buffData][0][generation]
 			if stat_cat in ['squadBuffs', 'groupBuffs', 'selfBuffs']:
 				get_buff_generation(fight_num, player, stat_cat, name_prof, fight_duration_ms, buff_data, squad_count, group_count)
-			if stat_cat in ['squadBuffsActive', 'groupBuffsActive', 'selfBuffsActive']:                
-				get_buff_generation(fight_num, player, stat_cat, name_prof, active_time, buff_data, squad_count, group_count)
-
+			if stat_cat in ['squadBuffsActive', 'groupBuffsActive', 'selfBuffsActive']:
+				if active_time:
+					get_buff_generation(fight_num, player, stat_cat, name_prof, active_time, buff_data, squad_count, group_count)
+				else:
+					get_buff_generation(fight_num, player, stat_cat, name_prof, fight_duration_ms, buff_data, squad_count, group_count)
 			# format: player[stat_category][skill][skills][casts]
 			if stat_cat == 'rotation' and 'rotation' in player:
-				get_skill_cast_by_prof_role(active_time, player, stat_cat, name_prof)
+				if active_time:
+					get_skill_cast_by_prof_role(active_time, player, stat_cat, name_prof)
+				else:
+					get_skill_cast_by_prof_role(fight_duration_ms, player, stat_cat, name_prof)
 
 			if stat_cat in ['extHealingStats', 'extBarrierStats'] and name in players_running_healing_addon:
 				get_healStats_data(fight_num, player, players, stat_cat, name_prof, fight_duration_ms)
