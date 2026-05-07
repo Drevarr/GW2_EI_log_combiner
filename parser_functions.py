@@ -653,6 +653,9 @@ def get_combat_start_from_player_json(initial_time, player_json):
 	"""
 
 	start_combat = -1
+	if 'combatReplayData' not in player_json:
+		start_combat = 0
+		return start_combat
 	if 'healthPercents' not in player_json:
 		return start_combat 
 	last_health_percent = 100
@@ -686,13 +689,15 @@ def get_combat_time_breakpoints(player_json):
 	Returns:
 		list: A list of [start, end] tuples representing combat time breakpoints.
 	"""
+	breakpoints = []
 	# Get the initial combat start time
 	start_combat = get_combat_start_from_player_json(0, player_json)
 
 	# Check if 'combatReplayData' is available, use 'activeTimes' if not
 	if 'combatReplayData' not in player_json:
 		print("WARNING: combatReplayData not in json, using activeTimes as time in combat")
-		return [[start_combat, player_json.get('activeTimes', 0)]]
+		breakpoints.append([start_combat, player_json.get('activeTimes', 0)[0]])
+		return breakpoints
 
 	replay = player_json['combatReplayData']
 
@@ -700,7 +705,7 @@ def get_combat_time_breakpoints(player_json):
 	if 'dead' not in replay:
 		return [[start_combat, player_json.get('activeTimes', 0)]]
 
-	breakpoints = []
+	#breakpoints = []
 	player_deaths = dict(replay['dead'])
 	player_downs = dict(replay['down'])
 
@@ -3093,7 +3098,8 @@ def parse_file(file_path, fight_num, guild_data, fight_data_charts, blacklist):
 		if player["profession"] in ["Mesmer", "Chronomancer", "Mirage"]:
 			determine_clone_usage(player, skill_map, mesmer_shatter_skills)
 
-		get_player_death_on_tag(player, commander_tag_positions, dead_tag_mark, dead_tag, inches_to_pixel, polling_rate)
+		if "combatReplayData" in player:
+			get_player_death_on_tag(player, commander_tag_positions, dead_tag_mark, dead_tag, inches_to_pixel, polling_rate)
 
 		# Cumulative group and squad supported counts
 		top_stats['player'][name_prof]['num_fights'] = top_stats['player'][name_prof].get('num_fights', 0) + 1

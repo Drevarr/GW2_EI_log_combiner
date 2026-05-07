@@ -2983,7 +2983,7 @@ def build_top_damage_by_skill(total_damage_taken: dict, target_damage_dist: dict
 	
 	# Populate the table with top 25 skills by damage output
 	for i, (skill_id, skill) in enumerate(sorted_target_damage_dist.items()):
-		if i < 25:
+		if i < 25 and total_damage_distributed_value > 0:
 			skill_name = skill_data.get(f"s{skill_id}", {}).get("name", buff_data.get(f"b{skill_id}", {}).get("name", ""))
 			skill_icon = skill_data.get(f"s{skill_id}", {}).get("icon", buff_data.get(f"b{skill_id}", {}).get("icon", ""))
 			entry = f"[img width=24 [{skill_name}|{skill_icon}]]-{skill_name}"
