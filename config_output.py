@@ -64,6 +64,8 @@ defenses_table = {
 	"dodgeCount": 'defenses',
 	"invulnedCount": 'defenses',
 	"interruptedCount": 'defenses',
+	"stunBreak": 'support',
+	#"removedStunDuration": 'support',    
 	"downCount": 'defenses',
 	#"downDuration": 'defenses',
 	"deadCount": 'defenses',
@@ -87,8 +89,6 @@ support_table = {
 	"boonStripsTime": 'support',
     "boonStripDownContribution": 'support',
 	"boonStripDownContributionTime": 'support',
-	"stunBreak": 'support',
-	"removedStunDuration": 'support',
 	"resurrects": 'support',
 	"resurrectTime": 'support'
 }
