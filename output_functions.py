@@ -1801,6 +1801,11 @@ def build_personal_damage_modifier_summary(top_stats: dict, personal_damage_mod_
 		# Add the columns to the header
 		header += "|!Party |!Name | !Prof | !{{FightTime}} |"
 		
+		# Sort modifier IDs by their display name
+		prof_mod_list = sorted(
+			prof_mod_list,
+			key=lambda mod_id: damage_mod_data[mod_id]["name"]
+		)
 		for mod_id in prof_mod_list:
 			# Get the icon and name of the modifier
 			icon = damage_mod_data[mod_id]["icon"]
@@ -1882,6 +1887,11 @@ def build_shared_damage_modifier_summary(top_stats: dict, damage_mod_data: dict,
 
 	rows = []
 	
+	# Sort modifier IDs by their display name
+	shared_mod_list = sorted(
+		shared_mod_list,
+		key=lambda mod_id: damage_mod_data[mod_id]["name"]
+	)	
 	rows.append('<div style="overflow-y: auto; width: 100%; overflow-x:auto;">\n\n')
 	header = "|thead-dark table-caption-top table-hover sortable|k\n"
 	header += f"| {caption} |c\n"
