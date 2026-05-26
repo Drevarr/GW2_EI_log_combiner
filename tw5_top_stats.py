@@ -28,7 +28,7 @@ import config_output
 from parser_functions import *
 from output_functions import *
 
-CURRENT_VERSION = "1.6.4"  
+CURRENT_VERSION = "1.6.5"  
 REPO = "Drevarr/GW2_EI_log_combiner"
 LATEST_VERSION = None
 
