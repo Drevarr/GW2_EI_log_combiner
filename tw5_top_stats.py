@@ -223,7 +223,9 @@ if __name__ == '__main__':
 
 	build_profession_damage_modifier_stats_tid(personal_damage_mod_data, "Damage Modifiers", tid_date_time)
 
-	build_shared_damage_modifier_summary(top_stats, damage_mod_data, "Shared Damage Mods", tid_date_time)
+	build_shared_damage_modifier_summary(top_stats, damage_mod_data, "Shared Incoming Damage Modifiers", tid_date_time)
+
+	build_shared_damage_modifier_summary(top_stats, damage_mod_data, "Shared Outgoing Damage Modifiers", tid_date_time)
 		
 	defense_stats = config_output.defenses_table
 	build_category_summary_report(top_stats, stats_per_fight, profession_color, defense_stats, enable_hide_columns, "Defenses", tid_date_time, tid_list, layout="summary", sort_mode=sort_mode)

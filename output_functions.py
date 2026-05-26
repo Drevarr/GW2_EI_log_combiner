@@ -1881,9 +1881,14 @@ def build_shared_damage_modifier_summary(top_stats: dict, damage_mod_data: dict,
 	The function then pushes the table to the tid_list for output.
 	"""
 	shared_mod_list = []
-	for modifier in damage_mod_data:
-		if damage_mod_data[modifier]['shared'] and modifier not in shared_mod_list:
-			shared_mod_list.append(modifier)
+	if caption == "Shared Incoming Damage Modifiers":
+		for modifier in damage_mod_data:
+			if damage_mod_data[modifier]['shared'] and damage_mod_data[modifier]['incoming'] and modifier not in shared_mod_list:
+				shared_mod_list.append(modifier)
+	else:
+		for modifier in damage_mod_data:
+			if damage_mod_data[modifier]['shared'] and not damage_mod_data[modifier]['incoming'] and modifier not in shared_mod_list:
+				shared_mod_list.append(modifier)
 
 	rows = []
 	
@@ -1925,7 +1930,7 @@ def build_shared_damage_modifier_summary(top_stats: dict, damage_mod_data: dict,
 			else:
 				row += f" - |"
 		rows.append(row)
-	rows.append(f"|{caption} Damage Modifiers Table|c")
+	rows.append(f"|{caption} Table|c")
 
 	rows.append("\n\n</div>")
 
@@ -2308,8 +2313,8 @@ def build_damage_modifiers_menu_tid(datetime: str) -> None:
 	caption = "Damage Modifiers"
 	creator = "Drevarr@github.com"
 
-	text = (f"<<tabs '[[{datetime}-Shared-Damage-Mods]] [[{datetime}-Profession_Damage_Mods]]' "
-			f"'{datetime}-Shared-Damage-Mods' '$:/temp/tab1'>>")
+	text = (f"<<tabs '[[{datetime}-Shared-Incoming-Damage-Modifiers]] [[{datetime}-Shared-Outgoing-Damage-Modifiers]] [[{datetime}-Profession_Damage_Mods]]' "
+			f"'{datetime}-Shared-Incoming-Damage-Modifiers' '$:/temp/tab1'>>")
 
 	append_tid_for_output(
 		create_new_tid_from_template(title, caption, text, tags, creator=creator),
