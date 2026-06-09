@@ -5845,9 +5845,9 @@ def send_profession_boon_support_embed(webhook_url: str, profession: str, prof_i
         return
     else:
         print("WebHook URL: ", webhook_url)		
-    # Limit name field to 12 characters
+    # Limit name field to 8 characters
     for row in data[1:]:
-        row[0] = str(row[0])[:12]
+        row[0] = str(row[0])[:8]
 
     # Format buffs with 2 decimals
     for row in data[1:]:
