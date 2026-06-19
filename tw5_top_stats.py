@@ -25,10 +25,11 @@ import datetime
 from collections import OrderedDict
 
 import config_output
+import discord_report as DR
 from parser_functions import *
 from output_functions import *
 
-CURRENT_VERSION = "1.6.5"  
+CURRENT_VERSION = "1.7.0"  
 REPO = "Drevarr/GW2_EI_log_combiner"
 LATEST_VERSION = None
 
@@ -464,6 +465,8 @@ if __name__ == '__main__':
 		print("No new team codes found")
 
 	if webhook_url != "false" and support_profs:
+		discord_players = DR.collect_discord_stats(top_stats, death_on_tag)
+		DR.send_report(top_stats, discord_players, webhook_url)
 		discord_colors = config_output.profession_discord_color
 		boon_support_data = build_boon_support_data(top_stats, support_profs, config_output.boons)
 		profession_icons = config_output.profession_icons

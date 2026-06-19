@@ -3193,6 +3193,7 @@ def build_damage_outgoing_by_skill_tid(tid_date_time: str, tid_list: list) -> No
 	tid_tags = tid_date_time
 
 	# Add the select component to the table
+	rows.append("\n''Minimum Requirements:'' ` >=750 DPS and participation in >= 33% of raid total fight time`\n\n")
 	rows.append('\n!!!Select players(ctrl+click):')
 	rows.append('<$let state=<<qualify $:/temp/selectedPlayer>>>')
 	rows.append('<$select tiddler=<<state>> multiple>')
@@ -3230,13 +3231,16 @@ def build_damage_outgoing_by_player_skill_tids(top_stats: dict, skill_data: dict
 		tid_date_time (str): A string representing the timestamp or unique identifier for the TID.
 		tid_list (list): A list of TIDs to which the generated TID should be appended.
 	"""
+	#calculate min participation time (33% of total fight_durationMS)
+	raid_time_threshold = sum(data.get('fight_durationMS', 0) for data in top_stats['fight'].values()) / 3
+
 	# Sort players by total damage output in descending order
 	damage_totals = {
 		player: data['dpsTargets']['damage']
 		for player, data in top_stats['player'].items()
-		if data['statsTargets']['critableDirectDamageCount'] > 0
-		and (data['statsTargets']['criticalRate'] / data['statsTargets']['critableDirectDamageCount']) > 0.45
-		and data['dpsTargets']['damage'] > 0
+		if data['active_time'] > 0
+		and data['fight_time'] >= raid_time_threshold
+		and data['statsTargets']['totalDmg'] / (data['active_time']/1000) >= 750
 	}	
 
 	sorted_damage_totals = sorted(damage_totals.items(), key=lambda x: x[1], reverse=True)
@@ -5833,6 +5837,36 @@ def build_boon_support_data(top_stats: dict, support_profs: dict, boon_dict: dic
 				boon_support_data[profession].append(player_data)
 
 	return boon_support_data
+
+
+def build_discord_damage_data(top_stats: dict):
+	discord_damage = []
+
+	for player, data in top_stats["player"].items():
+		activeTime = data["active_time"]
+		totalDamage = data["statsTargets"]["totalDmg"]
+
+		discord_damage.append({
+			"name": data["name"],
+			"profession": data["profession"],
+			"activeTime": activeTime,
+			"numFights": data["num_fights"],
+			"totalDamage": totalDamage,
+			"DmgPerSec": totalDamage / activeTime if activeTime else 0,
+			"downContrPct": (
+				data["statsTargets"]["downContribution"] / totalDamage
+				if totalDamage else 0
+			),
+		})
+
+	# Sort descending by Total Damage and keep top 10
+	damage_top_10 = sorted(
+		discord_damage,
+		key=lambda p: p["totalDamage"],
+		reverse=True
+	)[:10]
+
+	return damage_top_10
 
 
 def send_profession_boon_support_embed(webhook_url: str, profession: str, prof_icon: str, prof_color: str, tid_date_time: str, data: list) -> None:
