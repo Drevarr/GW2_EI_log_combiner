@@ -612,7 +612,8 @@ def build_category_summary_report(
 		"powerDamageTakenCount": '{{powerDamageTaken}}[img width=16 [Hits|hits.png]]',
 		"downedDamageTakenCount": '{{downedDamageTaken}}[img width=16 [Hits|hits.png]]',
 		"damageBarrierCount": '{{damageBarrier}}[img width=16 [Hits|hits.png]]',
-		"downContribPct": '{{downContribution}} %'
+		"downContribPct": '{{downContribution}} %',
+		"swapCount": "{{Weapon Swaps}}"
 		}
     pct_stats = {
 		"criticalRate": "critableDirectDamageCount", "flankingRate":"connectedDirectDamageCount", "glanceRate":"connectedDirectDamageCount", "againstMovingRate": "connectedDamageCount"

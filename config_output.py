@@ -126,7 +126,8 @@ offensive_table = {
     "appliedCrowdControl": 'statsTargets',
     "appliedCrowdControlDuration": 'statsTargets',
     "appliedCrowdControlDownContribution": 'statsTargets',
-	"appliedCrowdControlDurationDownContribution": 'statsTargets'
+	"appliedCrowdControlDurationDownContribution": 'statsTargets',
+    "swapCount": 'statsAll'
 }
 
 boons = {
