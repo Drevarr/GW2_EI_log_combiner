@@ -18,11 +18,14 @@ def compute_player_apm(skill_cast_by_role):
     			player_apm[player] = player_data['total_no_auto_no_proc'] / (player_data['ActiveTime'] / 60)
 
 
+
 def compute_average_distance(name_prof, death_on_tag):
     avg_dist = DEFAULT_DIST_TAG
     for name_prof in death_on_tag:
         if len(death_on_tag[name_prof]['distToTag']):
             avg_dist = round(sum(death_on_tag[name_prof]['distToTag']) / len(death_on_tag[name_prof]['distToTag']))
+        if avg_dist < 0:
+            avg_dist = DEFAULT_DIST_TAG
     return avg_dist
 
 
@@ -119,14 +122,8 @@ def collect_discord_stats(json_data, death_on_tag):
                 #Offensive Data
                 "totalDamage": totalDamage,
                 "DmgPerSec": totalDamage / (activeTime/1000) if activeTime else 0,
-                "downContrPct": (
-                    data["statsTargets"]["downContribution"] / totalDamage
-                    if totalDamage else 0
-                ),
-                "downedDamagePct": (
-                    data["statsTargets"]["againstDownedDamage"] / totalDamage
-                    if totalDamage else 0
-                ),
+                "downContrPct": data["statsTargets"]["downContribution"],
+                "downedDamagePct": data["statsTargets"]["againstDownedDamage"],
                 #Support Data
                 "outgoing_healing": (
                     data['extHealingStats']['outgoing_healing']
@@ -153,7 +150,9 @@ def collect_discord_stats(json_data, death_on_tag):
                     round(sum(death_on_tag[player]['distToTag']) / len(death_on_tag[player]['distToTag']))
                     if len(death_on_tag[player]['distToTag']) else DEFAULT_DIST_TAG
                 ),
-                "Actions per Minute": player_apm[player]
+                "Actions per Minute": (
+                    player_apm[player] if player in player_apm else 0
+                )
                 
             })
     return discord_players
@@ -201,8 +200,8 @@ def build_offense_embed(players):
     stats = [
         ("⚔️ DPS Leaders", "DmgPerSec", lambda v: f"{v:,.0f}"),
         ("💥 Damage Leaders", "totalDamage", lambda v: f"{v:,.0f}"),
-        ("📉 Down Contribution %", "downContrPct", lambda v: f"{v*100:.1f}%"),
-        ("☠️ Downed Damage %", "downedDamagePct", lambda v: f"{v*100:.1f}%"),
+        ("📉 Down Contribution", "downContrPct", lambda v: f"{v:,.0f}"),
+        ("☠️ Downed Damage", "downedDamagePct", lambda v: f"{v:,.0f}"),
     ]
 
     return build_embed("⚔️ Offensive Stats", 0xE74C3C, players, stats)
