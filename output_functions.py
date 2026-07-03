@@ -353,7 +353,7 @@ def output_tag_summary(LATEST_VERSION, tag_summary: dict, tid_date_time) -> None
 	
 	rows.append('<div style="overflow-y: auto; width: 100%; overflow-x:auto;">\n\n')
 	if LATEST_VERSION:
-		rows.append(f'New version available: {LATEST_VERSION} \n\n')
+		rows.append(f'New version available: [[{LATEST_VERSION}|https://github.com/Drevarr/GW2_EI_log_combiner/releases/latest]] \n\n')
 	rows.append("|thead-dark table-caption-top table-hover sortable|k")
 	rows.append("| Summary by Command Tag |c")
 	rows.append(
@@ -766,7 +766,7 @@ Uncheck to Hide: """)
             rows.append('<div class="flex-row">\n    <div class="flex-col border">\n\n')
             format_stat = stat[0].upper() + stat[1:]
             rows.append(f"!! {format_stat}\n")
-            rows.append("|thead-dark table-caption-top table-hover sortable|k\n")
+            rows.append("|thead-dark table-caption-top table-hover sortable|k")
             rows.append("|!Party |!Name |!Prof |!{{FightTime}} |!Total|!Stat/1s|!Stat/60s|h")
 
             for p in chart_data:
