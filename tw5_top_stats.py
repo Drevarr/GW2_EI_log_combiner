@@ -29,7 +29,7 @@ import discord_report as DR
 from parser_functions import *
 from output_functions import *
 
-CURRENT_VERSION = "1.7.3"  
+CURRENT_VERSION = "1.7.4"  
 REPO = "Drevarr/GW2_EI_log_combiner"
 LATEST_VERSION = None
 
@@ -51,7 +51,7 @@ def check_for_update():
 		return
 
 	if latest.strip().lstrip("v") != CURRENT_VERSION.strip().lstrip("v"):
-		print(f"New version available: {latest}")
+		print(f"Latest version available: {latest}")
 		return latest
 
 if __name__ == '__main__':
