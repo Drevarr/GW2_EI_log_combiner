@@ -43,6 +43,9 @@ enemy_avg_damage_per_skill = {}
 player_damage_mitigation = {}
 player_minion_damage_mitigation = {}
 
+#siege skills
+siege_skills = config.siege_skill_ids
+
 # Buff and skill data collected from all logs
 buff_data = {}
 skill_data = {}
@@ -1605,7 +1608,7 @@ def get_stat_by_skill(fight_num: int, player: dict, stat_category: str, name_pro
 				continue
 
 			# Update high score tracking
-			if stat == "max":
+			if stat == "max" and skill_id not in siege_skills:
 				update_high_score(
 					f"{stat_category}_{stat}",
 					f"{{{{{player['profession']}}}}}{player['name']}-{get_player_account(player)}-{fight_num} | {skill_id}",
