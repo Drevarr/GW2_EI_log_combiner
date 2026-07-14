@@ -3663,19 +3663,22 @@ def build_DPS_bubble_chart(top_stats: dict, tid_date_time: str, tid_list: list, 
 	"""
 	Build a bubble chart of DPS stats for all players in the log running the extension.
 
-	The bubble size is based on the percentage of damage that was against downed targets.
-	The x-axis is the percentage of damage that was down contribution.
+	The bubble size is based on the damage that was against downed targets/Second.
+	The x-axis is the damage per second that was down contribution.
 	The y-axis is the damage per second.
 
 	The function builds a table with the following columns:
 		- Player (player name)
 		- Profession (profession icon and abbreviated name)
 		- Damage/Sec (total damage divided by fight time)
-		- Down Contr % (down contribution divided by damage per second)
-		- Dmg to Down % (damage against downed targets divided by damage per second)
+		- Down Contr/Sec (Down Contribution Damage divided by fight time)
+		- Dmg to Down/Sec % (damage against downed targets divided by fight time)
 
 	The function then pushes the table to the tid_list for output.
 	"""
+	#TIME_THRESHOLD_MS = 3000
+	#raid_time_total = sum(data.get('fight_durationMS', 0) for data in top_stats['fight'].values())
+
 	tid_title = f"{tid_date_time}-DPS-Bubble-Chart"
 	tid_caption = "DPS Bubble Chart"
 	tid_tags = tid_date_time
@@ -3684,11 +3687,11 @@ def build_DPS_bubble_chart(top_stats: dict, tid_date_time: str, tid_list: list, 
 	chart_min = 1000
 	chart_max = 0
 	chart_yAxis = "Damage/Sec"
-	chart_xAxis = "Down Contr %"
+	chart_xAxis = "Down Contr/Sec"
 	chart_yData = "Damage/Sec"
-	chart_xData = "Down Contr %"
+	chart_xData = "Down Contr/Sec"
 
-	data_header = ["Name", "Profession", "Damage/Sec", "Down Contr %", "Dmg to Down %", "color"]
+	data_header = ["Name", "Profession", "Damage/Sec", "Down Contr/Sec", "Dmg to Down/Sec", "color"]
 	chart_data.append(data_header)
 
 	for player, player_data in top_stats['player'].items():
@@ -3701,10 +3704,10 @@ def build_DPS_bubble_chart(top_stats: dict, tid_date_time: str, tid_list: list, 
 		DCps = 0.00
 		DDps = 0.00
 		if Dps > 0:
-			DCps = round((player_data["statsTargets"].get("downContribution", 0)/fight_time)/Dps,4)
-			DCps = round(DCps*100,2)
-			DDps = round((player_data["statsTargets"].get("againstDownedDamage", 0)/fight_time)/Dps,2)
-			DDps = round(DDps*100,2)
+			DCps = round((player_data["statsTargets"].get("downContribution", 0)/fight_time),2)
+			#DCps = round(DCps*100,2)
+			DDps = round((player_data["statsTargets"].get("againstDownedDamage", 0)/fight_time),2)
+			#DDps = round(DDps*100,2)
 		player_entry = [name, profession, Dps, DCps, DDps]
 		if DDps > chart_max:
 			chart_max = DDps
@@ -3716,7 +3719,7 @@ def build_DPS_bubble_chart(top_stats: dict, tid_date_time: str, tid_list: list, 
 		chart_data.append(player_entry)
 
 	text = "__''DPS Bubble Chart''__\n"
-	text += "\n,,Bubble size based on against downed damage % of Damage"
+	text += "\n,,Bubble size based on against downed damage/Second"
 	text += "{{"+f"{tid_date_time}-DPS-Bubble-Chart||BubbleChart_Template"+"}}"
 
 	append_tid_for_output(
