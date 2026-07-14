@@ -29,7 +29,7 @@ import discord_report as DR
 from parser_functions import *
 from output_functions import *
 
-CURRENT_VERSION = "1.7.4"  
+CURRENT_VERSION = "1.7.5"  
 REPO = "Drevarr/GW2_EI_log_combiner"
 LATEST_VERSION = None
 
