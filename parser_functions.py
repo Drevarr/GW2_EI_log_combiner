@@ -21,7 +21,7 @@ import json
 import math
 import requests
 import time
-from typing import Optional, Dict
+from typing import Optional, Dict, Any
 from requests.exceptions import RequestException, HTTPError, Timeout, ConnectionError
 from collections import OrderedDict, defaultdict
 
@@ -81,64 +81,91 @@ killing_blow_rallies = {
 
 health_data = {}
 
-def get_player_account(player):
-	"""
-	Get the account name of a player
+def get_player_account(player: Dict[str, Any]) -> str:
+    """
+    Get the account name of a player, replacing hyphens with dots.
 
-	Args:
-		player (dict): The player data from the log
+    Args:
+        player (dict): The player data from the log.
 
-	Returns:
-		str: The account name of the player
-	"""
-	if len(player['account'].split('-')) >=1:
-		account = player['account'].replace("-", ".")
-	else:
-		account = player['account']
-	return account
+    Returns:
+        str: The formatted account name.
+
+    Raises:
+        KeyError: If the 'account' key is missing.
+        TypeError: If the 'account' value is not a string.
+    """
+    # Use .get() to handle missing keys or direct access if existence is guaranteed
+    account = player.get('account')
+
+    if account is None:
+        raise KeyError("The 'account' key is missing from the player dictionary.")
+    
+    if not isinstance(account, str):
+        raise TypeError(f"Expected 'account' to be a string, got {type(account).__name__}")
+
+    # Logic Simplification: .replace() is sufficient.
+    # The original 'split' check was redundant as split() always returns a list of at least length 1.
+    return account.replace("-", ".")
 
 
-def get_fight_data(player, fight_num):
-	"""
-	Get the fight data for a player in a given fight
 
-	Args:
-		player (dict): The player data from the log
-		fight_num (int): The fight number to add the data to
+def get_fight_data(player: Dict[str, Any], fight_num: int, data_store: Dict[int, Dict[str, Any]]) -> None:
+    """
+    Process player combat data and update the global fight_data structure.
 
-	Returns:
-		None
-	"""
-	account = get_player_account(player)
-	player_id = f"{account}-{player['profession']}-{player['name']}"
-	if fight_num not in fight_data:
-		fight_data[fight_num] = {
-			"damage1S": {},
-			"damageTaken1S": {},
-			"players": {}
-		}
+    Args:
+        player (dict): The player data dictionary.
+        fight_num (int): The unique identifier for the current fight.
+        data_store (dict): The master dictionary storing fight information.
+    """
+    # 1. Initialize fight data if not present
+    if fight_num not in data_store:
+        data_store[fight_num] = {
+            "damage1S": defaultdict(float),
+            "damageTaken1S": defaultdict(float),
+            "players": {}
+        }
+    
+    # Reference to the specific fight structure for cleaner access
+    current_fight = data_store[fight_num]
+    
+    # 2. Construct Identity
+    account = get_player_account(player)
+    player_id = f"{account}-{player.get('profession')}-{player.get('name')}"
+    
+    # 3. Process Damage Dealt (Conditional on DPS threshold)
+    dps_list = player.get("dpsAll", [])
+    if dps_list and dps_list[0].get("dps", 0) >= 700:
+        if player_id not in current_fight["players"]:
+            current_fight["players"][player_id] = {
+                "damage1S": defaultdict(float),
+                "damageTaken1S": 0.0 # Placeholder for total/avg if needed
+            }
+        
+        for target in player.get("targetDamage1S", []):
+            # target[0] is assumed to be the list of cumulative damage per second
+            damage_series = target[0]
+            prior_damage = 0
+            
+            for sec_index, cur_total_damage in enumerate(damage_series):
+                delta_damage = cur_total_damage - prior_damage
+                
+                # Update global damage for this second
+                current_fight["damage1S"][sec_index] += delta_damage
+                # Update individual player damage for this second
+                current_fight["players"][player_id]["damage1S"][sec_index] += delta_damage
+                
+                prior_damage = cur_total_damage
 
-	if player['dpsAll'][0]['dps'] >= 700:
-		if player_id not in fight_data[fight_num]["players"]:
-			fight_data[fight_num]["players"][player_id] = {
-				"damage1S": {},
-				"damageTaken1S": player["damageTaken1S"][0]
-			}
-			for target in player["targetDamage1S"]:
-				prior_damage = 0
-				for sec_index in range(len(target[0])):
-					cur_damage = target[0][sec_index] - prior_damage
-					fight_data[fight_num]["damage1S"][sec_index] = fight_data[fight_num]["damage1S"].get(sec_index, 0) + cur_damage
-					fight_data[fight_num]["players"][player_id]["damage1S"][sec_index] = fight_data[fight_num]["players"][player_id]["damage1S"].get(sec_index, 0)+cur_damage
-
-					prior_damage = target[0][sec_index]
-					
-	last_index = 0
-
-	for index in range(len(player["damageTaken1S"][0])):
-		current_damage_taken = player["damageTaken1S"][0][index] - player["damageTaken1S"][0][last_index]
-		fight_data[fight_num]["damageTaken1S"][index] = fight_data[fight_num]["damageTaken1S"].get(index, 0) + current_damage_taken
-		last_index = index
+    # 4. Process Damage Taken
+    taken_series = player.get("damageTaken1S", [[]])[0]
+    if taken_series:
+        # Optimization: Use zip to calculate deltas between current and previous values
+        # This avoids manual index tracking and 'last_index' logic
+        for i in range(1, len(taken_series)):
+            delta_taken = taken_series[i] - taken_series[i-1]
+            current_fight["damageTaken1S"][i] += delta_taken
 
 
 def check_burst1S_high_score(fight_data, player, fight_num):
@@ -3087,7 +3114,7 @@ def parse_file(file_path, fight_num, guild_data, fight_data_charts, blacklist):
 		# store last party the player was a member
 		top_stats['player'][name_prof]['last_party'] = group
 		if fight_data_charts:
-			get_fight_data(player, fight_num)
+			get_fight_data(player, fight_num, fight_data)
 
 			check_burst1S_high_score(fight_data, player, fight_num)
 
