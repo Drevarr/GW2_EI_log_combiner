@@ -38,6 +38,10 @@ Currently works with WVW and Detailed WVW logs. Partially working with PVElogs, 
       - `python tw5_top_stats.py -c flux_config.ini`  # `-c` flag to utilize a specific `guild_config.ini` file
 
  - You can use [TopStatsAIO](https://github.com/darkharasho/TopStatsAIO) for a GUI frontend that utilizes Elite Insights CLI version and either of my parsers.
+ - You can bake a single shareable `.html` report directly (skips the drag and drop step) with the `-b` flag pointed at an empty viewer:
+   - `python tw5_top_stats.py -i d:\path\to\logs -b Example_Output\Top_Stats_Index.html`
+   - The baked report is written next to the summary `.json` and is compressed to roughly a quarter of the normal size (a ~10 MB night becomes ~3 MB, small enough to attach on Discord without zipping). It unpacks itself in the browser — needs a 2023-or-newer browser (Chrome/Edge 80+, Firefox 113+, Safari 16.4+).
+   - Set `bake_html_compress = False` under `[TopStatsCfg]` to bake uncompressed, or `bake_html_template = path\to\Top_Stats_Index.html` to enable baking from the config instead of the flag.
 
 ### Example Output of current state shown here:  [Log Summary](https://wvwlogs.com)
 

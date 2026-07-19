@@ -64,6 +64,7 @@ if __name__ == '__main__':
 	parser.add_argument('-j', '--json_output', dest="json_output_filename", help="Override .json file to write the computed stats data")
 	parser.add_argument('-c', '--config_file', dest="config_file", help="Select a specific config file. Defaults to top_stats_config.ini")
 	parser.add_argument('-d', '--description_append', dest="description_append", help="Appended to the description of the summary caption.")
+	parser.add_argument('-b', '--bake_html', dest="bake_html_template", help="Also bake a single shareable .html report using the given empty Top_Stats_Index.html as template (no drag and drop needed). Compressed to roughly a quarter of the size by default; see bake_html_compress in the config.")
 
 	args = parser.parse_args()
 
@@ -457,6 +458,18 @@ if __name__ == '__main__':
 		build_high_scores_leaderboard_tids(tid_date_time, db_output_full_path)
 
 	write_tid_list_to_json(tid_list, args.output_filename)
+
+	# Optional: bake a single shareable .html report (no drag and drop)
+	bake_html_template = args.bake_html_template or config_ini.get('TopStatsCfg', 'bake_html_template', fallback=None)
+	if bake_html_template:
+		from standalone_report import bake_standalone_html
+		bake_html_compress = config_ini.getboolean('TopStatsCfg', 'bake_html_compress', fallback=True)
+		baked_filename = os.path.splitext(args.output_filename)[0] + ".html"
+		try:
+			bake_standalone_html(bake_html_template, tid_list, baked_filename, compress=bake_html_compress)
+			print(f"Baked standalone report: {baked_filename} ({os.path.getsize(baked_filename):,} bytes)")
+		except (OSError, ValueError) as e:
+			print(f"Could not bake standalone report: {e}")
 
 	if team_code_missing:
 		print("Missing team codes: " + str(team_code_missing))
