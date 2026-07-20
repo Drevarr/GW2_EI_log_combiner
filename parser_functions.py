@@ -2246,7 +2246,8 @@ def get_damage_mod_by_player(fight_num: int, player: dict, name_prof: str) -> No
 				mod_id = "d" + str(modifier['id'])
 				mod_hit_count = modifier["damageModifiers"][0]['hitCount']
 				mod_total_hit_count = modifier["damageModifiers"][0]['totalHitCount']
-				mod_damage_gain = modifier["damageModifiers"][0]['damageGain']
+				gain_value = modifier["damageModifiers"][0]['damageGain']
+				mod_damage_gain = gain_value if isinstance(gain_value, (int, float)) else 0
 				mod_total_damage = modifier["damageModifiers"][0]['totalDamage']
 
 				# Update commander summary data if the player has a commander tag
@@ -2259,6 +2260,7 @@ def get_damage_mod_by_player(fight_num: int, player: dict, name_prof: str) -> No
 						commander_summary_data[commander_name]['prot_mods']['totalDamage'] += mod_total_damage
 
 				# Update player's damage modifier statistics
+				#DEBUG INFINITY print(name_prof, mod_id)
 				if mod_id not in top_stats['player'][name_prof]['damageModifiers']:
 					top_stats['player'][name_prof]['damageModifiers'][mod_id] = {}
 
