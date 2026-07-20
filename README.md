@@ -38,6 +38,10 @@ Currently works with WVW and Detailed WVW logs. Partially working with PVElogs, 
       - `python tw5_top_stats.py -c flux_config.ini`  # `-c` flag to utilize a specific `guild_config.ini` file
 
  - You can use [TopStatsAIO](https://github.com/darkharasho/TopStatsAIO) for a GUI frontend that utilizes Elite Insights CLI version and either of my parsers.
+ - You can create a single shareable standalone HTML report directly (skips the drag and drop step) with `--standalone-html` (`-s`) pointed at an empty viewer:
+   - `python tw5_top_stats.py -i d:\path\to\logs --standalone-html Example_Output\Top_Stats_Index.html`
+   - The report is written next to the summary `.json` and is typically much smaller than uncompressed HTML (observed savings vary with report content). It decompresses itself in the browser and requires `DecompressionStream` support (Chrome/Edge 80+, Firefox 113+, Safari 17+).
+   - Set `compress_standalone_html = false` under `[TopStatsCfg]` for ordinary uncompressed HTML, or set `standalone_html_template = path\to\Top_Stats_Index.html` to create the report from the config instead of the command-line option.
 
 ### Example Output of current state shown here:  [Log Summary](https://wvwlogs.com)
 
