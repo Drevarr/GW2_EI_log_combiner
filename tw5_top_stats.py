@@ -64,6 +64,7 @@ if __name__ == '__main__':
 	parser.add_argument('-j', '--json_output', dest="json_output_filename", help="Override .json file to write the computed stats data")
 	parser.add_argument('-c', '--config_file', dest="config_file", help="Select a specific config file. Defaults to top_stats_config.ini")
 	parser.add_argument('-d', '--description_append', dest="description_append", help="Appended to the description of the summary caption.")
+	parser.add_argument('-s', '--standalone-html', dest="standalone_html_template", help="Create a standalone HTML report using the given empty Top_Stats_Index.html as the template. The report is compressed by default; see compress_standalone_html in the config.")
 
 	args = parser.parse_args()
 
@@ -75,6 +76,22 @@ if __name__ == '__main__':
 
 	config_ini = configparser.ConfigParser()
 	config_ini.read(args.config_file)
+
+	standalone_html_template = args.standalone_html_template or config_ini.get('TopStatsCfg', 'standalone_html_template', fallback=None)
+	compress_standalone = True
+	if standalone_html_template:
+		# Validate configuration before starting potentially expensive log parsing.
+		if not os.path.isfile(standalone_html_template):
+			parser.error(
+				f"standalone HTML template is not a file: {standalone_html_template}"
+			)
+		try:
+			compress_standalone = config_ini.getboolean('TopStatsCfg', 'compress_standalone_html', fallback=True)
+		except ValueError:
+			parser.error(
+				"compress_standalone_html in [TopStatsCfg] must be "
+				"true/false, yes/no, on/off, or 1/0"
+			)
 
 	# Resolve input_directory
 	input_directory = args.input_directory or config_ini.get('TopStatsCfg', 'input_directory', fallback='./')
@@ -128,6 +145,16 @@ if __name__ == '__main__':
 	else:
 		args.output_filename = os.path.join(input_directory, args.output_filename)
 
+	standalone_filename = None
+	if standalone_html_template:
+		from standalone_report import derive_standalone_filename, paths_refer_to_same_file
+		standalone_filename = derive_standalone_filename(args.output_filename)
+		if paths_refer_to_same_file(standalone_html_template, standalone_filename):
+			parser.error(
+				"standalone HTML template and output paths must refer to "
+				"different files"
+			)
+
 	# Config values
 	guild_name = config_ini.get('TopStatsCfg', 'guild_name', fallback=None)
 	guild_id = config_ini.get('TopStatsCfg', 'guild_id', fallback=None)
@@ -154,7 +181,7 @@ if __name__ == '__main__':
 	discord_additional_notes = config_ini.get('DiscordCfg', 'discord_additional_notes', fallback=None)
 
 	profession_color = config_output.profession_color
-	
+
 	LATEST_VERSION = check_for_update()
 
 	# Ensure output directories exist
@@ -458,6 +485,15 @@ if __name__ == '__main__':
 
 	write_tid_list_to_json(tid_list, args.output_filename)
 
+	if standalone_html_template:
+		from standalone_report import create_standalone_html
+		try:
+			create_standalone_html(standalone_html_template, tid_list, standalone_filename, compress=compress_standalone)
+			print(f"Created standalone HTML report: {standalone_filename} ({os.path.getsize(standalone_filename):,} bytes)")
+		except (OSError, ValueError) as e:
+			print(f"Error: could not create standalone HTML report: {e}", file=sys.stderr)
+			sys.exit(1)
+
 	if team_code_missing:
 		print("Missing team codes: " + str(team_code_missing))
 		print("Please review and add to config.py file")
@@ -481,5 +517,3 @@ if __name__ == '__main__':
 			print("No support professions found")
 		if not webhook_url:
 			print("No webhook URL found")
-
-	
