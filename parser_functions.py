@@ -1526,6 +1526,8 @@ def get_stat_by_target_and_skill(fight_num: int, player: dict, stat_category: st
 		if target[0]:
 			for skill in target[0]:
 				skill_id = skill['id']
+				if skill_id in siege_skills:
+					continue
 
 				if skill_id not in top_stats['player'][name_prof][stat_category]:
 					top_stats['player'][name_prof][stat_category][skill_id] = {}
