@@ -437,9 +437,9 @@ def build_fight_summary(top_stats: dict, fight_data_charts, caption: str, tid_da
 	header = "|thead-dark table-caption-top table-hover|k\n"
 	header += f"| {caption} |c\n"
 	if fight_data_charts:
-		header += "|!# |!Fight Link | !Duration | !Squad | !Allies | !Enemy | !R/G/B | !{{DownedEnemy}} | !{{killed}} | !{{DownedAlly}} | ![img width=24 [Rallies|https://wiki.guildwars2.com/images/6/6e/Renown_Heart_%28map_icon%29.png]] | !{{DeadAlly}} | !{{Damage}} | !{{Damage Taken}} | !{{damageBarrier}} | !{{damageBarrier}} % | !{{damageShield}} | !{{damageShield}} % |!Fight Chart|h"
+		header += "|!# |!Fight Link | !Duration | !Squad | !Allies | !Enemy | !R/G/B | !{{DownedEnemy}} | !{{killed}} | !{{DownedAlly}} | !{{DeadAlly}} | !{{Damage}} | !{{Damage Taken}} | !{{damageBarrier}} | !{{damageBarrier}} % | !{{damageShield}} | !{{damageShield}} % |!Fight Chart|h"
 	else:
-		header += "|!# |!Fight Link | !Duration | !Squad | !Allies | !Enemy | !R/G/B | !{{DownedEnemy}} | !{{killed}} | !{{DownedAlly}} | ![img width=24 [Rallies|https://wiki.guildwars2.com/images/6/6e/Renown_Heart_%28map_icon%29.png]] | !{{DeadAlly}} | !{{Damage}} | !{{Damage Taken}} | !{{damageBarrier}} | !{{damageBarrier}} % | !{{damageShield}} | !{{damageShield}} % |h"
+		header += "|!# |!Fight Link | !Duration | !Squad | !Allies | !Enemy | !R/G/B | !{{DownedEnemy}} | !{{killed}} | !{{DownedAlly}} | !{{DeadAlly}} | !{{Damage}} | !{{Damage Taken}} | !{{damageBarrier}} | !{{damageBarrier}} % | !{{damageShield}} | !{{damageShield}} % |h"
 
 	rows.append(header)
 
@@ -455,7 +455,6 @@ def build_fight_summary(top_stats: dict, fight_data_charts, caption: str, tid_da
 	enemy_killed = top_stats['overall']['enemy_killed']
 	squad_down = top_stats['overall']['defenses']['downCount']
 	squad_dead = top_stats['overall']['defenses']['deadCount']
-	total_rallies = top_stats['overall']['rallies']
 	total_damage_out = top_stats['overall']['dpsTargets']['damage']
 	total_damage_in = top_stats['overall']['defenses']['damageTaken']
 	total_barrier_damage = top_stats['overall']['defenses']['damageBarrier']
@@ -485,13 +484,12 @@ def build_fight_summary(top_stats: dict, fight_data_charts, caption: str, tid_da
 		killed = fight_data.get('enemy_killed', 0)
 		def_down = fight_data['defenses'].get('downCount', 0)
 		def_dead = fight_data['defenses'].get('deadCount', 0)
-		rallies = fight_data.get('rallies', 0)
 		dmg_out = fight_data['dpsTargets'].get('damage', 0)
 		def_barrier = fight_data['defenses'].get('damageBarrier', 0)
 		def_barrier_pct = (def_barrier / damage_taken) * 100 if damage_taken > 0 else 0
 		row += f"|{fight_num} |{fight_link} | {fight_data['fight_duration']}| {fight_data['squad_count']} | {fight_data['non_squad_count']} | {fight_data['enemy_count']} "
 		row += f"| {fight_data['enemy_Red']}/{fight_data['enemy_Green']}/{fight_data['enemy_Blue']} | {downed} | {killed} "
-		row += f"| {def_down} | {rallies} | {def_dead} | {dmg_out:,}| {damage_taken:,}"
+		row += f"| {def_down} | {def_dead} | {dmg_out:,}| {damage_taken:,}"
 		row += f"| {def_barrier:,}| {def_barrier_pct:.2f}%| {fight_shield_damage:,}"
 		# Calculate the shield damage percentage
 		shield_damage_pct = (fight_shield_damage / dmg_out) * 100 if dmg_out else 0
@@ -508,9 +506,9 @@ def build_fight_summary(top_stats: dict, fight_data_charts, caption: str, tid_da
 	raid_duration = convert_duration(total_durationMS)
 	# Build the footer
 	if fight_data_charts:
-		footer = f"|Total Fights: {last_fight}|<| {raid_duration}| {avg_squad_count:.1f},,avg,,| {avg_ally_count:.1f},,avg,,| {avg_enemy_count:.1f},,avg,,|     | {enemy_downed} | {enemy_killed} | {squad_down} | {total_rallies} | {squad_dead} | {total_damage_out:,}| {total_damage_in:,}| {total_barrier_damage:,}| {total_barrier_damage_percent:.2f}%| {total_shield_damage:,}| {total_shield_damage_percent:.2f}%| |f"
+		footer = f"|Total Fights: {last_fight}|<| {raid_duration}| {avg_squad_count:.1f},,avg,,| {avg_ally_count:.1f},,avg,,| {avg_enemy_count:.1f},,avg,,|     | {enemy_downed} | {enemy_killed} | {squad_down} | {squad_dead} | {total_damage_out:,}| {total_damage_in:,}| {total_barrier_damage:,}| {total_barrier_damage_percent:.2f}%| {total_shield_damage:,}| {total_shield_damage_percent:.2f}%| |f"
 	else:
-		footer = f"|Total Fights: {last_fight}|<| {raid_duration}| {avg_squad_count:.1f},,avg,,| {avg_ally_count:.1f},,avg,,| {avg_enemy_count:.1f},,avg,,|     | {enemy_downed} | {enemy_killed} | {squad_down} | {total_rallies} | {squad_dead} | {total_damage_out:,}| {total_damage_in:,}| {total_barrier_damage:,}| {total_barrier_damage_percent:.2f}%| {total_shield_damage:,}| {total_shield_damage_percent:.2f}%|f"
+		footer = f"|Total Fights: {last_fight}|<| {raid_duration}| {avg_squad_count:.1f},,avg,,| {avg_ally_count:.1f},,avg,,| {avg_enemy_count:.1f},,avg,,|     | {enemy_downed} | {enemy_killed} | {squad_down} | {squad_dead} | {total_damage_out:,}| {total_damage_in:,}| {total_barrier_damage:,}| {total_barrier_damage_percent:.2f}%| {total_shield_damage:,}| {total_shield_damage_percent:.2f}%|f"
 	rows.append(footer)
 	rows.append("\n\n</div>")
 	# push the table to tid_list
