@@ -2992,7 +2992,7 @@ def build_top_damage_by_skill(total_damage_taken: dict, target_damage_dist: dict
 
 	# Header for damage output table
 	header = "|thead-dark table-caption-top-left table-hover table-center sortable|k\n"
-	header += "|!Skill Name | !Damage | !Down Contrib | !% of Total|h"
+	header += "|!Skill Name | !Damage | !Down Contrib | !Connected Hits | !% of Total|h"
 	rows.append(header)
 	
 	# Populate the table with top 25 skills by damage output
@@ -3002,7 +3002,7 @@ def build_top_damage_by_skill(total_damage_taken: dict, target_damage_dist: dict
 			skill_icon = skill_data.get(f"s{skill_id}", {}).get("icon", buff_data.get(f"b{skill_id}", {}).get("icon", ""))
 			entry = f"[img width=24 [{skill_name}|{skill_icon}]]-{skill_name}"
 			down_contrib = skill.get("downContribution", 0)
-			row = f"|{entry} | {skill['totalDamage']:,.0f} | {down_contrib:,.0f} | {skill['totalDamage']/total_damage_distributed_value*100:,.1f}% |"
+			row = f"|{entry} | {skill['totalDamage']:,.0f} | {down_contrib:,.0f} | {skill['connectedHits']:,.0f} | {skill['totalDamage']/total_damage_distributed_value*100:,.1f}% |"
 			rows.append(row)
 
 	rows.append(f"| Squad Damage Output |c")
@@ -3010,7 +3010,7 @@ def build_top_damage_by_skill(total_damage_taken: dict, target_damage_dist: dict
 
 	# Header for damage taken table
 	header = "|thead-dark table-caption-top-left table-hover table-center sortable|k\n"
-	header += "|!Skill Name | !Damage | !% of Total|h"
+	header += "|!Skill Name | !Damage | !Connected Hits | !% of Total|h"
 	rows.append(header)
 
 	# Populate the table with top 25 skills by damage taken
@@ -3019,7 +3019,7 @@ def build_top_damage_by_skill(total_damage_taken: dict, target_damage_dist: dict
 			skill_name = skill_data.get(f"s{skill_id}", {}).get("name", buff_data.get(f"b{skill_id}", {}).get("name", ""))
 			skill_icon = skill_data.get(f"s{skill_id}", {}).get("icon", buff_data.get(f"b{skill_id}", {}).get("icon", ""))
 			entry = f"[img width=24 [{skill_name}|{skill_icon}]]-{skill_name}"
-			row = f"|{entry} | {skill['totalDamage']:,.0f} | {skill['totalDamage']/total_damage_taken_value*100:,.1f}% |"
+			row = f"|{entry} | {skill['totalDamage']:,.0f} | {skill['connectedHits']:,.0f} | {skill['totalDamage']/total_damage_taken_value*100:,.1f}% |"
 			rows.append(row)
 
 	rows.append(f"| Enemy Damage Output |c")
