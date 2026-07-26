@@ -2053,11 +2053,15 @@ def build_combat_resurrection_stats_tid(top_stats: dict, skill_data: dict, buff_
 		'players': {}
 		}
 
+	Downed_Healing_Skills = config.downed_healing_skills
+
 	for player, player_data in top_stats['player'].items():
 		prof_name = player_data['profession'] + '|' + player_data['name'] + '|' + str(player_data['account']) + '|' + str(player_data['last_party']) + '|' + str(player_data['active_time'])
 		if 'skills' in player_data['extHealingStats']:
 
 			for skill in player_data['extHealingStats']['skills']:
+				if skill not in Downed_Healing_Skills:
+					continue
 
 				if 'downedHealing' in player_data['extHealingStats']['skills'][skill]:
 					if player_data['extHealingStats']['skills'][skill]['downedHealing'] > 0:

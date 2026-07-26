@@ -190,3 +190,42 @@ siege_skill_ids = [
     *golem_skills, 
     *ebg_lord,   
 ]
+
+downed_healing_skills = [
+    's1066', #Ress
+    #Weapon skills
+    's5681', #Geyser — Staff, with Arcane Resurrection
+    #Healing skills
+    's10670', #Well of Blood — Well, with Ritual of Life
+    's10527', #Well of Blood — Well, with Ritual of Life
+    #Utility skills
+    's9246', #Merciful Intervention — Meditation
+    's34309', #"Search and Rescue!" — Command
+    's10302', #Feedback — Glamour, with Medic's Feedback
+    's13117', #Shadow Refuge — Deception
+    's5570', #Signet of Water — Signet
+    #Elite skills
+    's55046',
+    's55024', #Glyph of the Stars — Glyph
+    #Profession mechanics
+    's5867',
+    's6091', #Toss Elixir R — Elixir, Tool belt
+    #Function Gyro — Tool belt
+    's49123', #Unstable Artifact — Stolen skill
+    's1175', #Bandage
+    's29547', #Bandage Blast
+    #Skills that instantly revive
+    's9163', 
+    's9243', #Signet of Mercy — Signet — 1 ally
+    #Glyph of Renewal — Glyph
+    's24407', #Renewal of Fire — 1 ally, and self upon next down
+    's24410', #Renewal of Water — 1 ally, with full health
+    's24409', #Renewal of Air — 1 ally, and teleports to you
+    's24411', #Renewal of Earth — 3 allies
+    's10611', #Signet of Undeath — Signet — 1 ally
+    #Elite skills
+    's144119', #Battle Standard — Banner — 5 allies (3 in WvW)
+    #Spirit of Nature — Spirit
+    's12601', #Nature's Renewal — 5 allies (2 in WvW)
+    's69336', #Nature's Vengeance    
+]
