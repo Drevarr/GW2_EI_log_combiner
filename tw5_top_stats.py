@@ -409,7 +409,7 @@ if __name__ == '__main__':
 
 	build_squad_healthpct_table(health_data, tid_date_time, tid_list)
 
-	build_top_damage_by_skill(top_stats['overall']['totalDamageTaken'], top_stats['overall']['targetDamageDist'], skill_data, buff_data, "Top Damage By Skill", tid_date_time)
+	build_top_damage_by_skill(top_stats['skill_casts_by_enemy'], top_stats['skill_casts_by_role'], top_stats['overall']['totalDamageTaken'], top_stats['overall']['targetDamageDist'], skill_data, buff_data, "Top Damage By Skill", tid_date_time)
 
 
 	#build_damage_outgoing_by_player_skill_tids

@@ -1345,6 +1345,64 @@ def get_personal_buff_data(personal_buffs: dict) -> None:
 			if normalized not in personal_buff_data["total"]:
 				personal_buff_data["total"].append(normalized)
 
+
+def get_skill_cast_by_enemy_prof(targets: dict) -> None:
+	"""
+	Add enemy skill casts by profession to top_stats dictionary
+
+	Args:
+		targets (dict): The targets dictionary.
+	"""
+
+	for target in targets:
+		if target["isFake"]:
+			continue
+
+		if target['enemyPlayer'] and "rotation" in target:
+			profession, name_prof = target['name'].split()
+			active_time = (target["firstAware"] - target["lastAware"]) / 1000
+	
+			if 'skill_casts_by_enemy' not in top_stats:
+				top_stats['skill_casts_by_enemy'] = {}
+
+			if profession not in top_stats['skill_casts_by_enemy']:
+				top_stats['skill_casts_by_enemy'][profession] = {
+					'total': {}
+				}
+
+			if name_prof not in top_stats['skill_casts_by_enemy'][profession]:
+				top_stats['skill_casts_by_enemy'][profession][name_prof] = {
+					'ActiveTime': 0,
+					'total': 0,
+					'total_no_auto': 0,
+					'total_no_auto_no_proc': 0,
+					'Skills': {}
+				}
+
+			top_stats['skill_casts_by_enemy'][profession][name_prof]['ActiveTime'] += active_time
+
+			for skill in target["rotation" ]:
+				skill_id = 's'+str(skill['id'])
+				cast_count = len(skill['skills'])
+
+				top_stats['skill_casts_by_enemy'][profession][name_prof]['total'] += cast_count
+				
+				if not skill_data[skill_id]['auto'] and not skill_data[skill_id]['isProc']:
+					top_stats['skill_casts_by_enemy'][profession][name_prof]['total_no_auto_no_proc'] += cast_count
+
+				if not skill_data[skill_id]['auto']:
+					top_stats['skill_casts_by_enemy'][profession][name_prof]['total_no_auto'] += cast_count
+					
+				if skill_id not in top_stats['skill_casts_by_enemy'][profession][name_prof]['Skills']:
+					top_stats['skill_casts_by_enemy'][profession][name_prof]['Skills'][skill_id] = 0
+				if skill_id not in top_stats['skill_casts_by_enemy'][profession]['total']:
+					top_stats['skill_casts_by_enemy'][profession]['total'][skill_id] = 0
+
+				top_stats['skill_casts_by_enemy'][profession]['total'][skill_id] += cast_count
+				top_stats['skill_casts_by_enemy'][profession][name_prof]['Skills'][skill_id] = top_stats['skill_casts_by_enemy'][profession][name_prof]['Skills'].get(skill_id, 0) + cast_count
+
+
+
 def get_enemies_by_fight(fight_num: int, targets: dict) -> None:
 	"""
 	Organize targets by enemy for a fight.
@@ -3032,6 +3090,11 @@ def parse_file(file_path, fight_num, guild_data, fight_data_charts, blacklist):
 	#collect skill data
 	get_skills_data(skill_map) 
 
+
+	#collect enemy skill casts from rotation
+	get_skill_cast_by_enemy_prof(targets)
+
+	
 	#collect damage mods data
 	get_personal_mod_data(personal_damage_mods)
 	get_damage_mods_data(damage_mod_map, personal_damage_mod_data)

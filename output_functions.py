@@ -141,6 +141,14 @@ def calculate_average_squad_count(fight_data: dict) -> tuple:
 
 	return avg_squad_count, avg_ally_count, avg_enemy_count
 
+
+def get_total_cast_count(skill_cast_by_role, skill):
+    return sum(
+        skill_cast_by_role[profession].get("total", {}).get(f"s{skill}", 0)
+        for profession in skill_cast_by_role
+    )
+
+
 def extract_gear_buffs_and_skills(buff_data: dict, skill_data: dict) -> tuple:
 	"""
 	Extract gear buffs and skills from the top stats data.
@@ -2958,7 +2966,7 @@ def build_minions_tid(minions: dict, players: dict, skill_data: dict, caption: s
 			tid_list
 		)
 
-def build_top_damage_by_skill(total_damage_taken: dict, target_damage_dist: dict, skill_data: dict, buff_data: dict, caption: str, tid_date_time: str) -> None:
+def build_top_damage_by_skill(skill_casts_by_enemy: dict, skill_cast_by_role: dict, total_damage_taken: dict, target_damage_dist: dict, skill_data: dict, buff_data: dict, caption: str, tid_date_time: str) -> None:
 	"""
 	Builds a table of top damage by skill.
 
@@ -2983,7 +2991,7 @@ def build_top_damage_by_skill(total_damage_taken: dict, target_damage_dist: dict
 
 	# Prepare HTML rows for the table
 	rows = []
-	
+	rows.append("\n!!!@@ Note: Enemy Total Casts may be inaccurate, it is based on data available in target['rotation'].@@\n\n")
 	rows.append('<div style="overflow-y: auto; width: 100%; overflow-x:auto;">\n\n')
 	rows.append("|thead-dark table-borderless w-75 table-center|k")
 	rows.append("|!Top 25 Skills by Damage Output|")
@@ -2992,17 +3000,18 @@ def build_top_damage_by_skill(total_damage_taken: dict, target_damage_dist: dict
 
 	# Header for damage output table
 	header = "|thead-dark table-caption-top-left table-hover table-center sortable|k\n"
-	header += "|!Skill Name | !Damage | !Down Contrib | !Connected Hits | !% of Total|h"
+	header += "|!Skill Name | !Damage | !Down Contrib | !Total Casts | !Connected Hits | !% of Total|h"
 	rows.append(header)
 	
 	# Populate the table with top 25 skills by damage output
 	for i, (skill_id, skill) in enumerate(sorted_target_damage_dist.items()):
 		if i < 25 and total_damage_distributed_value > 0:
+			total_casts = get_total_cast_count(skill_cast_by_role, skill_id)
 			skill_name = skill_data.get(f"s{skill_id}", {}).get("name", buff_data.get(f"b{skill_id}", {}).get("name", ""))
 			skill_icon = skill_data.get(f"s{skill_id}", {}).get("icon", buff_data.get(f"b{skill_id}", {}).get("icon", ""))
 			entry = f"[img width=24 [{skill_name}|{skill_icon}]]-{skill_name}"
 			down_contrib = skill.get("downContribution", 0)
-			row = f"|{entry} | {skill['totalDamage']:,.0f} | {down_contrib:,.0f} | {skill['connectedHits']:,.0f} | {skill['totalDamage']/total_damage_distributed_value*100:,.1f}% |"
+			row = f"|{entry} | {skill['totalDamage']:,.0f} | {down_contrib:,.0f} | {total_casts} | {skill['connectedHits']:,.0f} | {skill['totalDamage']/total_damage_distributed_value*100:,.1f}% |"
 			rows.append(row)
 
 	rows.append(f"| Squad Damage Output |c")
@@ -3010,16 +3019,17 @@ def build_top_damage_by_skill(total_damage_taken: dict, target_damage_dist: dict
 
 	# Header for damage taken table
 	header = "|thead-dark table-caption-top-left table-hover table-center sortable|k\n"
-	header += "|!Skill Name | !Damage | !Connected Hits | !% of Total|h"
+	header += "|!Skill Name | !Damage | !Total Casts | !Connected Hits | !% of Total|h"
 	rows.append(header)
 
 	# Populate the table with top 25 skills by damage taken
 	for i, (skill_id, skill) in enumerate(sorted_total_damage_taken.items()):
 		if i < 25:
+			enemy_total_casts = get_total_cast_count(skill_casts_by_enemy, skill_id)
 			skill_name = skill_data.get(f"s{skill_id}", {}).get("name", buff_data.get(f"b{skill_id}", {}).get("name", ""))
 			skill_icon = skill_data.get(f"s{skill_id}", {}).get("icon", buff_data.get(f"b{skill_id}", {}).get("icon", ""))
 			entry = f"[img width=24 [{skill_name}|{skill_icon}]]-{skill_name}"
-			row = f"|{entry} | {skill['totalDamage']:,.0f} | {skill['connectedHits']:,.0f} | {skill['totalDamage']/total_damage_taken_value*100:,.1f}% |"
+			row = f"|{entry} | {skill['totalDamage']:,.0f} | {enemy_total_casts} |  {skill['connectedHits']:,.0f} | {skill['totalDamage']/total_damage_taken_value*100:,.1f}% |"
 			rows.append(row)
 
 	rows.append(f"| Enemy Damage Output |c")
@@ -6184,6 +6194,7 @@ def output_top_stats_json(top_stats: dict, buff_data: dict, skill_data: dict, da
 	json_dict["skill_data"] = {key: value for key, value in skill_data.items()}
 	json_dict["damage_mod_data"] = {key: value for key, value in damage_mod_data.items()}
 	json_dict["skill_casts_by_role"] = {key: value for key, value in top_stats["skill_casts_by_role"].items()}
+	json_dict["skill_casts_by_enemy"] = {key: value for key, value in top_stats["skill_casts_by_enemy"].items()}
 	json_dict["high_scores"] = {key: value for key, value in high_scores.items()}    
 	json_dict["personal_damage_mod_data"] = {key: value for key, value in personal_damage_mod_data.items()}
 	json_dict['personal_buff_data'] = {key: value for key, value in personal_buff_data.items()}
