@@ -163,11 +163,11 @@ pull_skills = [
     "s43532",   #Magebane Tether
     ]
 
-arrow_cart_skill_ids = [18850, 18853, 18855, 18860, 18862, 18865, 18867, 18869, 18872]
-trebuchet_skill_ids = [21037, 21038]
-balista_skill_ids = [14622, 14654, 41540]
+arrow_cart_skill_ids = [18849, 18850, 18852, 18853, 18847, 18854, 18855, 18860, 18861, 18862, 18864, 18865, 18866, 18867, 18869, 18872]
+trebuchet_skill_ids = [21005, 21015, 21025, 21034, 21037, 21038]
+balista_skill_ids = [14622, 14654, 18565, 18569, 18573, 19571, 41540]
 catapult_skill_ids = [20242, 20254, 20272,20285]
-cannon_skill_ids = [14626, 14658, 14659, 18535, 18531, 18533, 18543, 18580, 19626]
+cannon_skill_ids = [14626, 14658, 14659, 18535, 18531, 18533, 18535, 18543, 18580, 19626]
 burning_oil_skill_ids = [14605, 14648, 18887]
 dragon_banner_skill_ids = [32980, 31968, 33232]
 ebg_lord = [3837]
@@ -218,9 +218,13 @@ downed_healing_skills = [
     's9163', 
     's9243', #Signet of Mercy — Signet — 1 ally
     #Glyph of Renewal — Glyph
+    's5762' #Renewal of Water — 1 ally, with full health
     's24407', #Renewal of Fire — 1 ally, and self upon next down
+    's5763', #Renewal of Water — 1 ally, with full health
     's24410', #Renewal of Water — 1 ally, with full health
+    's5760',  #Renewal of Air — 1 ally, and teleports to you
     's24409', #Renewal of Air — 1 ally, and teleports to you
+    's5761', #Renewal of Earth — 3 allies
     's24411', #Renewal of Earth — 3 allies
     's10611', #Signet of Undeath — Signet — 1 ally
     #Elite skills
