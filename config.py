@@ -194,6 +194,7 @@ siege_skill_ids = [
 downed_healing_skills = [
     's1066', #Ress
     #Weapon skills
+    's5782', #Geyser — Staff, with Arcane Resurrection
     's5681', #Geyser — Staff, with Arcane Resurrection
     #Healing skills
     's10670', #Well of Blood — Well, with Ritual of Life
