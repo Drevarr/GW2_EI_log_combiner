@@ -229,7 +229,7 @@ downed_healing_skills = [
     's24411', #Renewal of Earth — 3 allies
     's10611', #Signet of Undeath — Signet — 1 ally
     #Elite skills
-    's144119', #Battle Standard — Banner — 5 allies (3 in WvW)
+    's14419', #Battle Standard — Banner — 5 allies (3 in WvW)
     #Spirit of Nature — Spirit
     's12601', #Nature's Renewal — 5 allies (2 in WvW)
     's69336', #Nature's Vengeance    
