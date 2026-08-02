@@ -431,6 +431,7 @@ def build_fight_summary(top_stats: dict, fight_data_charts, caption: str, tid_da
 		- Barrier percentage
 		- Shield damage
 		- Shield percentage
+		- Log POV
 
 	Args:
 		top_stats (dict): The top_stats dictionary containing the overall stats.
@@ -445,9 +446,9 @@ def build_fight_summary(top_stats: dict, fight_data_charts, caption: str, tid_da
 	header = "|thead-dark table-caption-top table-hover|k\n"
 	header += f"| {caption} |c\n"
 	if fight_data_charts:
-		header += "|!# |!Fight Link | !Duration | !Squad | !Allies | !Enemy | !R/G/B | !{{DownedEnemy}} | !{{killed}} | !{{DownedAlly}} | !{{DeadAlly}} | !{{Damage}} | !{{Damage Taken}} | !{{damageBarrier}} | !{{damageBarrier}} % | !{{damageShield}} | !{{damageShield}} % |!Fight Chart|h"
+		header += "|!# |!Fight Link | !Duration | !Squad | !Allies | !Enemy | !R/G/B | !{{DownedEnemy}} | !{{killed}} | !{{DownedAlly}} | !{{DeadAlly}} | !{{Damage}} | !{{Damage Taken}} | !{{damageBarrier}} | !{{damageBarrier}} % | !{{damageShield}} | !{{damageShield}} % |Log POV|!Fight Chart|h"
 	else:
-		header += "|!# |!Fight Link | !Duration | !Squad | !Allies | !Enemy | !R/G/B | !{{DownedEnemy}} | !{{killed}} | !{{DownedAlly}} | !{{DeadAlly}} | !{{Damage}} | !{{Damage Taken}} | !{{damageBarrier}} | !{{damageBarrier}} % | !{{damageShield}} | !{{damageShield}} % |h"
+		header += "|!# |!Fight Link | !Duration | !Squad | !Allies | !Enemy | !R/G/B | !{{DownedEnemy}} | !{{killed}} | !{{DownedAlly}} | !{{DeadAlly}} | !{{Damage}} | !{{Damage Taken}} | !{{damageBarrier}} | !{{damageBarrier}} % | !{{damageShield}} | !{{damageShield}} % |Log POV|h"
 
 	rows.append(header)
 
@@ -495,13 +496,17 @@ def build_fight_summary(top_stats: dict, fight_data_charts, caption: str, tid_da
 		dmg_out = fight_data['dpsTargets'].get('damage', 0)
 		def_barrier = fight_data['defenses'].get('damageBarrier', 0)
 		def_barrier_pct = (def_barrier / damage_taken) * 100 if damage_taken > 0 else 0
+		recordedAccountBy = fight_data['recordedAccountBy']
+		recorded_by = fight_data['recorded_by'][:20]
+		log_POV = f'<span data-tooltip="{recordedAccountBy}">{recorded_by}</span>'
 		row += f"|{fight_num} |{fight_link} | {fight_data['fight_duration']}| {fight_data['squad_count']} | {fight_data['non_squad_count']} | {fight_data['enemy_count']} "
 		row += f"| {fight_data['enemy_Red']}/{fight_data['enemy_Green']}/{fight_data['enemy_Blue']} | {downed} | {killed} "
 		row += f"| {def_down} | {def_dead} | {dmg_out:,}| {damage_taken:,}"
 		row += f"| {def_barrier:,}| {def_barrier_pct:.2f}%| {fight_shield_damage:,}"
 		# Calculate the shield damage percentage
 		shield_damage_pct = (fight_shield_damage / dmg_out) * 100 if dmg_out else 0
-		row += f"| {shield_damage_pct:.2f}%|"
+		row += f"| {shield_damage_pct:.2f}%"
+		row += f"| {log_POV}|"		
 		if fight_data_charts:
 			row += f"[[F-{fight_num} Chart|{tid_date_time}_Fight_{str(fight_num).zfill(2)}_Damage_Output_Review]]|"
 
@@ -514,9 +519,9 @@ def build_fight_summary(top_stats: dict, fight_data_charts, caption: str, tid_da
 	raid_duration = convert_duration(total_durationMS)
 	# Build the footer
 	if fight_data_charts:
-		footer = f"|Total Fights: {last_fight}|<| {raid_duration}| {avg_squad_count:.1f},,avg,,| {avg_ally_count:.1f},,avg,,| {avg_enemy_count:.1f},,avg,,|     | {enemy_downed} | {enemy_killed} | {squad_down} | {squad_dead} | {total_damage_out:,}| {total_damage_in:,}| {total_barrier_damage:,}| {total_barrier_damage_percent:.2f}%| {total_shield_damage:,}| {total_shield_damage_percent:.2f}%| |f"
+		footer = f"|Total Fights: {last_fight}|<| {raid_duration}| {avg_squad_count:.1f},,avg,,| {avg_ally_count:.1f},,avg,,| {avg_enemy_count:.1f},,avg,,|     | {enemy_downed} | {enemy_killed} | {squad_down} | {squad_dead} | {total_damage_out:,}| {total_damage_in:,}| {total_barrier_damage:,}| {total_barrier_damage_percent:.2f}%| {total_shield_damage:,}| {total_shield_damage_percent:.2f}%| | |f"
 	else:
-		footer = f"|Total Fights: {last_fight}|<| {raid_duration}| {avg_squad_count:.1f},,avg,,| {avg_ally_count:.1f},,avg,,| {avg_enemy_count:.1f},,avg,,|     | {enemy_downed} | {enemy_killed} | {squad_down} | {squad_dead} | {total_damage_out:,}| {total_damage_in:,}| {total_barrier_damage:,}| {total_barrier_damage_percent:.2f}%| {total_shield_damage:,}| {total_shield_damage_percent:.2f}%|f"
+		footer = f"|Total Fights: {last_fight}|<| {raid_duration}| {avg_squad_count:.1f},,avg,,| {avg_ally_count:.1f},,avg,,| {avg_enemy_count:.1f},,avg,,|     | {enemy_downed} | {enemy_killed} | {squad_down} | {squad_dead} | {total_damage_out:,}| {total_damage_in:,}| {total_barrier_damage:,}| {total_barrier_damage_percent:.2f}%| {total_shield_damage:,}| {total_shield_damage_percent:.2f}%| |f"
 	rows.append(footer)
 	rows.append("\n\n</div>")
 	# push the table to tid_list

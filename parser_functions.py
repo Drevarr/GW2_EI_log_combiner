@@ -1527,7 +1527,7 @@ def get_stat_by_key(fight_num: int, player: dict, stat_category: str, name_prof:
 	active_time_seconds = player['activeTimes'][0] / 1000 if player['activeTimes'] else 0
 
 	for stat, value in player_stats.items():
-		if stat in ['boonStripsTime', 'condiCleanseTime', 'condiCleanseTimeSelf'] and value > 999999:
+		if stat in ['boonStripsTime', 'condiCleanseTime', 'condiCleanseTimeSelf', 'boonStripDownContributionTime'] and value > 999999:
 			value = 0
 		if stat in ['distToCom', 'stackDist'] and value == "Infinity":
 			print(f"Invalid stat: {stat} with value: {value} for player: {player['name']}. The log for fight {fight_num} needs review.")
@@ -3036,6 +3036,8 @@ def parse_file(file_path, fight_num, guild_data, fight_data_charts, blacklist):
 	fight_duration_ms = json_data['durationMS']
 	fight_name = json_data['fightName']
 	fight_link = json_data['uploadLinks'][0]
+	recorded_by = json_data['recordedBy']
+	recorded_by_account = json_data['recordedAccountBy']
 	dist_to_com = []
 	player_in_combat = 0
 
@@ -3067,6 +3069,8 @@ def parse_file(file_path, fight_num, guild_data, fight_data_charts, blacklist):
 		'enemy_Blue': 0,
 		'enemy_Unk': 0,
 		'rallies': 0,
+		'recordedAccountBy': recorded_by_account,
+		'recorded_by': recorded_by,
 	}
 
 	for stat_cat in json_stats:
