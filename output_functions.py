@@ -3552,7 +3552,7 @@ def build_utility_bubble_chart(top_stats: dict, boons: dict, weights: dict, tid_
 	chart_xData = "Strips/Sec"
 	chart_yData = "Condition Score"
 
-	data_header = ["Name", "Profession", "Strips/Sec", "Condition Score", "Boon Score", "color"]
+	data_header = ["Name", "Profession", "Strips/Sec", "Condition Score", "Crowd Control", "color"]
 	chart_data.append(data_header)
 
 	for player, player_data in top_stats['player'].items():
@@ -3574,26 +3574,21 @@ def build_utility_bubble_chart(top_stats: dict, boons: dict, weights: dict, tid_
 		cps = round(cps, 2)
 		player_entry = [name, profession, xdata, cps]
 
-		boon_ps = 0
-		for boon in boons:
-			if boon in player_data["squadBuffs"] and player_data["squadBuffs"][boon]["generation"] > 0:
-				boon_name = boons[boon]['name'].lower()
-				boon_wt = float(weights["Boon_Weights"].get(boon_name, 0))
-				generated = (player_data["squadBuffs"][boon]["generation"] / 1000) * boon_wt
-				boon_ps += round(generated / fight_time, 2)
-		player_entry.append(round(boon_ps, 2))
+		CC_score = player_data['statsTargets'].get('appliedCrowdControl', 0)
 
-		if boon_ps > chart_max:
-			chart_max = boon_ps
-		if boon_ps < chart_min:
-			chart_min = boon_ps
+		player_entry.append(CC_score)
+
+		if CC_score > chart_max:
+			chart_max = CC_score
+		if CC_score < chart_min:
+			chart_min = CC_score
 		player_color = profession_colors[profession]
 		player_entry.append(player_color)
 
 		chart_data.append(player_entry)
 
 	text = "__''Utility Bubble Chart''__\n"
-	text += "\n,,Bubble size based on boon score,,\n\n"
+	text += "\n,,Bubble size based on Crowd Control score,,\n\n"
 	text += "{{"+f"{tid_date_time}-Utility-Bubble-Chart||BubbleChart_Template"+"}}"
 
 	append_tid_for_output(
