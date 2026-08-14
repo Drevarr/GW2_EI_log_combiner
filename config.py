@@ -201,6 +201,7 @@ downed_healing_skills = [
     's10527', #Well of Blood — Well, with Ritual of Life
     #Utility skills
     's9246', #Merciful Intervention — Meditation
+    's1196', #triggered by Search and Rescue
     's34309', #"Search and Rescue!" — Command
     's10302', #Feedback — Glamour, with Medic's Feedback
     's13117', #Shadow Refuge — Deception
