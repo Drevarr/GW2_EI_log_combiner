@@ -153,6 +153,7 @@ pull_skills = [
     "s5602",    #Whirlpool
     "s30359",   #Gravity Well
     "s33134",   #"Hunter's Verdict"
+    "s32410",   #HuntersVerdictPull
     "s31048",   #Wild Whirl
     "s41843",   #Prismatic Singularity
     "s43375",   #Prelude Lash
