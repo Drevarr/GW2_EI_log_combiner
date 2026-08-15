@@ -435,6 +435,7 @@ if __name__ == '__main__':
 	build_boon_generation_bar_chart(top_stats, boons, weights, tid_date_time, tid_list)
 	conditions = config_output.buffs_conditions
 	build_condition_generation_bar_chart(top_stats, conditions, weights, tid_date_time, tid_list)
+	build_APM_analysis_bubble_chart(top_stats, buff_data, weights, tid_date_time, tid_list)
 	if chart_mode.lower() == "boxplot":
 		for stat, stat_category in config_output.support_table.items():
 			render_boxplot_echart(stats_per_fight, stat_category, stat, profession_color, tid_date_time, tid_list)

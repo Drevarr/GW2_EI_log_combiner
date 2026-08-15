@@ -2311,7 +2311,7 @@ def build_dashboard_menu_tid(datetime: str) -> None:
 	caption = "Dashboard"
 	creator = "Drevarr@github.com"
 
-	text = (f"<<tabs '[[{datetime}-Support-Bubble-Chart]] [[{datetime}-DPS-Bubble-Chart]] [[{datetime}-Utility-Bubble-Chart]] [[{datetime}-Total-Squad-Boon-Generation]] [[{datetime}-Total-Condition-Output-Generation]]' "
+	text = (f"<<tabs '[[{datetime}-Support-Bubble-Chart]] [[{datetime}-DPS-Bubble-Chart]] [[{datetime}-Utility-Bubble-Chart]] [[{datetime}-Total-Squad-Boon-Generation]] [[{datetime}-Total-Condition-Output-Generation]] [[{datetime}-APM-Analysis-Bubble-Chart]]' "
 			f"'{datetime}-Support-Bubble-Chart' '$:/temp/tab1'>>")
 
 	append_tid_for_output(
@@ -4221,6 +4221,1043 @@ def render_boxplot_echart(StatsPerFight, stat_category, stat_name, profession_co
 	tid_list
 	)    
 
+def build_APM_analysis_bubble_chart(top_stats: dict, boons: dict, weights: dict, tid_date_time: str, tid_list: list) -> None:
+	apm_all_players = []
+	tid_title = f"{tid_date_time}-APM-Analysis-Bubble-Chart"
+	tid_caption = "Actions Per Minute Analysis"
+	tid_tags = tid_date_time
+	creator = "Drevarr@github.com"
+	
+	for player, player_data in top_stats['player'].items():
+		player_apm_data = {}
+		player_active_time = round(int(player_data['active_time'])/1000,2)
+		if player_active_time == 0:
+			continue
+
+		name = player_data['name']
+		profession = player_data['profession']
+		prof_name = "{{"+profession+"}} - "+name
+		account = player_data['account']
+		name_prof_acct = name+"|"+profession+"|"+account
+		boon_ps=0
+		for boon in boons:
+			if boon in player_data["squadBuffs"] and player_data["squadBuffs"][boon]["generation"] > 0:
+				boon_name = boons[boon]['name'].lower()
+				boon_wt = float(weights["Boon_Weights"].get(boon_name, 0))
+				generated = (player_data["squadBuffs"][boon]["generation"] / 1000) * boon_wt
+				boon_ps += round(generated / player_active_time, 2)
+					
+		player_apm_data = {
+			"prof_name": prof_name,
+			"Player": name,
+			"Profession": profession,
+			"ActiveTime": player_active_time,
+			"ActionsPerMinute": round(top_stats["skill_casts_by_role"][profession][name_prof_acct].get("total_no_auto_no_proc",0)/(player_active_time/60),2),
+			"BoonScore": boon_ps,
+			"Strips": player_data["support"]["boonStrips"],
+			"Cleanses": player_data["support"]["condiCleanse"] + player_data["support"]["condiCleanseSelf"],
+			"CrowdControl": player_data["statsTargets"]["appliedCrowdControl"],
+			"DamagePerSec": round(player_data["statsTargets"]["totalDmg"]/player_active_time,2),
+			"downContribution": round(player_data["statsTargets"]["downContribution"]/player_active_time,2),
+			"HealingBarrier": round((player_data["extHealingStats"].get("squad_healing",0) + player_data["extBarrierStats"].get("squad_barrier",0))/player_active_time,2),
+		}
+		apm_all_players.append(player_apm_data)
+
+	players_js = json.dumps(apm_all_players, ensure_ascii=False, indent=2)
+	chart_text = f"""
+<div id="wvw-apm-chart-container">
+
+<style>
+#wvw-apm-chart-container {{
+    width: 100%;
+}}
+
+#wvw-apm-controls {{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 8px;
+    padding: 8px 12px;
+}}
+
+#wvw-apm-controls label {{
+    font-weight: bold;
+}}
+
+#wvw-apm-controls select {{
+    padding: 4px 8px;
+    min-width: 150px;
+}}
+
+#wvw-apm-chart {{
+    width: 100%;
+    height: 600px;
+}}
+</style>
+
+<div id="wvw-apm-controls">
+
+    <label for="wvw-apm-metric">
+        Metric:
+    </label>
+
+    <select id="wvw-apm-metric">
+        <option value="DamagePerSec">Damage / Sec</option>
+        <option value="BoonScore">Boon Score</option>
+        <option value="Strips">Strips</option>
+        <option value="Cleanses">Cleanses</option>
+        <option value="CrowdControl">Crowd Control</option>
+        <option value="downContribution">Down Contribution</option>
+        <option value="HealingBarrier">Healing + Barrier</option>
+    </select>
+
+
+    <label for="wvw-apm-size">
+        Bubble Size:
+    </label>
+
+    <select id="wvw-apm-size">
+        <option value="ActiveTime">Active Time</option>
+        <option value="DamagePerSec">Damage / Sec</option>
+        <option value="BoonScore">Boon Score</option>
+        <option value="Strips">Strips</option>
+        <option value="Cleanses">Cleanses</option>
+        <option value="CrowdControl">Crowd Control</option>
+        <option value="downContribution">Down Contribution</option>
+        <option value="HealingBarrier">Healing + Barrier</option>
+        <option value="ActionsPerMinute">Actions / Minute</option>
+    </select>
+
+
+    <label for="wvw-apm-profession">
+        Profession:
+    </label>
+
+    <select id="wvw-apm-profession">
+        <option value="All">All Professions</option>
+
+        <option value="Warrior">Warrior</option>
+        <option value="Berserker">Berserker</option>
+        <option value="Spellbreaker">Spellbreaker</option>
+        <option value="Bladesworn">Bladesworn</option>
+        <option value="Paragon">Paragon</option>
+
+        <option value="Guardian">Guardian</option>
+        <option value="Dragonhunter">Dragonhunter</option>
+        <option value="Firebrand">Firebrand</option>
+        <option value="Willbender">Willbender</option>
+        <option value="Luminary">Luminary</option>
+
+        <option value="Revenant">Revenant</option>
+        <option value="Herald">Herald</option>
+        <option value="Renegade">Renegade</option>
+        <option value="Vindicator">Vindicator</option>
+        <option value="Conduit">Conduit</option>
+
+        <option value="Engineer">Engineer</option>
+        <option value="Scrapper">Scrapper</option>
+        <option value="Holosmith">Holosmith</option>
+        <option value="Mechanist">Mechanist</option>
+        <option value="Amalgam">Amalgam</option>
+
+        <option value="Ranger">Ranger</option>
+        <option value="Druid">Druid</option>
+        <option value="Soulbeast">Soulbeast</option>
+        <option value="Untamed">Untamed</option>
+        <option value="Galeshot">Galeshot</option>
+
+        <option value="Thief">Thief</option>
+        <option value="Daredevil">Daredevil</option>
+        <option value="Deadeye">Deadeye</option>
+        <option value="Specter">Specter</option>
+        <option value="Antiquary">Antiquary</option>
+
+        <option value="Elementalist">Elementalist</option>
+        <option value="Tempest">Tempest</option>
+        <option value="Weaver">Weaver</option>
+        <option value="Catalyst">Catalyst</option>
+        <option value="Evoker">Evoker</option>
+
+        <option value="Mesmer">Mesmer</option>
+        <option value="Chronomancer">Chronomancer</option>
+        <option value="Mirage">Mirage</option>
+        <option value="Virtuoso">Virtuoso</option>
+        <option value="Troubadour">Troubadour</option>
+
+        <option value="Necromancer">Necromancer</option>
+        <option value="Reaper">Reaper</option>
+        <option value="Scourge">Scourge</option>
+        <option value="Harbinger">Harbinger</option>
+        <option value="Ritualist">Ritualist</option>
+    </select>
+
+</div>
+
+<$echarts
+$text=```
+
+
+function formatTime(seconds) {{
+
+    const hours = Math.floor(seconds / 3600);
+
+    const minutes =
+        Math.floor((seconds % 3600) / 60);
+
+    const secs =
+        Math.floor(seconds % 60);
+
+    if (hours > 0) {{
+        return `${{hours}}h ${{minutes}}m ${{secs}}s`;
+    }}
+
+    return `${{minutes}}m ${{secs}}s`;
+}}
+
+
+const players = {players_js};
+
+const ProfessionColor = {{
+
+    Warrior: '#FF9933',
+    Berserker: '#FFA750',
+    Spellbreaker: '#FFB66D',
+    Bladesworn: '#FFC48A',
+    Paragon: '#FFD2A7',
+
+    Guardian: '#3399CC',
+    Dragonhunter: '#50A7D3',
+    Firebrand: '#6DB6DA',
+    Willbender: '#8AC4E1',
+    Luminary: '#A7D2E8',
+
+    Revenant: '#CC6342',
+    Herald: '#D3795D',
+    Renegade: '#DA8F78',
+    Vindicator: '#E1A593',
+    Conduit: '#E7B7AE',
+
+    Engineer: '#996633',
+    Scrapper: '#A77B50',
+    Holosmith: '#B6916D',
+    Mechanist: '#C4A78A',
+    Amalgam: '#D2B6A7',
+
+    Ranger: '#66CC33',
+    Druid: '#7BD350',
+    Soulbeast: '#91DA6D',
+    Untamed: '#A7E18A',
+    Galeshot: '#BDE7A7',
+
+    Thief: '#CC6666',
+    Daredevil: '#D37B7B',
+    Deadeye: '#DA9191',
+    Specter: '#E1A7A7',
+    Antiquary: '#E8BDBD',
+
+    Elementalist: '#EC5752',
+    Tempest: '#EE6F6A',
+    Weaver: '#F18783',
+    Catalyst: '#F49F9C',
+    Evoker: '#F6B7B5',
+
+    Mesmer: '#993399',
+    Chronomancer: '#A750A7',
+    Mirage: '#B66DB6',
+    Virtuoso: '#C48AC4',
+    Troubadour: '#D2A7D2',
+
+    Necromancer: '#339966',
+    Reaper: '#50A77B',
+    Scourge: '#6DB691',
+    Harbinger: '#8AC4A7',
+    Ritualist: '#A7D2BD',
+
+    Unknown: '#FFFFFF'
+}};
+
+
+const profession_icons = {{
+
+    Warrior:
+        'https://wiki.guildwars2.com/images/2/28/Warrior_tango_icon_48px.png',
+
+    Berserker:
+        'https://wiki.guildwars2.com/images/7/70/Berserker_tango_icon_48px.png',
+
+    Spellbreaker:
+        'https://wiki.guildwars2.com/images/4/42/Spellbreaker_tango_icon_48px.png',
+
+    Bladesworn:
+        'https://wiki.guildwars2.com/images/f/f8/Bladesworn_tango_icon_48px.png',
+
+    Paragon:
+        'https://wiki.guildwars2.com/images/2/29/Paragon_tango_icon_48px.png',
+
+
+    Guardian:
+        'https://wiki.guildwars2.com/images/5/53/Guardian_tango_icon_48px.png',
+
+    Dragonhunter:
+        'https://wiki.guildwars2.com/images/f/fe/Dragonhunter_tango_icon_48px.png',
+
+    Firebrand:
+        'https://wiki.guildwars2.com/images/f/ff/Firebrand_tango_icon_48px.png',
+
+    Willbender:
+        'https://wiki.guildwars2.com/images/d/dd/Willbender_tango_icon_48px.png',
+
+    Luminary:
+        'https://wiki.guildwars2.com/images/d/d9/Luminary_tango_icon_48px.png',
+
+
+    Revenant:
+        'https://wiki.guildwars2.com/images/5/53/Revenant_tango_icon_48px.png',
+
+    Herald:
+        'https://wiki.guildwars2.com/images/8/8f/Herald_tango_icon_48px.png',
+
+    Renegade:
+        'https://wiki.guildwars2.com/images/4/4c/Renegade_tango_icon_48px.png',
+
+    Vindicator:
+        'https://wiki.guildwars2.com/images/d/dd/Vindicator_tango_icon_48px.png',
+
+    Conduit:
+        'https://wiki.guildwars2.com/images/c/c0/Conduit_tango_icon_48px.png',
+
+
+    Engineer:
+        'https://wiki.guildwars2.com/images/d/dd/Engineer_tango_icon_48px.png',
+
+    Scrapper:
+        'https://wiki.guildwars2.com/images/4/4a/Scrapper_tango_icon_48px.png',
+
+    Holosmith:
+        'https://wiki.guildwars2.com/images/4/4f/Holosmith_tango_icon_48px.png',
+
+    Mechanist:
+        'https://wiki.guildwars2.com/images/f/f5/Mechanist_tango_icon_48px.png',
+
+    Amalgam:
+        'https://wiki.guildwars2.com/images/5/5f/Amalgam_tango_icon_48px.png',
+
+
+    Ranger:
+        'https://wiki.guildwars2.com/images/b/b5/Ranger_tango_icon_48px.png',
+
+    Druid:
+        'https://wiki.guildwars2.com/images/9/91/Druid_tango_icon_48px.png',
+
+    Soulbeast:
+        'https://wiki.guildwars2.com/images/4/4f/Soulbeast_tango_icon_48px.png',
+
+    Untamed:
+        'https://wiki.guildwars2.com/images/9/90/Untamed_tango_icon_48px.png',
+
+    Galeshot:
+        'https://wiki.guildwars2.com/images/6/67/Galeshot_tango_icon_48px.png',
+
+
+    Thief:
+        'https://wiki.guildwars2.com/images/c/cd/Thief_tango_icon_48px.png',
+
+    Daredevil:
+        'https://wiki.guildwars2.com/images/6/61/Daredevil_tango_icon_48px.png',
+
+    Deadeye:
+        'https://wiki.guildwars2.com/images/8/81/Deadeye_tango_icon_48px.png',
+
+    Specter:
+        'https://wiki.guildwars2.com/images/d/d7/Specter_tango_icon_48px.png',
+
+    Antiquary:
+        'https://wiki.guildwars2.com/images/c/ce/Antiquary_tango_icon_48px.png',
+
+
+    Elementalist:
+        'https://wiki.guildwars2.com/images/5/55/Elementalist_tango_icon_48px.png',
+
+    Tempest:
+        'https://wiki.guildwars2.com/images/4/40/Tempest_tango_icon_48px.png',
+
+    Weaver:
+        'https://wiki.guildwars2.com/images/2/2f/Weaver_tango_icon_48px.png',
+
+    Catalyst:
+        'https://wiki.guildwars2.com/images/0/08/Catalyst_tango_icon_48px.png',
+
+    Evoker:
+        'https://wiki.guildwars2.com/images/4/4b/Evoker_tango_icon_48px.png',
+
+
+    Mesmer:
+        'https://wiki.guildwars2.com/images/3/38/Mesmer_tango_icon_48px.png',
+
+    Chronomancer:
+        'https://wiki.guildwars2.com/images/f/f2/Chronomancer_tango_icon_48px.png',
+
+    Mirage:
+        'https://wiki.guildwars2.com/images/9/94/Mirage_tango_icon_48px.png',
+
+    Virtuoso:
+        'https://wiki.guildwars2.com/images/2/21/Virtuoso_tango_icon_48px.png',
+
+    Troubadour:
+        'https://wiki.guildwars2.com/images/3/35/Troubadour_tango_icon_48px.png',
+
+
+    Necromancer:
+        'https://wiki.guildwars2.com/images/e/ea/Necromancer_tango_icon_48px.png',
+
+    Reaper:
+        'https://wiki.guildwars2.com/images/3/39/Reaper_tango_icon_48px.png',
+
+    Scourge:
+        'https://wiki.guildwars2.com/images/4/49/Scourge_tango_icon_48px.png',
+
+    Harbinger:
+        'https://wiki.guildwars2.com/images/e/eb/Harbinger_tango_icon_48px.png',
+
+    Ritualist:
+        'https://wiki.guildwars2.com/images/7/7a/Ritualist_tango_icon_48px.png'
+
+}};
+
+
+const metricNames = {{
+
+    DamagePerSec: 'Damage / Sec',
+    BoonScore: 'Boon Score',
+    Strips: 'Strips',
+    Cleanses: 'Cleanses',
+    CrowdControl: 'Crowd Control',
+    downContribution: 'Down Contribution',
+    HealingBarrier: 'Healing + Barrier'
+
+}};
+
+
+const sizeNames = {{
+
+    ActiveTime: 'Active Time',
+    DamagePerSec: 'Damage / Sec',
+    BoonScore: 'Boon Score',
+    Strips: 'Strips',
+    Cleanses: 'Cleanses',
+    CrowdControl: 'Crowd Control',
+    downContribution: 'Down Contribution',
+    HealingBarrier: 'Healing + Barrier',
+    ActionsPerMinute: 'Actions / Minute'
+
+}};
+
+
+/*
+ * Locate the chart created by the ECharts plugin.
+ */
+
+const container =
+    document.getElementById('wvw-apm-chart-container');
+
+const chartElement =
+    container ?
+        container.querySelector('.echarts') :
+        null;
+
+
+/*
+ * The ECharts plugin may not have created the
+ * chart DOM yet when this code executes.
+ *
+ * Wait until it exists.
+ */
+
+function findChart() {{
+
+    if (!container) {{
+        return null;
+    }}
+
+    const elements =
+        container.querySelectorAll('div');
+
+    for (const element of elements) {{
+
+        const instance =
+            echarts.getInstanceByDom(element);
+
+        if (instance) {{
+            return instance;
+        }}
+    }}
+
+    return null;
+}}
+
+
+function getStats(metric) {{
+
+    return players
+        .map(p => Number(p[metric]))
+        .filter(v => Number.isFinite(v));
+
+}}
+
+
+function getMedian(values) {{
+
+    if (!values.length) {{
+        return 0;
+    }}
+
+    const sorted =
+        [...values].sort((a, b) => a - b);
+
+    const middle =
+        Math.floor(sorted.length / 2);
+
+    if (sorted.length % 2) {{
+        return sorted[middle];
+    }}
+
+    return (sorted[middle - 1] + sorted[middle]) / 2;
+
+}}
+
+
+/*
+ * Convert an arbitrary statistic into a
+ * bubble size between 24 and 60 pixels.
+ */
+
+function getBubbleSize(player, sizeMetric, allPlayers) {{
+
+    const values =
+        allPlayers
+            .map(p => Number(p[sizeMetric]))
+            .filter(v => Number.isFinite(v));
+
+    if (!values.length) {{
+        return 30;
+    }}
+
+    const min =
+        Math.min(...values);
+
+    const max =
+        Math.max(...values);
+
+    const value =
+        Number(player[sizeMetric]);
+
+    if (max === min) {{
+        return 38;
+    }}
+
+    const normalized =
+        (value - min) / (max - min);
+
+    return 24 + normalized * 36;
+
+}}
+
+
+/*
+ * Build the scatter data.
+ */
+
+function buildSeriesData(metric, sizeMetric, profession) {{
+
+    return players
+
+        .filter(player =>
+            profession === 'All' ||
+            player.Profession === profession
+        )
+
+        .map(player => ({{
+
+            name: player.Player,
+
+            value: [
+                player.ActionsPerMinute,
+                player[metric],
+                player[sizeMetric]
+            ],
+
+            symbol:
+                profession_icons[player.Profession]
+                    ? `image://${{profession_icons[player.Profession]}}`
+                    : 'circle',
+
+            symbolSize:
+                getBubbleSize(
+                    player,
+                    sizeMetric,
+                    players
+                ),
+
+            itemStyle: {{
+
+                color:
+                    ProfessionColor[player.Profession]
+                        || '#FFFFFF',
+
+                borderColor: '#FFFFFF',
+
+                borderWidth: 1
+
+            }},
+
+            player: player
+
+        }}));
+
+}}
+
+
+/*
+ * Update the existing ECharts instance.
+ */
+
+function updateChart() {{
+
+    const metricSelect =
+        document.getElementById('wvw-apm-metric');
+
+    const sizeSelect =
+        document.getElementById('wvw-apm-size');
+
+    const professionSelect =
+        document.getElementById('wvw-apm-profession');
+
+
+    if (!metricSelect ||
+        !sizeSelect ||
+        !professionSelect) {{
+
+        return;
+    }}
+
+
+    const metric =
+        metricSelect.value;
+
+    const sizeMetric =
+        sizeSelect.value;
+
+    const profession =
+        professionSelect.value;
+
+
+    const metricName =
+        metricNames[metric] || metric;
+
+    const sizeName =
+        sizeNames[sizeMetric] || sizeMetric;
+
+
+    const filteredPlayers =
+        players.filter(player =>
+            profession === 'All' ||
+            player.Profession === profession
+        );
+
+
+    const seriesData =
+        buildSeriesData(
+            metric,
+            sizeMetric,
+            profession
+        );
+
+
+    const apmValues =
+        filteredPlayers.map(
+            p => p.ActionsPerMinute
+        );
+
+
+    const metricValues =
+        filteredPlayers.map(
+            p => p[metric]
+        );
+
+
+    const medianAPM =
+        getMedian(apmValues);
+
+
+    const medianMetric =
+        getMedian(metricValues);
+
+
+    const chart =
+        findChart();
+
+
+    if (!chart) {{
+        return;
+    }}
+
+
+    chart.setOption({{
+
+        title: {{
+
+            text:
+                `APM vs ${{metricName}}`,
+
+            subtext:
+                `Bubble Size: ${{sizeName}}`,
+
+            left: 'center'
+
+        }},
+
+
+        tooltip: {{
+
+            trigger: 'item',
+
+            formatter: function(params) {{
+
+                const p =
+                    params.data.player;
+
+
+                const selectedValue =
+                    Number(p[metric]);
+
+
+                const sizeValue =
+                    Number(p[sizeMetric]);
+
+
+                return `
+
+                    <div style="min-width:250px">
+
+                        <div style="
+                            display:flex;
+                            align-items:center;
+                            gap:8px;
+                            margin-bottom:8px;
+                        ">
+
+                            <img
+                                src="${{profession_icons[p.Profession]}}"
+                                width="32"
+                                height="32"
+                            >
+
+                            <div>
+
+                                <b>${{p.Player}}</b><br>
+
+                                <span style="
+                                    color:${{ProfessionColor[p.Profession]}}
+                                ">
+                                    ${{p.Profession}}
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <table>
+
+                            <tr>
+                                <td>Active Time:</td>
+                                <td>
+                                    <b>
+                                        ${{formatTime(p.ActiveTime)}}
+                                    </b>
+                                </td>
+                            </tr>
+
+
+                            <tr>
+                                <td>APM:</td>
+                                <td>
+                                    <b>
+                                        ${{p.ActionsPerMinute.toFixed(1)}}
+                                    </b>
+                                </td>
+                            </tr>
+
+
+                            <tr>
+                                <td>${{metricName}}:</td>
+                                <td>
+                                    <b>
+                                        ${{selectedValue.toFixed(1)}}
+                                    </b>
+                                </td>
+                            </tr>
+
+
+                            <tr>
+                                <td>Bubble Size:</td>
+                                <td>
+                                    <b>
+                                        ${{sizeName}}:
+                                        ${{sizeValue.toFixed(1)}}
+                                    </b>
+                                </td>
+                            </tr>
+
+
+                            <tr>
+                                <td>Boon Score:</td>
+                                <td>
+                                    <b>
+                                        ${{p.BoonScore.toFixed(0)}}
+                                    </b>
+                                </td>
+                            </tr>
+
+
+                            <tr>
+                                <td>Strips:</td>
+                                <td>
+                                    <b>
+                                        ${{p.Strips.toFixed(1)}}
+                                    </b>
+                                </td>
+                            </tr>
+
+
+                            <tr>
+                                <td>Cleanses:</td>
+                                <td>
+                                    <b>
+                                        ${{p.Cleanses.toFixed(1)}}
+                                    </b>
+                                </td>
+                            </tr>
+
+
+                            <tr>
+                                <td>CC:</td>
+                                <td>
+                                    <b>
+                                        ${{p.CrowdControl.toFixed(1)}}
+                                    </b>
+                                </td>
+                            </tr>
+
+
+                            <tr>
+                                <td>Down Contribution:</td>
+                                <td>
+                                    <b>
+                                        ${{p.downContribution.toFixed(1)}}
+                                    </b>
+                                </td>
+                            </tr>
+
+
+                            <tr>
+                                <td>Healing + Barrier:</td>
+                                <td>
+                                    <b>
+                                        ${{p.HealingBarrier.toFixed(1)}}
+                                    </b>
+                                </td>
+                            </tr>
+
+                        </table>
+
+                    </div>
+
+                `;
+
+            }}
+
+        }},
+
+
+        xAxis: {{
+
+            type: 'value',
+
+            name: 'Actions Per Minute',
+
+            nameLocation: 'middle',
+
+            nameGap: 35,
+
+            splitLine: {{
+                show: true
+            }}
+
+        }},
+
+
+        yAxis: {{
+
+            type: 'value',
+
+            name: metricName,
+
+            nameLocation: 'middle',
+
+            nameGap: 60,
+
+            splitLine: {{
+                show: true
+            }}
+
+        }},
+
+
+        series: [
+
+            {{
+
+                name: 'Players',
+
+                type: 'scatter',
+
+                data: seriesData,
+
+
+                emphasis: {{
+
+                    scale: 1.5
+
+                }},
+
+
+                markLine: {{
+
+                    silent: true,
+
+                    symbol: [
+                        'none',
+                        'none'
+                    ],
+
+                    lineStyle: {{
+
+                        type: 'dashed',
+
+                        color: '#888'
+
+                    }},
+
+
+                    data: [
+
+                        {{
+
+                            xAxis: medianAPM,
+
+                            label: {{
+
+                                formatter:
+                                    `Median APM: ${{medianAPM.toFixed(1)}}`
+
+                            }}
+
+                        }},
+
+
+                        {{
+
+                            yAxis: medianMetric,
+
+                            label: {{
+
+                                formatter:
+                                    `Median ${{metricName}}: ${{medianMetric.toFixed(1)}}`
+
+                            }}
+
+                        }}
+
+                    ]
+
+                }}
+
+            }}
+
+        ]
+
+    }});
+
+}}
+
+
+/*
+ * Wait for the ECharts plugin to finish
+ * creating the chart, then connect the
+ * controls.
+ */
+
+function initializeControls() {{
+
+    const chart =
+        findChart();
+
+    if (!chart) {{
+
+        setTimeout(
+            initializeControls,
+            100
+        );
+
+        return;
+
+    }}
+
+
+    const metricSelect =
+        document.getElementById('wvw-apm-metric');
+
+    const sizeSelect =
+        document.getElementById('wvw-apm-size');
+
+    const professionSelect =
+        document.getElementById('wvw-apm-profession');
+
+
+    if (!metricSelect ||
+        !sizeSelect ||
+        !professionSelect) {{
+
+        return;
+
+    }}
+
+
+    metricSelect.onchange =
+        updateChart;
+
+    sizeSelect.onchange =
+        updateChart;
+
+    professionSelect.onchange =
+        updateChart;
+
+
+    updateChart();
+
+}}
+
+
+initializeControls();``` $height="600px" $width="100%" $theme="dark"/>
+
+</div>
+"""
+	append_tid_for_output(
+		create_new_tid_from_template(tid_title, tid_caption, chart_text, tid_tags, creator),
+		tid_list
+	)
 
 def build_squad_healthpct_table(health_data: dict, tid_date_time: str, tid_list: list) -> None:
 	bucket_list = [
