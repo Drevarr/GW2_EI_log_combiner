@@ -3280,7 +3280,7 @@ def build_damage_outgoing_by_player_skill_tids(top_stats: dict, skill_data: dict
 		rows.append('<div style="overflow-y: auto; width: 100%; overflow-x:auto;">\n\n')		
 		header = "|thead-dark table-caption-top table-hover sortable w-75 table-center|k\n"
 		header += "|{{"+profession+"}}"+f" - {name} - {account}|c\n"
-		header += "|!Skill Name | !Damage | !Down Contrib | !Hits | !Dmg/Hit | !% of Total|h"
+		header += "|!Skill Name | !Damage| !Down Contrib| !Hits| !Dmg/Hit| !Max Hit| !% of Total|h"
 		rows.append(header)
 
 		# Populate the table with the player's damage output by skill
@@ -3289,10 +3289,11 @@ def build_damage_outgoing_by_player_skill_tids(top_stats: dict, skill_data: dict
 			skill_icon = skill_data.get(f"s{skill_id}", {}).get("icon", buff_data.get(f"b{skill_id}", {}).get("icon", ""))
 			connect_hits = top_stats['player'][player]['targetDamageDist'][skill_id]['connectedHits']
 			down_contrib = top_stats['player'][player]['targetDamageDist'][skill_id].get('downContribution', 0)
+			max_hit = top_stats['player'][player]['targetDamageDist'][skill_id].get('max', 0)
 			if connect_hits == 0:
 				connect_hits = 1
 			entry = f"[img width=24 [{skill_name}|{skill_icon}]]-{skill_name[:30]}"
-			row = f"|{entry} | {damage:,.0f} | {down_contrib:,.0f} | {connect_hits} | {damage / connect_hits:,.1f} | {damage / total_damage * 100:,.1f}%|"
+			row = f"|{entry} | {damage:,.0f}| {down_contrib:,.0f}| {connect_hits}| {damage / connect_hits:,.1f}| {max_hit:,.0f}| {damage / total_damage * 100:,.1f}%|"
 			rows.append(row)
 		rows.append("\n</div>\n")
 		# Create the TID
@@ -5114,7 +5115,26 @@ function updateChart() {{
 
         }},
 
-
+		dataZoom: [
+		{{
+			type: 'inside'
+		}},
+		{{
+			type: 'slider',
+			showDataShadow: true,
+			handleSize: '80%'
+		}},
+		{{
+			type: 'inside',
+			orient: 'vertical'
+		}},
+		{{
+			type: 'slider',
+			orient: 'vertical',
+			showDataShadow: true,
+			handleSize: '80%'
+		}}
+		],
         series: [
 
             {{
