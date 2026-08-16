@@ -45,6 +45,8 @@ player_minion_damage_mitigation = {}
 
 #siege skills
 siege_skills = config.siege_skill_ids
+#db skills
+db_skill_ids = config.dragon_banner_skill_ids
 
 # Buff and skill data collected from all logs
 buff_data = {}
@@ -406,6 +408,14 @@ def check_target_for_buff_start_end(targets, players, damage_buff_ids):
 							if name_prof not in debuff_damage:
 								debuff_damage[name_prof] = {}
 							debuff_damage[name_prof][buff['id']] = debuff_damage[name_prof].get(buff['id'], 0) + total_damage
+
+
+def check_dragon_banner(rotation):
+    return any(
+        skill.get('id') in db_skill_ids
+        for skill in rotation
+    )
+
 
 def update_high_score(stat_name: str, key: str, value: float) -> None:
 	"""
@@ -3184,14 +3194,15 @@ def parse_file(file_path, fight_num, guild_data, fight_data_charts, blacklist):
 
 		# store last party the player was a member
 		top_stats['player'][name_prof]['last_party'] = group
-		if fight_data_charts:
+		db_user = check_dragon_banner(player["rotation"])
+		if not db_user:
 			get_fight_data(player, fight_num, fight_data)
 
 			check_burst1S_high_score(fight_data, player, fight_num)
 
 		get_firebrand_pages(player, name_prof, name, account,fight_duration_ms)
-
-		get_player_fight_dps(player["dpsTargets"], name, profession, account, fight_num, (fight_duration_ms/1000))
+		if not db_user:
+			get_player_fight_dps(player["dpsTargets"], name, profession, account, fight_num, (fight_duration_ms/1000))
 		get_player_stats_targets(player["statsTargets"], name, profession, account, fight_num, (fight_duration_ms/1000))
 
 		get_minions_by_player(player, name, profession)
