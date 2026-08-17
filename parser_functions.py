@@ -3194,7 +3194,11 @@ def parse_file(file_path, fight_num, guild_data, fight_data_charts, blacklist):
 
 		# store last party the player was a member
 		top_stats['player'][name_prof]['last_party'] = group
-		db_user = check_dragon_banner(player["rotation"])
+		if "rotation" in player:
+			db_user = check_dragon_banner(player["rotation"])
+		else:
+			db_user = False
+			
 		if not db_user:
 			get_fight_data(player, fight_num, fight_data)
 
@@ -3203,7 +3207,7 @@ def parse_file(file_path, fight_num, guild_data, fight_data_charts, blacklist):
 		get_firebrand_pages(player, name_prof, name, account,fight_duration_ms)
 		if not db_user:
 			get_player_fight_dps(player["dpsTargets"], name, profession, account, fight_num, (fight_duration_ms/1000))
-		get_player_stats_targets(player["statsTargets"], name, profession, account, fight_num, (fight_duration_ms/1000))
+			get_player_stats_targets(player["statsTargets"], name, profession, account, fight_num, (fight_duration_ms/1000))
 
 		get_minions_by_player(player, name, profession)
 
@@ -3243,7 +3247,8 @@ def parse_file(file_path, fight_num, guild_data, fight_data_charts, blacklist):
 			
 			# format: player[stat_category][0][stat]
 			if stat_cat in ['defenses', 'support', 'statsAll']:
-				get_stat_by_key(fight_num, player, stat_cat, name_prof)
+				if not db_user:
+					get_stat_by_key(fight_num, player, stat_cat, name_prof)
 				if stat_cat in ['defenses']:
 					get_defense_hits_and_glances(fight_num, player, stat_cat, name_prof)
 

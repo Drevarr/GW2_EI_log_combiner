@@ -572,9 +572,9 @@ def build_damage_summary_table(top_stats: dict, caption: str, tid_date_time: str
 			player_data["dpsTargets"]["condiDamage"],
 			player_data["dpsTargets"]["condiDamage"]/fighttime,
 			player_data["dpsTargets"]["breakbarDamage"],
-			player_data["statsAll"]["totalDmg"],
-			player_data["statsAll"]["directDmg"],
-			player_data["statsAll"]["totalDmg"] - player_data["statsAll"]["directDmg"],
+			player_data["statsAll"].get("totalDmg", 0),
+			player_data["statsAll"].get("directDmg", 0),
+			player_data["statsAll"].get("totalDmg", 0) - player_data["statsAll"].get("directDmg", 0),
 			player_data["dpsTargets"]["breakbarDamage"],
 		)
 
@@ -3001,6 +3001,7 @@ def build_top_damage_by_skill(skill_casts_by_enemy: dict, skill_cast_by_role: di
 	# Prepare HTML rows for the table
 	rows = []
 	rows.append("\n!!!@@ Note: Enemy Total Casts may be inaccurate, it is based on data available in target['rotation'].@@\n\n")
+	rows.append("\n!!!@@ Note: Excludes Siege skills, Dragon Banner and select keep lord skills.@@\n\n")
 	rows.append('<div style="overflow-y: auto; width: 100%; overflow-x:auto;">\n\n')
 	rows.append("|thead-dark table-borderless w-75 table-center|k")
 	rows.append("|!Top 25 Skills by Damage Output|")
@@ -3013,7 +3014,11 @@ def build_top_damage_by_skill(skill_casts_by_enemy: dict, skill_cast_by_role: di
 	rows.append(header)
 	
 	# Populate the table with top 25 skills by damage output
-	for i, (skill_id, skill) in enumerate(sorted_target_damage_dist.items()):
+	siege_skill_ids = config.siege_skill_ids
+	i = 0
+	for skill_id, skill in sorted_target_damage_dist.items():
+		if skill_id in siege_skill_ids:
+			continue		
 		if i < 25 and total_damage_distributed_value > 0:
 			total_casts = get_total_cast_count(skill_cast_by_role, skill_id)
 			skill_name = skill_data.get(f"s{skill_id}", {}).get("name", buff_data.get(f"b{skill_id}", {}).get("name", ""))
@@ -3022,6 +3027,7 @@ def build_top_damage_by_skill(skill_casts_by_enemy: dict, skill_cast_by_role: di
 			down_contrib = skill.get("downContribution", 0)
 			row = f"|{entry} | {skill['totalDamage']:,.0f} | {down_contrib:,.0f} | {total_casts} | {skill['connectedHits']:,.0f} | {skill['totalDamage']/total_damage_distributed_value*100:,.1f}% |"
 			rows.append(row)
+			i += 1
 
 	rows.append(f"| Squad Damage Output |c")
 	rows.append('\n\n</div>\n\n    <div class="flex-col">\n\n')
@@ -3032,7 +3038,11 @@ def build_top_damage_by_skill(skill_casts_by_enemy: dict, skill_cast_by_role: di
 	rows.append(header)
 
 	# Populate the table with top 25 skills by damage taken
-	for i, (skill_id, skill) in enumerate(sorted_total_damage_taken.items()):
+	siege_skill_ids = config.siege_skill_ids
+	i=0
+	for skill_id, skill in sorted_total_damage_taken.items():
+		if skill_id in siege_skill_ids:
+			continue
 		if i < 25:
 			enemy_total_casts = get_total_cast_count(skill_casts_by_enemy, skill_id)
 			skill_name = skill_data.get(f"s{skill_id}", {}).get("name", buff_data.get(f"b{skill_id}", {}).get("name", ""))
@@ -3040,6 +3050,7 @@ def build_top_damage_by_skill(skill_casts_by_enemy: dict, skill_cast_by_role: di
 			entry = f"[img width=24 [{skill_name}|{skill_icon}]]-{skill_name}"
 			row = f"|{entry} | {skill['totalDamage']:,.0f} | {enemy_total_casts} |  {skill['connectedHits']:,.0f} | {skill['totalDamage']/total_damage_taken_value*100:,.1f}% |"
 			rows.append(row)
+			i += 1
 
 	rows.append(f"| Enemy Damage Output |c")
 	rows.append("\n\n</div>\n\n</div>")
@@ -4255,8 +4266,8 @@ def build_APM_analysis_bubble_chart(top_stats: dict, boons: dict, weights: dict,
 			"ActiveTime": player_active_time,
 			"ActionsPerMinute": round(top_stats["skill_casts_by_role"][profession][name_prof_acct].get("total_no_auto_no_proc",0)/(player_active_time/60),2),
 			"BoonScore": boon_ps,
-			"Strips": player_data["support"]["boonStrips"],
-			"Cleanses": player_data["support"]["condiCleanse"] + player_data["support"]["condiCleanseSelf"],
+			"Strips": player_data["support"].get("boonStrips", 0),
+			"Cleanses": player_data["support"].get("condiCleanse", 0) + player_data["support"].get("condiCleanseSelf",0),
 			"CrowdControl": player_data["statsTargets"]["appliedCrowdControl"],
 			"DamagePerSec": round(player_data["statsTargets"]["totalDmg"]/player_active_time,2),
 			"downContribution": round(player_data["statsTargets"]["downContribution"]/player_active_time,2),
