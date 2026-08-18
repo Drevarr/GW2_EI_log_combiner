@@ -1950,62 +1950,56 @@ def get_buff_generation(fight_num: int, player: dict, stat_category: str, name_p
 		top_stats['overall'][stat_category][buff_id]['generation'] = top_stats['overall'][stat_category][buff_id].get('generation', 0) + buff_generation
 		top_stats['overall'][stat_category][buff_id]['wasted'] = top_stats['overall'][stat_category][buff_id].get('wasted', 0) + buff_wasted
 
-def get_skill_cast_by_prof_role(active_time, player: dict, stat_category: str, name_prof: str) -> None:
+def get_skill_cast_by_prof_role(active_time, player: dict, stat_category: str, player_key: str) -> None:
 	"""
-	Add player skill casts by profession and role to top_stats dictionary
+	Accumulate skill cast counts for one player directly into top_stats.
 
-	Args:
-		'active_time' (int): player active time in milliseconds.
-		player (dict): The player dictionary.
-		stat_category (str): The category of stats to collect.
-		name_prof (str): The name of the profession.
+    Args:
+        active_time: Player active time in milliseconds.
+        player: The player dictionary.
+        stat_category: The category of stats to collect (e.g. 'skills').
+        player_key: Composite key "Name|Profession|Account" identifying the player.
 	"""
 
 	profession = player['profession']
-	role = determine_player_role(player)
-	prof_role = f"{profession}-{role}"
-	active_time /= 1000
+	account = get_player_account(player)
+	#role = determine_player_role(player)
+	#prof_role = f"{profession}-{role}"
+	active_seconds = active_time / 1000
 	
-	if 'skill_casts_by_role' not in top_stats:
-		top_stats['skill_casts_by_role'] = {}
+	top_stats.setdefault('skill_casts_by_role', {}).setdefault(profession, {'total': {}})
+	prof_stats = top_stats['skill_casts_by_role'][profession]
 
-	if profession not in top_stats['skill_casts_by_role']:
-		top_stats['skill_casts_by_role'][profession] = {
-			'total': {}
-		}
+	prof_stats.setdefault(player_key, {
+        'ActiveTime': 0,
+        'total': 0,
+        'total_no_auto': 0,
+        'total_no_auto_no_proc': 0,
+        'account': account,
+        'Skills': {}
+    })
+	player_stats = prof_stats[player_key]
 
-	if name_prof not in top_stats['skill_casts_by_role'][profession]:
-		top_stats['skill_casts_by_role'][profession][name_prof] = {
-			'ActiveTime': 0,
-			'total': 0,
-			'total_no_auto': 0,
-			'total_no_auto_no_proc': 0,
-			'account': get_player_account(player),
-			'Skills': {}
-		}
-
-	top_stats['skill_casts_by_role'][profession][name_prof]['ActiveTime'] += active_time
+	player_stats['ActiveTime'] += active_seconds
 
 	if stat_category in player:
-			for skill in player[stat_category]:
-				skill_id = 's'+str(skill['id'])
-				cast_count = len(skill['skills'])
+		for skill_entry in player[stat_category]:
+			skill_id = f"s{skill_entry['id']}"
+			sub_count = len(skill_entry['skills'])
 
-				top_stats['skill_casts_by_role'][profession][name_prof]['total'] += cast_count
-				
-				if not skill_data[skill_id]['auto'] and not skill_data[skill_id]['isProc']:
-					top_stats['skill_casts_by_role'][profession][name_prof]['total_no_auto_no_proc'] += cast_count
+			player_stats['total'] += sub_count
 
-				if not skill_data[skill_id]['auto']:
-					top_stats['skill_casts_by_role'][profession][name_prof]['total_no_auto'] += cast_count
-					
-				if skill_id not in top_stats['skill_casts_by_role'][profession][name_prof]['Skills']:
-					top_stats['skill_casts_by_role'][profession][name_prof]['Skills'][skill_id] = 0
-				if skill_id not in top_stats['skill_casts_by_role'][profession]['total']:
-					top_stats['skill_casts_by_role'][profession]['total'][skill_id] = 0
+			skill_info = skill_data[skill_id]
+			is_auto = skill_info['auto']
+			is_proc = skill_info['isProc']
 
-				top_stats['skill_casts_by_role'][profession]['total'][skill_id] += cast_count
-				top_stats['skill_casts_by_role'][profession][name_prof]['Skills'][skill_id] = top_stats['skill_casts_by_role'][profession][name_prof]['Skills'].get(skill_id, 0) + cast_count
+			if not is_auto and not is_proc:
+				player_stats['total_no_auto_no_proc'] += sub_count
+			if not is_auto:
+				player_stats['total_no_auto'] += sub_count
+
+			prof_stats['total'][skill_id] = prof_stats['total'].get(skill_id, 0) + sub_count
+			player_stats['Skills'][skill_id] = player_stats['Skills'].get(skill_id, 0) + sub_count
 
 def get_healStats_data(fight_num: int, player: dict, players: dict, stat_category: str, name_prof: str, fight_time: int) -> None:
 	"""
