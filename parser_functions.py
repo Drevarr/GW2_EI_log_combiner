@@ -2014,6 +2014,7 @@ def _accumulate_heal_or_barrier(
     fight_time: int,
     field_name: str,
     target_list_key: str,
+    targets_key: str,  # <-- explicitly passed now
     is_healing: bool,
 ) -> float:
     """
@@ -2067,7 +2068,7 @@ def _accumulate_heal_or_barrier(
         player_stats['outgoing_' + field_name] = player_stats.get('outgoing_' + field_name, 0) + net_value
         player_stats['downed_' + field_name] = player_stats.get('downed_' + field_name, 0) + downed_value
 
-        # Squad vs off-squad (uses net value for main, separate for downed)
+        # Squad vs off-squad
         if not_in_squad:
             player_stats['off_squad_' + field_name] = player_stats.get('off_squad_' + field_name, 0) + net_value
             player_stats['off_squad_downed_' + field_name] = player_stats.get('off_squad_downed_' + field_name, 0) + downed_value
@@ -2075,18 +2076,17 @@ def _accumulate_heal_or_barrier(
             player_stats['squad_' + field_name] = player_stats.get('squad_' + field_name, 0) + net_value
             player_stats['squad_downed_' + field_name] = player_stats.get('squad_downed_' + field_name, 0) + downed_value
 
-        # Group (uses net value)
+        # Group
         if target_group == healer_group:
             player_stats['group_' + field_name] = player_stats.get('group_' + field_name, 0) + net_value
             player_stats['group_downed_' + field_name] = player_stats.get('group_downed_' + field_name, 0) + downed_value
 
-        # Self (uses net value)
+        # Self
         if target_name == healer_name:
             player_stats['self_' + field_name] = player_stats.get('self_' + field_name, 0) + net_value
             player_stats['self_downed_' + field_name] = player_stats.get('self_downed_' + field_name, 0) + downed_value
 
-        # Per-target tracking
-        targets_key = field_name + '_targets'
+        # Per-target tracking (uses explicit targets_key to avoid string mismatch)
         player_stats.setdefault(targets_key, {})
         player_stats[targets_key].setdefault(target_name, {
             'outgoing_' + field_name: 0,
@@ -2146,6 +2146,7 @@ def get_healStats_data(
             fight_time=fight_time,
             field_name='healing',
             target_list_key='outgoingHealingAllies',
+            targets_key='heal_targets',  # <-- fixed: was 'healing_targets'
             is_healing=True,
         )
     elif stat_category == 'extBarrierStats':
@@ -2162,101 +2163,113 @@ def get_healStats_data(
             fight_time=fight_time,
             field_name='barrier',
             target_list_key='outgoingBarrierAllies',
+            targets_key='barrier_targets',
             is_healing=False,
         )
 
+def _accumulate_skill_dist(
+    player: dict,
+    stat_category: str,
+    name_prof: str,
+    dist_key: str,
+    value_field: str,
+    downed_field: str | None = None,
+    net_field: str | None = None,
+) -> None:
+    """
+    Accumulate per-skill stats from a distance-based distribution list
+    (e.g. alliedHealingDist, alliedBarrierDist).
+
+    Args:
+        player: The player dictionary.
+        stat_category: The stat category key in player (e.g. 'extHealingStats').
+        name_prof: Composite key "Name|Profession|Account".
+        dist_key: Key in player[stat_category] containing the list (e.g. 'alliedHealingDist').
+        value_field: Field name for the main value (e.g. 'totalHealing', 'totalBarrier').
+        downed_field: Optional field name for downed value (e.g. 'totalDownedHealing').
+        net_field: Optional key name for the net value (total - downed). If None, no net key is created.
+    """
+    dist_list = player.get(stat_category, {}).get(dist_key)
+    if not dist_list:
+        return
+
+    skills = top_stats.setdefault('player', {}).setdefault(name_prof, {}).setdefault(
+        stat_category, {}
+    ).setdefault('skills', {})
+
+    for target in dist_list:
+        for skill in target[0]:
+            skill_id = f"s{skill['id']}"
+            hits = skill['hits']
+            min_value = skill['min']
+            max_value = skill['max']
+
+            entry = skills.setdefault(skill_id, {})
+
+            entry['hits'] = entry.get('hits', 0) + hits
+
+            current_min = entry.get('min', 0)
+            if min_value < current_min or current_min == 0:
+                entry['min'] = min_value
+
+            current_max = entry.get('max', 0)
+            if max_value > current_max or current_max == 0:
+                entry['max'] = max_value
+
+            total_value = skill[value_field]
+            entry[value_field] = entry.get(value_field, 0) + total_value
+
+            if downed_field and skill.get(downed_field):
+                downed_value = skill[downed_field]
+                entry['downed' + value_field.replace('total', '')] = (
+                    entry.get('downed' + value_field.replace('total', ''), 0) + downed_value
+                )
+
+            if net_field:
+                net_value = total_value - skill[downed_field]
+                entry[net_field] = entry.get(net_field, 0) + net_value
+
 
 def get_healing_skill_data(player: dict, stat_category: str, name_prof: str) -> None:
-	"""
-	Collect data for extHealingStats and extBarrierStats
+    """
+    Collect per-skill healing stats from alliedHealingDist.
 
-	Args:
-		player (dict): The player dictionary.
-		stat_category (str): The category of stats to collect.
-		name_prof (str): The name of the profession.
-	"""
-	if 'alliedHealingDist' in player[stat_category]:
-		for heal_target in player[stat_category]['alliedHealingDist']:
-			for skill in heal_target[0]:
-				skill_id = 's'+str(skill['id'])
-				hits = skill['hits']
-				min_value = skill['min']
-				max_value = skill['max']
+    Args:
+        player: The player dictionary.
+        stat_category: Should be 'extHealingStats'.
+        name_prof: Composite key "Name|Profession|Account".
+    """
+    _accumulate_skill_dist(
+        player=player,
+        stat_category=stat_category,
+        name_prof=name_prof,
+        dist_key='alliedHealingDist',
+        value_field='totalHealing',
+        downed_field='totalDownedHealing',
+        net_field='healing',
+    )
 
-				if 'skills' not in top_stats['player'][name_prof][stat_category]:
-					top_stats['player'][name_prof][stat_category]['skills'] = {}
-
-				if skill_id not in top_stats['player'][name_prof][stat_category]['skills']:
-					top_stats['player'][name_prof][stat_category]['skills'][skill_id] = {}
-
-				top_stats['player'][name_prof][stat_category]['skills'][skill_id]['hits'] = (
-					top_stats['player'][name_prof][stat_category]['skills'][skill_id].get('hits', 0) + hits
-				)
-
-				current_min = top_stats['player'][name_prof][stat_category]['skills'][skill_id].get('min', 0)
-				current_max = top_stats['player'][name_prof][stat_category]['skills'][skill_id].get('max', 0)
-
-				if min_value < current_min or current_min == 0:
-					top_stats['player'][name_prof][stat_category]['skills'][skill_id]['min'] = min_value
-				if max_value > current_max or current_max == 0:
-					top_stats['player'][name_prof][stat_category]['skills'][skill_id]['max'] = max_value
-
-				total_healing = skill['totalHealing']
-				downed_healing = skill['totalDownedHealing']
-				healing = total_healing - downed_healing
-
-				top_stats['player'][name_prof][stat_category]['skills'][skill_id]['totalHealing'] = (
-					top_stats['player'][name_prof][stat_category]['skills'][skill_id].get('totalHealing', 0) + total_healing
-				)
-
-				top_stats['player'][name_prof][stat_category]['skills'][skill_id]['downedHealing'] = (
-					top_stats['player'][name_prof][stat_category]['skills'][skill_id].get('downedHealing', 0) + downed_healing
-				)
-
-				top_stats['player'][name_prof][stat_category]['skills'][skill_id]['healing'] = (
-					top_stats['player'][name_prof][stat_category]['skills'][skill_id].get('healing', 0) + healing
-				)
 
 def get_barrier_skill_data(player: dict, stat_category: str, name_prof: str) -> None:
-	"""
-	Collect data for extHealingStats and extBarrierStats
+    """
+    Collect per-skill barrier stats from alliedBarrierDist.
 
-	Args:
-		player (dict): The player dictionary.
-		stat_category (str): The category of stats to collect.
-		name_prof (str): The name of the profession.
-	"""
-	if 'extBarrierStats' in player and 'alliedBarrierDist' in player[stat_category]:
-		for barrier_target in player[stat_category]['alliedBarrierDist']:
-			for skill in barrier_target[0]:
-				skill_id = 's'+str(skill['id'])
-				hits = skill['hits']
-				min_value = skill['min']
-				max_value = skill['max']
+    Args:
+        player: The player dictionary.
+        stat_category: Should be 'extBarrierStats'.
+        name_prof: Composite key "Name|Profession|Account".
+    """
+    _accumulate_skill_dist(
+        player=player,
+        stat_category=stat_category,
+        name_prof=name_prof,
+        dist_key='alliedBarrierDist',
+        value_field='totalBarrier',
+        downed_field=None,
+        net_field=None,
+    )
 
-				if 'skills' not in top_stats['player'][name_prof][stat_category]:
-					top_stats['player'][name_prof][stat_category]['skills'] = {}
 
-				if skill_id not in top_stats['player'][name_prof][stat_category]['skills']:
-					top_stats['player'][name_prof][stat_category]['skills'][skill_id] = {}
-
-				top_stats['player'][name_prof][stat_category]['skills'][skill_id]['hits'] = (
-					top_stats['player'][name_prof][stat_category]['skills'][skill_id].get('hits', 0) + hits
-				)
-
-				current_min = top_stats['player'][name_prof][stat_category]['skills'][skill_id].get('min', 0)
-				current_max = top_stats['player'][name_prof][stat_category]['skills'][skill_id].get('max', 0)
-
-				if min_value < current_min or current_min == 0:
-					top_stats['player'][name_prof][stat_category]['skills'][skill_id]['min'] = min_value
-				if max_value > current_max or current_max == 0:
-					top_stats['player'][name_prof][stat_category]['skills'][skill_id]['max'] = max_value
-
-				total_barrier = skill['totalBarrier']
-
-				top_stats['player'][name_prof][stat_category]['skills'][skill_id]['totalBarrier'] = (
-					top_stats['player'][name_prof][stat_category]['skills'][skill_id].get('totalBarrier', 0) + total_barrier
-				)
 
 def get_damage_mod_by_player(fight_num: int, player: dict, name_prof: str) -> None:
 	"""
