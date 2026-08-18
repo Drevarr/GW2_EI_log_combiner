@@ -179,7 +179,7 @@ if __name__ == '__main__':
 
 	webhook_url = config_ini.get('DiscordCfg', 'webhook_url', fallback=False)
 	discord_additional_notes = config_ini.get('DiscordCfg', 'discord_additional_notes', fallback=None)
-
+	apm_mode = config_ini.get('TopStatsCfg', 'APM_Mode', fallback='total_no_auto_no_proc')
 	profession_color = config_output.profession_color
 
 	LATEST_VERSION = check_for_update()
@@ -435,7 +435,7 @@ if __name__ == '__main__':
 	build_boon_generation_bar_chart(top_stats, boons, weights, tid_date_time, tid_list)
 	conditions = config_output.buffs_conditions
 	build_condition_generation_bar_chart(top_stats, conditions, weights, tid_date_time, tid_list)
-	build_APM_analysis_bubble_chart(top_stats, buff_data, weights, tid_date_time, tid_list)
+	build_APM_analysis_bubble_chart(top_stats, buff_data, weights, apm_mode, tid_date_time, tid_list)
 	if chart_mode.lower() == "boxplot":
 		for stat, stat_category in config_output.support_table.items():
 			render_boxplot_echart(stats_per_fight, stat_category, stat, profession_color, tid_date_time, tid_list)

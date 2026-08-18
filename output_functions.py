@@ -4150,6 +4150,7 @@ option = {{
   ]
 }};"""$height="600px" $width="100%" $theme="dark"/>
 '''
+
 def build_boon_bar_echart(sorted_chart, boon_name):
 	json_chart = json.dumps(sorted_chart)
 
@@ -4233,7 +4234,7 @@ def render_boxplot_echart(StatsPerFight, stat_category, stat_name, profession_co
 	tid_list
 	)    
 
-def build_APM_analysis_bubble_chart(top_stats: dict, boons: dict, weights: dict, tid_date_time: str, tid_list: list) -> None:
+def build_APM_analysis_bubble_chart(top_stats: dict, boons: dict, weights: dict, apm_mode: str, tid_date_time: str, tid_list: list) -> None:
 	apm_all_players = []
 	tid_title = f"{tid_date_time}-APM-Analysis-Bubble-Chart"
 	tid_caption = "Actions Per Minute Analysis"
@@ -4258,13 +4259,13 @@ def build_APM_analysis_bubble_chart(top_stats: dict, boons: dict, weights: dict,
 				boon_wt = float(weights["Boon_Weights"].get(boon_name, 0))
 				generated = (player_data["squadBuffs"][boon]["generation"] / 1000) * boon_wt
 				boon_ps += round(generated / player_active_time, 2)
-					
+
 		player_apm_data = {
 			"prof_name": prof_name,
 			"Player": name,
 			"Profession": profession,
 			"ActiveTime": player_active_time,
-			"ActionsPerMinute": round(top_stats["skill_casts_by_role"][profession][name_prof_acct].get("total_no_auto_no_proc",0)/(player_active_time/60),2),
+			"ActionsPerMinute": round(top_stats["skill_casts_by_role"][profession][name_prof_acct].get(apm_mode, 0)/(player_active_time/60),2),
 			"BoonScore": boon_ps,
 			"Strips": player_data["support"].get("boonStrips", 0),
 			"Cleanses": player_data["support"].get("condiCleanse", 0) + player_data["support"].get("condiCleanseSelf",0),
@@ -4403,6 +4404,15 @@ def build_APM_analysis_bubble_chart(top_stats: dict, boons: dict, weights: dict,
         <option value="Harbinger">Harbinger</option>
         <option value="Ritualist">Ritualist</option>
     </select>
+
+
+    <label for="wvw-apm-mode">
+		APM_MODE:
+    </label>
+
+    <select id="wvw-apm-mode" disabled>
+        <option value="{apm_mode}">{apm_mode}</option>
+    </select>	
 
 </div>
 
