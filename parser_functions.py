@@ -1986,25 +1986,26 @@ def get_skill_cast_by_prof_role(active_time, player: dict, stat_category: str, n
 
 	top_stats['skill_casts_by_role'][profession][name_prof]['ActiveTime'] += active_time
 
-	for skill in player[stat_category]:
-		skill_id = 's'+str(skill['id'])
-		cast_count = len(skill['skills'])
+	if stat_category in player:
+			for skill in player[stat_category]:
+				skill_id = 's'+str(skill['id'])
+				cast_count = len(skill['skills'])
 
-		top_stats['skill_casts_by_role'][profession][name_prof]['total'] += cast_count
-		
-		if not skill_data[skill_id]['auto'] and not skill_data[skill_id]['isProc']:
-			top_stats['skill_casts_by_role'][profession][name_prof]['total_no_auto_no_proc'] += cast_count
+				top_stats['skill_casts_by_role'][profession][name_prof]['total'] += cast_count
+				
+				if not skill_data[skill_id]['auto'] and not skill_data[skill_id]['isProc']:
+					top_stats['skill_casts_by_role'][profession][name_prof]['total_no_auto_no_proc'] += cast_count
 
-		if not skill_data[skill_id]['auto']:
-			top_stats['skill_casts_by_role'][profession][name_prof]['total_no_auto'] += cast_count
-			
-		if skill_id not in top_stats['skill_casts_by_role'][profession][name_prof]['Skills']:
-			top_stats['skill_casts_by_role'][profession][name_prof]['Skills'][skill_id] = 0
-		if skill_id not in top_stats['skill_casts_by_role'][profession]['total']:
-			top_stats['skill_casts_by_role'][profession]['total'][skill_id] = 0
+				if not skill_data[skill_id]['auto']:
+					top_stats['skill_casts_by_role'][profession][name_prof]['total_no_auto'] += cast_count
+					
+				if skill_id not in top_stats['skill_casts_by_role'][profession][name_prof]['Skills']:
+					top_stats['skill_casts_by_role'][profession][name_prof]['Skills'][skill_id] = 0
+				if skill_id not in top_stats['skill_casts_by_role'][profession]['total']:
+					top_stats['skill_casts_by_role'][profession]['total'][skill_id] = 0
 
-		top_stats['skill_casts_by_role'][profession]['total'][skill_id] += cast_count
-		top_stats['skill_casts_by_role'][profession][name_prof]['Skills'][skill_id] = top_stats['skill_casts_by_role'][profession][name_prof]['Skills'].get(skill_id, 0) + cast_count
+				top_stats['skill_casts_by_role'][profession]['total'][skill_id] += cast_count
+				top_stats['skill_casts_by_role'][profession][name_prof]['Skills'][skill_id] = top_stats['skill_casts_by_role'][profession][name_prof]['Skills'].get(skill_id, 0) + cast_count
 
 def get_healStats_data(fight_num: int, player: dict, players: dict, stat_category: str, name_prof: str, fight_time: int) -> None:
 	"""
@@ -3277,7 +3278,7 @@ def parse_file(file_path, fight_num, guild_data, fight_data_charts, blacklist):
 				else:
 					get_buff_generation(fight_num, player, stat_cat, name_prof, fight_duration_ms, buff_data, squad_count, group_count)
 			# format: player[stat_category][skill][skills][casts]
-			if stat_cat == 'rotation' and 'rotation' in player:
+			if stat_cat == 'rotation': # and 'rotation' in player:
 				if active_time:
 					get_skill_cast_by_prof_role(active_time, player, stat_cat, name_prof)
 				else:
