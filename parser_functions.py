@@ -2001,196 +2001,170 @@ def get_skill_cast_by_prof_role(active_time, player: dict, stat_category: str, p
 			prof_stats['total'][skill_id] = prof_stats['total'].get(skill_id, 0) + sub_count
 			player_stats['Skills'][skill_id] = player_stats['Skills'].get(skill_id, 0) + sub_count
 
-def get_healStats_data(fight_num: int, player: dict, players: dict, stat_category: str, name_prof: str, fight_time: int) -> None:
-	"""
-	Collect data for extHealingStats and extBarrierStats
+def _accumulate_heal_or_barrier(
+    player: dict,
+    players: dict,
+    stat_category: str,
+    name_prof: str,
+    top_stats: dict,
+    commander_summary_data: dict,
+    update_high_score: callable,
+    stats_per_fight: dict,
+    fight_num: int,
+    fight_time: int,
+    field_name: str,
+    target_list_key: str,
+    is_healing: bool,
+) -> float:
+    """
+    Common handler for healing and barrier accumulation.
 
-	Args:
-		fight_num (int): The fight number.
-		player (dict): The player dictionary.
-		players (dict): The players dictionary.
-		stat_category (str): The category of stats to collect.
-		name_prof (str): The name of the profession.
-	"""
-	fight_healing = 0
+    Returns the per-fight rate (total_net / fight_time_seconds).
+    """
+    total_net = 0
+    total_downed = 0
 
-	if stat_category == 'extHealingStats' and 'extHealingStats' in player:
-		healer_name = player['name']
-		healer_group = player['group']
-		for index, heal_target in enumerate(player[stat_category]['outgoingHealingAllies']):
-			heal_target_name = players[index]['name']
-			heal_target_group = players[index]['group']
-			heal_target_notInSquad = players[index]['notInSquad']
-			heal_target_tag = players[index]['hasCommanderTag']
-			outgoing_healing = heal_target[0]['healing'] - heal_target[0]['downedHealing']
-			downed_healing = heal_target[0]['downedHealing']
+    if stat_category not in player:
+        return 0.0
 
-			fight_healing += outgoing_healing
+    healer_name = player['name']
+    healer_group = player['group']
+    player_stats = top_stats['player'][name_prof][stat_category]
+    fight_stats = top_stats['fight'][fight_num][stat_category]
+    overall_stats = top_stats['overall'][stat_category]
 
-			if outgoing_healing or downed_healing:
+    for index, target in enumerate(player[stat_category][target_list_key]):
+        target_data = players[index]
+        target_name = target_data['name']
+        target_group = target_data['group']
+        has_commander_tag = target_data['hasCommanderTag']
+        not_in_squad = target_data['notInSquad']
 
-				if heal_target_tag:
-					commander_name = f"{heal_target_name}|{players[index]['profession']}|{players[index]['account']}"
+        raw_value = target[0][field_name]
+        downed_value = target[0]['downedHealing'] if is_healing else 0
+        net_value = raw_value - downed_value
 
-					if name_prof not in commander_summary_data[commander_name]['heal_stats']:
-						commander_summary_data[commander_name]['heal_stats'][name_prof] = {
-							'outgoing_healing': 0,
-							'downed_healing': 0,
-							'outgoing_barrier': 0
-						}
+        if not net_value and not downed_value:
+            continue
 
-					commander_summary_data[commander_name]['heal_stats'][name_prof]['outgoing_healing'] += outgoing_healing
-					commander_summary_data[commander_name]['heal_stats'][name_prof]['downed_healing'] += downed_healing
+        total_net += net_value
+        total_downed += downed_value
 
+        # Commander summary
+        if has_commander_tag:
+            commander_key = f"{target_name}|{target_data['profession']}|{target_data['account']}"
+            commander_summary_data[commander_key]['heal_stats'].setdefault(
+                name_prof,
+                {'outgoing_healing': 0, 'downed_healing': 0, 'outgoing_barrier': 0}
+            )
+            if is_healing:
+                commander_summary_data[commander_key]['heal_stats'][name_prof]['outgoing_healing'] += net_value
+                commander_summary_data[commander_key]['heal_stats'][name_prof]['downed_healing'] += downed_value
+            else:
+                commander_summary_data[commander_key]['heal_stats'][name_prof]['outgoing_barrier'] += net_value
 
-				if 'heal_targets' not in top_stats['player'][name_prof][stat_category]:
-					top_stats['player'][name_prof][stat_category]['heal_targets'] = {}
+        # Player-level totals
+        player_stats['outgoing_' + field_name] = player_stats.get('outgoing_' + field_name, 0) + net_value
+        player_stats['downed_' + field_name] = player_stats.get('downed_' + field_name, 0) + downed_value
 
-				if heal_target_name not in top_stats['player'][name_prof][stat_category]['heal_targets']:
-					top_stats['player'][name_prof][stat_category]['heal_targets'][heal_target_name] = {
-						'outgoing_healing': 0,
-						'downed_healing': 0
-					}
+        # Squad vs off-squad (uses net value for main, separate for downed)
+        if not_in_squad:
+            player_stats['off_squad_' + field_name] = player_stats.get('off_squad_' + field_name, 0) + net_value
+            player_stats['off_squad_downed_' + field_name] = player_stats.get('off_squad_downed_' + field_name, 0) + downed_value
+        else:
+            player_stats['squad_' + field_name] = player_stats.get('squad_' + field_name, 0) + net_value
+            player_stats['squad_downed_' + field_name] = player_stats.get('squad_downed_' + field_name, 0) + downed_value
 
-				top_stats['player'][name_prof][stat_category]['outgoing_healing'] = (
-					top_stats['player'][name_prof][stat_category].get('outgoing_healing', 0) + outgoing_healing
-				)
+        # Group (uses net value)
+        if target_group == healer_group:
+            player_stats['group_' + field_name] = player_stats.get('group_' + field_name, 0) + net_value
+            player_stats['group_downed_' + field_name] = player_stats.get('group_downed_' + field_name, 0) + downed_value
 
-				if heal_target_notInSquad:
-					top_stats['player'][name_prof][stat_category]['off_squad_healing'] = (
-						top_stats['player'][name_prof][stat_category].get('off_squad_healing', 0) + outgoing_healing
-					)
-					top_stats['player'][name_prof][stat_category]['off_squad_downed_healing'] = (
-						top_stats['player'][name_prof][stat_category].get('off_squad_downed_healing', 0) + downed_healing
-					)					
-				else:
-					top_stats['player'][name_prof][stat_category]['squad_healing'] = (
-						top_stats['player'][name_prof][stat_category].get('squad_healing', 0) + outgoing_healing
-					)
-					top_stats['player'][name_prof][stat_category]['squad_downed_healing'] = (
-						top_stats['player'][name_prof][stat_category].get('squad_downed_healing', 0) + downed_healing
-					)					
+        # Self (uses net value)
+        if target_name == healer_name:
+            player_stats['self_' + field_name] = player_stats.get('self_' + field_name, 0) + net_value
+            player_stats['self_downed_' + field_name] = player_stats.get('self_downed_' + field_name, 0) + downed_value
 
-				if heal_target_group == healer_group:
+        # Per-target tracking
+        targets_key = field_name + '_targets'
+        player_stats.setdefault(targets_key, {})
+        player_stats[targets_key].setdefault(target_name, {
+            'outgoing_' + field_name: 0,
+            'downed_' + field_name: 0
+        })
+        player_stats[targets_key][target_name]['outgoing_' + field_name] += net_value
+        player_stats[targets_key][target_name]['downed_' + field_name] += downed_value
 
-					top_stats['player'][name_prof][stat_category]['group_healing'] = (
-						top_stats['player'][name_prof][stat_category].get('group_healing', 0) + outgoing_healing
-					)
-					top_stats['player'][name_prof][stat_category]['group_downed_healing'] = (
-						top_stats['player'][name_prof][stat_category].get('group_downed_healing', 0) + downed_healing
-					)
+        # Fight-level
+        fight_stats['outgoing_' + field_name] = fight_stats.get('outgoing_' + field_name, 0) + net_value
+        fight_stats['downed_' + field_name] = fight_stats.get('downed_' + field_name, 0) + downed_value
 
-				if heal_target_name == healer_name:
+        # Overall
+        overall_stats['outgoing_' + field_name] = overall_stats.get('outgoing_' + field_name, 0) + net_value
+        overall_stats['downed_' + field_name] = overall_stats.get('downed_' + field_name, 0) + downed_value
 
-					top_stats['player'][name_prof][stat_category]['self_healing'] = (
-						top_stats['player'][name_prof][stat_category].get('self_healing', 0) + outgoing_healing
-					)
-					top_stats['player'][name_prof][stat_category]['self_downed_healing'] = (
-						top_stats['player'][name_prof][stat_category].get('self_downed_healing', 0) + downed_healing
-					)
-					
-
-				top_stats['player'][name_prof][stat_category]['heal_targets'][heal_target_name]['outgoing_healing'] = (
-					top_stats['player'][name_prof][stat_category]['heal_targets'][heal_target_name].get('outgoing_healing', 0) + outgoing_healing
-				)
-
-				top_stats['fight'][fight_num][stat_category]['outgoing_healing'] = (
-					top_stats['fight'][fight_num][stat_category].get('outgoing_healing', 0) + outgoing_healing
-				)
-
-				top_stats['overall'][stat_category]['outgoing_healing'] = (
-					top_stats['overall'][stat_category].get('outgoing_healing', 0) + outgoing_healing
-				)
-
-				top_stats['player'][name_prof][stat_category]['downed_healing'] = (
-					top_stats['player'][name_prof][stat_category].get('downed_healing', 0) + downed_healing
-				)
-				top_stats['player'][name_prof][stat_category]['heal_targets'][heal_target_name]['downed_healing'] = (
-					top_stats['player'][name_prof][stat_category]['heal_targets'][heal_target_name].get('downed_healing', 0) + downed_healing
-				)
-				top_stats['fight'][fight_num][stat_category]['downed_healing'] = (
-					top_stats['fight'][fight_num][stat_category].get('downed_healing', 0) + downed_healing
-				)
-				top_stats['overall'][stat_category]['downed_healing'] = (
-					top_stats['overall'][stat_category].get('downed_healing', 0) + downed_healing
-				)
-		update_high_score(f"{stat_category}_Healing", "{{"+player["profession"]+"}}"+player["name"]+"-"+get_player_account(player)+"-"+str(fight_num)+" | Healing", round(fight_healing/(fight_time/1000), 2))	
-		stats_per_fight['extHealingStats']['squad_healing'][name_prof].append(round(fight_healing/(fight_time/1000), 2) if fight_time > 0 else 0)
-
-	fight_barrier = 0
-	if stat_category == 'extBarrierStats' and 'extBarrierStats' in player:
-		healer_name = player['name']
-		healer_group = player['group']		
-		for index, barrier_target in enumerate(player[stat_category]['outgoingBarrierAllies']):
-			barrier_target_name = players[index]['name']
-			barrier_target_group = players[index]['group']
-			barrier_target_notInSquad = players[index]['notInSquad']
-			heal_target_tag = players[index]['hasCommanderTag']
-			outgoing_barrier = barrier_target[0]['barrier']
-
-			fight_barrier += outgoing_barrier
-
-			if outgoing_barrier:
-				if heal_target_tag:
-					commander_name = f"{barrier_target_name}|{players[index]['profession']}|{players[index]['account']}"
-
-					if name_prof not in commander_summary_data[commander_name]['heal_stats']:
-						commander_summary_data[commander_name]['heal_stats'][name_prof] = {
-							'outgoing_healing': 0,
-							'downed_healing': 0,
-							'outgoing_barrier': 0
-						}
-
-					commander_summary_data[commander_name]['heal_stats'][name_prof]['outgoing_barrier'] += outgoing_barrier	
+    rate = round(total_net / (fight_time / 1000), 2) if fight_time > 0 else 0.0
+    update_high_score(
+        f"{stat_category}_{field_name.capitalize()}",
+        f"{{{{{player['profession']}}}}}{player['name']}-{get_player_account(player)}-{fight_num} | {field_name.capitalize()}",
+        rate
+    )
+    stats_per_fight[stat_category]['squad_' + field_name][name_prof].append(rate)
+    return rate
 
 
-				if 'barrier_targets' not in top_stats['player'][name_prof][stat_category]:
-					top_stats['player'][name_prof][stat_category]['barrier_targets'] = {}
+def get_healStats_data(
+    fight_num: int,
+    player: dict,
+    players: dict,
+    stat_category: str,
+    name_prof: str,
+    fight_time: int,
+) -> None:
+    """
+    Collect data for extHealingStats and extBarrierStats.
 
-				if barrier_target_name not in top_stats['player'][name_prof][stat_category]['barrier_targets']:
-					top_stats['player'][name_prof][stat_category]['barrier_targets'][barrier_target_name] = {
-						'outgoing_barrier': 0
-					}
+    Args:
+        fight_num: The fight number.
+        player: The player dictionary.
+        players: The players dictionary (indexed by target index).
+        stat_category: 'extHealingStats' or 'extBarrierStats'.
+        name_prof: Composite key "Name|Profession|Account".
+        fight_time: Fight duration in milliseconds.
+    """
+    if stat_category == 'extHealingStats':
+        _accumulate_heal_or_barrier(
+            player=player,
+            players=players,
+            stat_category=stat_category,
+            name_prof=name_prof,
+            top_stats=top_stats,
+            commander_summary_data=commander_summary_data,
+            update_high_score=update_high_score,
+            stats_per_fight=stats_per_fight,
+            fight_num=fight_num,
+            fight_time=fight_time,
+            field_name='healing',
+            target_list_key='outgoingHealingAllies',
+            is_healing=True,
+        )
+    elif stat_category == 'extBarrierStats':
+        _accumulate_heal_or_barrier(
+            player=player,
+            players=players,
+            stat_category=stat_category,
+            name_prof=name_prof,
+            top_stats=top_stats,
+            commander_summary_data=commander_summary_data,
+            update_high_score=update_high_score,
+            stats_per_fight=stats_per_fight,
+            fight_num=fight_num,
+            fight_time=fight_time,
+            field_name='barrier',
+            target_list_key='outgoingBarrierAllies',
+            is_healing=False,
+        )
 
-				top_stats['player'][name_prof][stat_category]['outgoing_barrier'] = (
-					top_stats['player'][name_prof][stat_category].get('outgoing_barrier', 0) + outgoing_barrier
-				)
-
-				if barrier_target_notInSquad:
-					#off_squad_barrier
-					top_stats['player'][name_prof][stat_category]['off_squad_barrier'] = (
-						top_stats['player'][name_prof][stat_category].get('off_squad_barrier', 0) + outgoing_barrier
-					)
-				else:
-					top_stats['player'][name_prof][stat_category]['squad_barrier'] = (
-						top_stats['player'][name_prof][stat_category].get('squad_barrier', 0) + outgoing_barrier
-					)
-
-				if barrier_target_group == healer_group:
-
-					top_stats['player'][name_prof][stat_category]['group_barrier'] = (
-						top_stats['player'][name_prof][stat_category].get('group_barrier', 0) + outgoing_barrier
-					)
-
-				if barrier_target_name == healer_name:
-
-					top_stats['player'][name_prof][stat_category]['self_barrier'] = (
-						top_stats['player'][name_prof][stat_category].get('self_barrier', 0) + outgoing_barrier
-					)
-
-				top_stats['player'][name_prof][stat_category]['barrier_targets'][barrier_target_name]['outgoing_barrier'] = (
-					top_stats['player'][name_prof][stat_category]['barrier_targets'][barrier_target_name].get('outgoing_barrier', 0) + outgoing_barrier
-				)
-
-				top_stats['fight'][fight_num][stat_category]['outgoing_barrier'] = (
-					top_stats['fight'][fight_num][stat_category].get('outgoing_barrier', 0) + outgoing_barrier
-				)
-
-				top_stats['overall'][stat_category]['outgoing_barrier'] = (
-					top_stats['overall'][stat_category].get('outgoing_barrier', 0) + outgoing_barrier
-				)
-		update_high_score(f"{stat_category}_Barrier", "{{"+player["profession"]+"}}"+player["name"]+"-"+get_player_account(player)+"-"+str(fight_num)+" | Barrier", round(fight_barrier/(fight_time/1000), 2))
-		stats_per_fight['extBarrierStats']['squad_barrier'][name_prof].append(round(fight_barrier/(fight_time/1000), 2) if fight_time > 0 else 0)
 
 def get_healing_skill_data(player: dict, stat_category: str, name_prof: str) -> None:
 	"""
