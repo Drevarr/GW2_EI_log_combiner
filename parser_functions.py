@@ -642,14 +642,14 @@ def get_player_death_on_tag(
                         player_positions, commander_tag_positions, player_dead_poll, inch_to_pixel
                     )
 
-                # Classification
-                if death_range <= On_Tag:
-                    entry["On_Tag"] += 1
-                elif death_range <= Run_Back:
-                    entry["Off_Tag"] += 1
-                    entry["Ranges"].append(death_range)
-                else:
-                    entry["Run_Back"] += 1
+                    # Classification
+                    if death_range <= On_Tag:
+                        entry["On_Tag"] += 1
+                    elif death_range <= Run_Back:
+                        entry["Off_Tag"] += 1
+                        entry["Ranges"].append(death_range)
+                    else:
+                        entry["Run_Back"] += 1
 
     # Record distance
     if player_dist_to_tag <= Run_Back:
