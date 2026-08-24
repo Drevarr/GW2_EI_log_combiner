@@ -1468,7 +1468,8 @@ def build_uptime_summary(top_stats: dict, boons: dict, buff_data: dict, caption:
 		skillIcon = buff_data[boon_id]["icon"]
 
 		header += f" ![img width=24 [{boon_name}|{skillIcon}]] |"
-	header += "h"
+	header1 = header+"h"
+	footer1 = header+"f"
 
 	non_damaging_conditions = [
 		'b720', #Blinded
@@ -1502,9 +1503,10 @@ def build_uptime_summary(top_stats: dict, boons: dict, buff_data: dict, caption:
 			uptime_percentage = round((uptime_ms / top_stats['overall']["active_time"]) * 100, 3)
 			detailEntry = f"{uptime_percentage:.3f}%"
 		header2 += f" {detailEntry}|" 
-	header2 += "h"
+	header2 += "f"
 
-	rows.append(header)
+	rows.append(header1)
+	rows.append(footer1)
 	rows.append(header2)
 	#build party table rows
 	
@@ -1531,7 +1533,7 @@ def build_uptime_summary(top_stats: dict, boons: dict, buff_data: dict, caption:
 				uptime_percentage = round((uptime_ms / top_stats['overall']['group_data'][group]['fight_time']) * 100, 3)
 				detailEntry = f"{uptime_percentage:.3f}%"
 			footer += f" {detailEntry}|"
-		footer += "h"	#footer, moved to header
+		footer += "f"	#footer, moved to header
 		rows.append(footer)
 
 	# Build the table body
