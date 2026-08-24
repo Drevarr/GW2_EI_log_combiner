@@ -3404,7 +3404,7 @@ def build_squad_composition(top_stats: dict, tid_date_time: str, tid_list: list)
 		tid_list
 	)
 
-def build_on_tag_review(death_on_tag, tid_date_time):
+def build_on_tag_review(death_on_tag, players, tid_date_time):
 	"""
 	Build a table of on tag review stats for all players in the log running the extension.
 
@@ -3434,12 +3434,13 @@ def build_on_tag_review(death_on_tag, tid_date_time):
 	rows.append('<div style="overflow-y: auto; width: 100%; overflow-x:auto;">\n\n')
 	rows.append("\n\n|thead-dark table-caption-top table-hover sortable|k")
 	rows.append("| On Tag Review |c")
-	header = "|!Player |!Profession | !Avg Dist| !On-Tag<br>{{deadCount}} | !Off-Tag<br>{{deadCount}} | !After-Tag<br>{{deadCount}} | !Run-Back<br>{{deadCount}} | !Total<br>{{deadCount}} |!OffTag Ranges|h"
+	header = "|!Player |!Profession | !{{FightTime}} | !Avg Dist| !On-Tag<br>{{deadCount}} | !Off-Tag<br>{{deadCount}} | !After-Tag<br>{{deadCount}} | !Run-Back<br>{{deadCount}} | !Total<br>{{deadCount}} |!OffTag Ranges|h"
 	rows.append(header)
 	for name_prof in death_on_tag:
 		player = death_on_tag[name_prof]['name']
 		profession = death_on_tag[name_prof]['profession']
 		account = death_on_tag[name_prof]['account']
+		active_time = round(players[name_prof]['active_time']/1000, 1)
 		if len(death_on_tag[name_prof]['distToTag']):
 			avg_dist = round(sum(death_on_tag[name_prof]['distToTag']) / len(death_on_tag[name_prof]['distToTag']))
 		else:
@@ -3450,7 +3451,7 @@ def build_on_tag_review(death_on_tag, tid_date_time):
 		run_back = death_on_tag[name_prof]['Run_Back']
 		total = death_on_tag[name_prof]['Total']
 		off_tag_ranges = death_on_tag[name_prof]['Ranges']
-		row = f"|<span class='tooltip tooltip-right' data-tooltip=' {account}'> {player} </span> | {{{{{profession}}}}} {profession[:3]} | {avg_dist} | {on_tag} | {off_tag} | {after_tag} | {run_back} | {total} |{off_tag_ranges} |"
+		row = f"|<span class='tooltip tooltip-right' data-tooltip=' {account}'> {player} </span> | {{{{{profession}}}}} {profession[:3]} | {active_time} | {avg_dist} | {on_tag} | {off_tag} | {after_tag} | {run_back} | {total} |{off_tag_ranges} |"
 		rows.append(row)
 
 	rows.append("</div>\n\n\n")

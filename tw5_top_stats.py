@@ -423,7 +423,7 @@ if __name__ == '__main__':
 
 	build_damage_summary_table(top_stats, "Damage", tid_date_time)
 
-	build_on_tag_review(death_on_tag, tid_date_time)
+	build_on_tag_review(death_on_tag, top_stats["player"], tid_date_time)
 
 	build_mesmer_clone_usage(mesmer_clone_usage, tid_date_time, tid_list)
 
