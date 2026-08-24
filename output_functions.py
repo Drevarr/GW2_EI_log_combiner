@@ -3451,7 +3451,7 @@ def build_on_tag_review(death_on_tag, players, tid_date_time):
 		run_back = death_on_tag[name_prof]['Run_Back']
 		total = death_on_tag[name_prof]['Total']
 		off_tag_ranges = death_on_tag[name_prof]['Ranges']
-		row = f"|<span class='tooltip tooltip-right' data-tooltip=' {account}'> {player} </span> | {{{{{profession}}}}} {profession[:3]} | {active_time} | {avg_dist} | {on_tag} | {off_tag} | {after_tag} | {run_back} | {total} |{off_tag_ranges} |"
+		row = f"|<span class='tooltip tooltip-right' data-tooltip=' {account}'> {player} </span> | {{{{{profession}}}}} {profession[:3]} | {active_time:,.1f} | {avg_dist} | {on_tag} | {off_tag} | {after_tag} | {run_back} | {total} |{off_tag_ranges} |"
 		rows.append(row)
 
 	rows.append("</div>\n\n\n")
