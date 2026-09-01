@@ -1370,6 +1370,7 @@ def get_skill_cast_by_enemy_prof(targets: dict) -> None:
 
 		if target['enemyPlayer'] and "rotation" in target:
 			profession, name_prof = target['name'].split()
+			teamID = target['teamID']
 			active_time = (target["firstAware"] - target["lastAware"]) / 1000
 	
 			if 'skill_casts_by_enemy' not in top_stats:
@@ -3038,6 +3039,14 @@ def parse_file(file_path, fight_num, guild_data, fight_data_charts, blacklist):
 	log_type, fight_name = determine_log_type_and_extract_fight_name(fight_name)
 
 	calculate_dps_stats(json_data, blacklist)
+
+	wvw_map = json_data["wvWMapData"]
+
+	team_color_map = {
+	    wvw_map["redTeamID"]: "Red Team",
+	    wvw_map["blueTeamID"]: "Blue Team",
+	    wvw_map["greenTeamID"]: "Green Team",
+	}
 
 	top_stats['overall']['last_fight'] = f"{fight_date}-{fight_end}"
 	#Initialize fight_num stats
