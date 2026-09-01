@@ -413,12 +413,12 @@ if __name__ == '__main__':
 
 
 	#build_damage_outgoing_by_player_skill_tids
-	build_damage_outgoing_by_skill_tid(tid_date_time, tid_list)
-	build_damage_outgoing_by_player_skill_tids(top_stats, skill_data, buff_data, tid_date_time, tid_list)
+	build_damage_summary_tid(tid_date_time, tid_list, mode="outgoing")
+	build_player_skill_tids(top_stats, skill_data, buff_data, tid_date_time, tid_list, mode="outgoing")
 
 	#build_damage_taken_by_player_skill_tids
-	build_damage_taken_by_skill_tid(tid_date_time, tid_list)
-	build_damage_taken_by_player_skill_tids(top_stats, skill_data, buff_data, tid_date_time, tid_list)
+	build_damage_summary_tid(tid_date_time, tid_list, mode="incoming")
+	build_player_skill_tids(top_stats, skill_data, buff_data, tid_date_time, tid_list, mode="incoming")
 
 	#build_gear_buff_summary
 	gear_buff_ids, gear_skill_ids = extract_gear_buffs_and_skills(buff_data, skill_data)
