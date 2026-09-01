@@ -177,13 +177,13 @@ buffs_debuff = {
 }
 
 
-arrow_cart_skill_ids = [18850, 18853, 18855, 18860, 18862, 18865, 18867, 18869, 18872]
-trebuchet_skill_ids = [21037, 21038]
-balista_skill_ids = [14622, 14654, 41540]
+arrow_cart_skill_ids = [ 14618, 14650, 14651, 18847, 18849, 18850, 18852, 18853, 18854, 18855, 18860, 18861, 18862, 18864, 18865, 18866, 18867, 18869, 18872]
+trebuchet_skill_ids = [21005, 21015, 21025, 21034, 21037, 21038, 79538]
+balista_skill_ids = [14622, 14654, 18565, 18569, 18573, 19571, 41540]
 catapult_skill_ids = [20242, 20254, 20272,20285]
-cannon_skill_ids = [14626, 14658, 14659, 18535, 18531, 18533, 18543, 18580, 19626]
+cannon_skill_ids = [14626, 14658, 14659, 18535, 18531, 18533, 18535, 18543, 18580, 19626]
 burning_oil_skill_ids = [14605, 14648, 18887]
-dragon_banner_skill_ids = [32980, 31968, 33232]
+dragon_banner_skill_ids = [32980, 31968, 33232, 33336, 32536, 31975, 33963]
 ebg_lord = [3837]
 golem_skills = [14627, 14639, 14709, 14710, 14708, 14713, 63185, 1656, 14642]
 downed_skills = [9149, 9096, 9095, 28180, 27063, 27792, 14390, 14515, 14391, 5820,
@@ -203,19 +203,6 @@ siege_skill_ids = [
 	*dragon_banner_skill_ids,
     *golem_skills, 
     *ebg_lord,   
-]
-
-exclude_skill_ids = [
-	*arrow_cart_skill_ids,
-	*trebuchet_skill_ids,
-	*catapult_skill_ids,
-    *balista_skill_ids,
-	*cannon_skill_ids,
-	*burning_oil_skill_ids,
-	*dragon_banner_skill_ids,
-    *golem_skills,
-    *downed_skills,
-    *other_skills
 ]
 
 profession_color = {
