@@ -1713,26 +1713,111 @@ def get_stat_by_skill(fight_num: int, player: dict, stat_category: str, name_pro
 					value,
 				)
 
-			# Aggregate into top_stats
-			top_stats["player"][name_prof][stat_category][skill_id][stat] = (
-				top_stats["player"][name_prof][stat_category][skill_id].get(stat, 0) + value
-			)
-			top_stats["fight"][fight_num][stat_category][skill_id][stat] = (
-				top_stats["fight"][fight_num][stat_category][skill_id].get(stat, 0) + value
-			)
-			top_stats["overall"][stat_category][skill_id][stat] = (
-				top_stats["overall"][stat_category][skill_id].get(stat, 0) + value
-			)
+			if stat == "max":
+				# Player
+				current = top_stats["player"][name_prof][stat_category][skill_id].get(stat, 0)
+				if value >= current:
+					top_stats["player"][name_prof][stat_category][skill_id][stat] = value
 
-			# Commander-specific summary
-			if player.get("hasCommanderTag"):
-				commander_name = f"{player['name']}|{player['profession']}|{get_player_account(player)}"
-				if skill_id not in commander_summary_data[commander_name][stat_category]:
-					commander_summary_data[commander_name][stat_category][skill_id] = {}
+				# Fight
+				current = top_stats["fight"][fight_num][stat_category][skill_id].get(stat, 0)
+				if value >= current:
+					top_stats["fight"][fight_num][stat_category][skill_id][stat] = value
 
-				commander_summary_data[commander_name][stat_category][skill_id][stat] = (
-					commander_summary_data[commander_name][stat_category][skill_id].get(stat, 0) + value
-				) 
+				# Overall
+				current = top_stats["overall"][stat_category][skill_id].get(stat, 0)
+				if value >= current:
+					top_stats["overall"][stat_category][skill_id][stat] = value
+
+				# Commander-specific summary
+				if player.get("hasCommanderTag"):
+					commander_name = (
+						f"{player['name']}|{player['profession']}|"
+						f"{get_player_account(player)}"
+					)
+
+					if skill_id not in commander_summary_data[commander_name][stat_category]:
+						commander_summary_data[commander_name][stat_category][skill_id] = {}
+
+					current = commander_summary_data[
+						commander_name
+					][stat_category][skill_id].get(stat, 0)
+
+					if value >= current:
+						commander_summary_data[
+							commander_name
+						][stat_category][skill_id][stat] = value
+
+			elif stat == "min":
+				# Player
+				current = top_stats["player"][name_prof][stat_category][skill_id].get(stat)
+				if current is None or value <= current:
+					top_stats["player"][name_prof][stat_category][skill_id][stat] = value
+
+				# Fight
+				current = top_stats["fight"][fight_num][stat_category][skill_id].get(stat)
+				if current is None or value <= current:
+					top_stats["fight"][fight_num][stat_category][skill_id][stat] = value
+
+				# Overall
+				current = top_stats["overall"][stat_category][skill_id].get(stat)
+				if current is None or value <= current:
+					top_stats["overall"][stat_category][skill_id][stat] = value
+
+				# Commander-specific summary
+				if player.get("hasCommanderTag"):
+					commander_name = (
+						f"{player['name']}|{player['profession']}|"
+						f"{get_player_account(player)}"
+					)
+
+					if skill_id not in commander_summary_data[commander_name][stat_category]:
+						commander_summary_data[commander_name][stat_category][skill_id] = {}
+
+					current = commander_summary_data[
+						commander_name
+					][stat_category][skill_id].get(stat)
+
+					if current is None or value <= current:
+						commander_summary_data[
+							commander_name
+						][stat_category][skill_id][stat] = value
+
+			else:
+				# Aggregate all other stats
+				top_stats["player"][name_prof][stat_category][skill_id][stat] = (
+					top_stats["player"][name_prof][stat_category][skill_id].get(stat, 0)
+					+ value
+				)
+
+				top_stats["fight"][fight_num][stat_category][skill_id][stat] = (
+					top_stats["fight"][fight_num][stat_category][skill_id].get(stat, 0)
+					+ value
+				)
+
+				top_stats["overall"][stat_category][skill_id][stat] = (
+					top_stats["overall"][stat_category][skill_id].get(stat, 0)
+					+ value
+				)
+
+				# Commander-specific summary
+				if player.get("hasCommanderTag"):
+					commander_name = (
+						f"{player['name']}|{player['profession']}|"
+						f"{get_player_account(player)}"
+					)
+
+					if skill_id not in commander_summary_data[commander_name][stat_category]:
+						commander_summary_data[commander_name][stat_category][skill_id] = {}
+
+					commander_summary_data[
+						commander_name
+					][stat_category][skill_id][stat] = (
+						commander_summary_data[
+							commander_name
+						][stat_category][skill_id].get(stat, 0)
+						+ value
+					)
 
 def get_buff_uptimes(fight_num: int, player: dict, group: str, stat_category: str, name_prof: str, fight_duration: int, active_time: int) -> None:
 	"""
