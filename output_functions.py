@@ -3066,6 +3066,51 @@ def build_top_damage_by_skill(skill_casts_by_enemy: dict, skill_cast_by_role: di
 		tid_list
 	)
 
+def build_enemy_team_top_damage_by_skill(enemy_avg_damage_per_skill: dict, caption: str, tid_date_time: str) -> None:
+	for team in enemy_avg_damage_per_skill:
+		if team == "Total":
+			continue
+		if enemy_avg_damage_per_skill[team]:
+			sorted_team_damage = dict(sorted(enemy_avg_damage_per_skill[team].items(), key=lambda item: item[1]["dmg"], reverse=True))
+			total_damage_distributed_value = sum(skill["dmg"] for skill in sorted_team_damage.values())
+
+			rows = []
+			#rows.append("\n!!!@@ Note: Enemy Total Casts may be inaccurate, it is based on data available in target['rotation'].@@\n\n")
+			#rows.append("\n!!!@@ Note: Excludes Siege skills, Dragon Banner and select keep lord skills.@@\n\n")
+			rows.append('<div style="overflow-y: auto; width: 100%; overflow-x:auto;">\n\n')
+			rows.append("|thead-dark table-borderless w-75 table-center|k")
+			rows.append("|!Top 25 Skills by Damage Output|")
+			rows.append("\n\n")
+
+			#Header for damage output table
+			header = "|thead-dark table-caption-top-left table-hover table-center sortable|k\n"
+			header += "|!Skill Name | !Damage | !Hits | !Min | !Max | !% of Total|h"
+			rows.append(header)
+	
+			i = 0
+			for skill_id, skill in sorted_team_damage.items():
+				if i < 25 and total_damage_distributed_value > 0:
+					skill_name = skill_id
+					skill_icon = skill['icon']
+					entry = f"[img width=24 [{skill_name}|{skill_icon}]]-{skill_name}"
+					row = f"|{entry} | {skill['dmg']:,.0f} | {skill['hits']:,.0f} | {skill['min']} | {skill['max']} | {skill['dmg']/total_damage_distributed_value*100:,.1f}% |"
+					rows.append(row)
+					i += 1
+
+			rows.append(f"| {team} Damage Output |c")
+			rows.append('\n\n</div>\n\n')
+
+			text = "\n".join(rows)
+
+			# Define the title for the TID
+			top_skills_title = f"{tid_date_time}-{team}-{caption.replace(' ', '-')}"
+
+			# Append the TID for output
+			append_tid_for_output(
+				create_new_tid_from_template(top_skills_title, caption, text, tid_date_time),
+				tid_list
+			)
+
 def build_healer_menu_tabs(top_stats: dict, caption: str, tid_date_time: str) -> None:
 	"""Builds a menu tab macro for healers."""
 
@@ -3255,7 +3300,6 @@ def build_damage_summary_tid(
         tid_list,
     )
 
-
 def build_player_skill_tids(
     top_stats: dict,
     skill_data: dict,
@@ -3363,7 +3407,6 @@ def build_player_skill_tids(
             create_new_tid_from_template(player_title, player_caption, "\n".join(rows), tid_date_time),
             tid_list,
         )
-
 
 def build_squad_composition(top_stats: dict, tid_date_time: str, tid_list: list) -> None:
 	"""
@@ -6402,7 +6445,6 @@ def build_pull_stats_tid(tid_date_time: str, top_stats: dict, skill_data: dict, 
 		tid_list
 	)
 
-#Add Glicko Leaderboard Support
 def update_glicko_ratings(db_path: str = "Top_Stats.db"):
 
 	def create_table(cursor):
@@ -6596,7 +6638,6 @@ def update_glicko_ratings(db_path: str = "Top_Stats.db"):
 	conn.close()
 	print("Glicko ratings (with normalization and trends) updated.")
 
-
 def generate_leaderboard(stat: str, db_path: str, top_n: int = 25) -> str:
 	conn = sqlite3.connect(db_path)
 	cursor = conn.cursor()
@@ -6680,7 +6721,6 @@ def generate_leaderboard(stat: str, db_path: str, top_n: int = 25) -> str:
 
 	return table
 
-
 def save_high_score(
 	db_path: str,
 	account: str,
@@ -6753,7 +6793,6 @@ def save_high_score(
 	conn.commit()
 	conn.close()
 
-
 def write_high_scores_to_db(highscores, fights, skill_data, db_path):
 	for category, stat_data in highscores.items():
 		STAT_NAME_MAP = {
@@ -6817,7 +6856,6 @@ def write_high_scores_to_db(highscores, fights, skill_data, db_path):
 				stat_info,
 				stat_value,
 			)
-
 
 def build_high_scores_leaderboard_tids(tid_date_time: str, db_path: str) -> None:
 	"""
@@ -6884,7 +6922,6 @@ def build_high_scores_leaderboard_tids(tid_date_time: str, db_path: str) -> None
 	build_high_scores_leaderboard_menu_tid(tid_date_time, categories, tid_list)
 	conn.close()
 
-
 def build_high_scores_leaderboard_menu_tid(datetime: str, categories: list, tid_list: list) -> None:
 	"""
 	Build a TID for the high scores leaderboard menu.
@@ -6907,7 +6944,6 @@ def build_high_scores_leaderboard_menu_tid(datetime: str, categories: list, tid_
 		tid_list
 	)
 	
-
 def build_leaderboard_tids(tid_date_time: str, leaderboard_stats: dict, tid_list: list, db_path: str) -> None:
 	for stat in leaderboard_stats:
 		table = generate_leaderboard(stat, db_path)
@@ -6979,7 +7015,6 @@ def build_boon_support_data(top_stats: dict, support_profs: dict, boon_dict: dic
 
 	return boon_support_data
 
-
 def build_discord_damage_data(top_stats: dict):
 	discord_damage = []
 
@@ -7008,7 +7043,6 @@ def build_discord_damage_data(top_stats: dict):
 	)[:10]
 
 	return damage_top_10
-
 
 def send_profession_boon_support_embed(webhook_url: str, profession: str, prof_icon: str, prof_color: str, tid_date_time: str, data: list) -> None:
     """
@@ -7101,8 +7135,6 @@ def send_profession_boon_support_embed(webhook_url: str, profession: str, prof_i
     except RequestException as e:
         print(f"[Discord] Unexpected request error: {e}")
 
-
-
 def send_additional_data_embed(webhook_url: str, discord_additional_notes: str, tid_date_time: str) -> None:
     """
     Build and send a Discord embed containing an additional data note.
@@ -7146,7 +7178,6 @@ def send_additional_data_embed(webhook_url: str, discord_additional_notes: str, 
     except RequestException as e:
         print(f"[Discord] Additional notes webhook error: {e}")
 	
-
 def write_data_to_excel(top_stats: dict, last_fight: str, excel_path: str = "Top_Stats.xlsx") -> None:
     """
     Write the top_stats dictionary to an Excel file using XlsxWriter.
@@ -7232,7 +7263,6 @@ def write_data_to_excel(top_stats: dict, last_fight: str, excel_path: str = "Top
     # Save file
     workbook.close()
     print(f"Excel file created: {excel_path}")
-
 
 def write_data_to_db(top_stats: dict, last_fight: str, db_path: str = "Top_Stats.db") -> None:
 		
