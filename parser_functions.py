@@ -39,7 +39,12 @@ team_colors = config.team_colors
 team_code_missing = []
 mesmer_shatter_skills = config.mesmer_shatter_skills
 mesmer_clone_usage = {}
-enemy_avg_damage_per_skill = {}
+enemy_avg_damage_per_skill = {
+    'Total': {},
+    'Red Team': {},
+    'Blue Team': {},
+    'Green Team': {}
+}
 player_damage_mitigation = {}
 player_minion_damage_mitigation = {}
 
@@ -109,7 +114,6 @@ def get_player_account(player: Dict[str, Any]) -> str:
     # Logic Simplification: .replace() is sufficient.
     # The original 'split' check was redundant as split() always returns a list of at least length 1.
     return account.replace("-", ".")
-
 
 
 def get_fight_data(player: Dict[str, Any], fight_num: int, data_store: Dict[int, Dict[str, Any]]) -> None:
@@ -183,7 +187,6 @@ def check_burst1S_high_score(fight_data, player, fight_num):
 		)
 			
 
-
 def determine_log_type_and_extract_fight_name(fight_name: str) -> tuple:
 	"""
 	Determine if the log is a PVE or WVW log and extract the fight name.
@@ -213,6 +216,7 @@ def determine_log_type_and_extract_fight_name(fight_name: str) -> tuple:
 		log_type = "PVE"
 	return log_type, fight_name
 
+
 def calculate_resist_offset(resist_data: dict, state_data: dict) -> int:
 	"""
 	Calculate the total time a player has resist during a set of states.
@@ -236,6 +240,7 @@ def calculate_resist_offset(resist_data: dict, state_data: dict) -> int:
 			elif state_end < resist_end and state_end >= resist_start and state_start < resist_start:
 				total_offset += state_end - resist_start
 	return total_offset
+
 
 def determine_clone_usage(player, skill_map, mesmer_shatter_skills):
 	"""
@@ -296,6 +301,7 @@ def get_buff_states(buff_states: list) -> dict:
 
 	return dict(zip(start_times, end_times))
 
+
 def calculate_moving_average(data: list, window_size: int) -> list:
 	"""
 	Calculate the moving average of a list of numbers with a specified window size.
@@ -314,6 +320,7 @@ def calculate_moving_average(data: list, window_size: int) -> list:
 		sub_data = data[start_index:end_index + 1]
 		ma.append(sum(sub_data) / len(sub_data))
 	return ma
+
 
 def find_lowest(dict):
 	"""
@@ -334,6 +341,7 @@ def find_lowest(dict):
 			res.append(value)
 	return res
 
+
 def find_smallest_value(my_dict):
 	"""
 	Find the key with the smallest value in a dictionary.
@@ -349,6 +357,7 @@ def find_smallest_value(my_dict):
 	
 	min_key = min(my_dict, key=my_dict.get)
 	return min_key
+
 
 def calculate_damage_during_buff(player, target_idx, buff_start, buff_end, damage_type):
 
@@ -371,6 +380,7 @@ def calculate_damage_during_buff(player, target_idx, buff_start, buff_end, damag
 	current_damage = player[damage_type][target_idx][0][end_idx] - player[damage_type][target_idx][0][start_idx]
 			
 	return current_damage
+
 
 def check_target_for_buff_start_end(targets, players, damage_buff_ids):
 	"""
@@ -477,6 +487,7 @@ def determine_player_role(player_data: dict) -> str:
 	else:
 		return "DPS"
 
+
 def calculate_defensive_hits_and_glances(player_data):
 	"""
 	Calculate the number of direct and glancing hits taken by a player based on the total damage taken.
@@ -495,6 +506,7 @@ def calculate_defensive_hits_and_glances(player_data):
 			direct_hits += skill['hits']
 
 	return direct_hits, glancing_hits
+
 
 def get_commander_tag_data(fight_json):
 	"""Extract commander tag data from the fight JSON."""
@@ -530,6 +542,7 @@ def get_commander_tag_data(fight_json):
 					break
 
 	return commander_tag_positions, earliest_death_time, has_died
+
 
 def get_player_death_on_tag(
     player,
@@ -718,6 +731,7 @@ def get_combat_start_from_player_json(initial_time, player_json):
 				start_combat = min(start_combat, i*1000)
 			break
 	return start_combat
+
 
 def get_combat_time_breakpoints(player_json):
 	"""
@@ -2607,7 +2621,29 @@ def get_rally_mechanics_by_fight(mechanics_map, players):
 
 	return rallies
 
-def get_damage_mitigation_data(fight_num: int, players: dict, targets: dict, skill_data: dict, buff_data: dict) -> None:
+
+def add_skill_damage(bucket, skill_name, skill):
+    if skill_name not in bucket:
+        bucket[skill_name] = {
+            'dmg': 0,
+            'hits': 0,
+            'min': skill['min'],
+            'max': skill['max']
+        }
+    else:
+        bucket[skill_name]['dmg'] += skill['totalDamage']
+        bucket[skill_name]['hits'] += skill['connectedHits']
+        bucket[skill_name]['min'] = min(
+            bucket[skill_name]['min'],
+            skill['min']
+        )
+        bucket[skill_name]['max'] = max(
+            bucket[skill_name]['max'],
+            skill['max']
+        )
+
+
+def get_damage_mitigation_data(fight_num: int, players: dict, targets: dict, skill_data: dict, buff_data: dict, team_colorMap: dict) -> None:
 	"""
 	Collects damage mitigation data from a fight and stores it in a dictionary.
 
@@ -2619,24 +2655,34 @@ def get_damage_mitigation_data(fight_num: int, players: dict, targets: dict, ski
 		buff_data (dict): The buff data.
 	"""
 	for target in targets:
-		if 'totalDamageDist' in target:
-			for skill in target['totalDamageDist'][0]:
-				skill_id = skill['id']
-				if f"s{skill_id}" in skill_data:
-					skill_name = skill_data[f"s{skill_id}"]['name']
-				elif f"b{skill_id}" in buff_data:
-					skill_name = buff_data[f"b{skill_id}"]['name']
-				else:
-					skill_name = f"Unknown Skill {skill_id}"
-				if skill_name not in enemy_avg_damage_per_skill:
-					enemy_avg_damage_per_skill[skill_name] = {
-						'dmg': 0,
-						'hits': 0,
-						'min': []
-					}
-				enemy_avg_damage_per_skill[skill_name]['dmg'] += skill['totalDamage']
-				enemy_avg_damage_per_skill[skill_name]['hits'] += skill['connectedHits']
-				enemy_avg_damage_per_skill[skill_name]['min'].append(skill['min'])
+		if 'totalDamageDist' not in target:
+			continue
+		if target['teamID'] in team_colorMap:
+			team_color = team_colorMap[target['teamID']]
+		else:
+			continue
+
+		for skill in target['totalDamageDist'][0]:
+			skill_id = skill['id']
+
+			if f"s{skill_id}" in skill_data:
+				skill_name = skill_data[f"s{skill_id}"]['name']
+			elif f"b{skill_id}" in buff_data:
+				skill_name = buff_data[f"b{skill_id}"]['name']
+			else:
+				skill_name = f"Unknown Skill {skill_id}"
+
+			add_skill_damage(
+				enemy_avg_damage_per_skill['Total'],
+				skill_name,
+				skill
+			)
+
+			add_skill_damage(
+				enemy_avg_damage_per_skill[team_color],
+				skill_name,
+				skill
+			)
 
 	for player in players:
 		if player['notInSquad']:
@@ -2680,17 +2726,17 @@ def get_damage_mitigation_data(fight_num: int, players: dict, targets: dict, ski
 					enemy_avg_dmg = 1
 					enemy_min_dmg = 1
 				else:
-					enemy_min_dmg = sum(enemy_avg_damage_per_skill[skill_name]['min']) / len(enemy_avg_damage_per_skill[skill_name]['min']) if skill_name in enemy_avg_damage_per_skill else 0
-					enemy_avg_dmg = enemy_avg_damage_per_skill[skill_name]['dmg'] / enemy_avg_damage_per_skill[skill_name]['hits'] if enemy_avg_damage_per_skill[skill_name]['hits'] > 0 else 0
+					enemy_min_dmg = enemy_avg_damage_per_skill['Total'][skill_name]['min'] if skill_name in enemy_avg_damage_per_skill['Total'] else 0
+					enemy_avg_dmg = enemy_avg_damage_per_skill['Total'][skill_name]['dmg'] / enemy_avg_damage_per_skill['Total'][skill_name]['hits'] if enemy_avg_damage_per_skill['Total'][skill_name]['hits'] > 0 else 0
 				player_damage_mitigation[name_prof][skill_name]['blocked'] += skill['blocked']
 				player_damage_mitigation[name_prof][skill_name]['evaded'] += skill['evaded']
 				player_damage_mitigation[name_prof][skill_name]['glanced'] += skill['glance']
 				player_damage_mitigation[name_prof][skill_name]['missed'] += skill['missed']
 				player_damage_mitigation[name_prof][skill_name]['invulned'] += skill['invulned']
 				player_damage_mitigation[name_prof][skill_name]['interrupted'] += skill['interrupted']
-				player_damage_mitigation[name_prof][skill_name]['total_dmg'] = enemy_avg_damage_per_skill[skill_name]['dmg'] if skill_name in enemy_avg_damage_per_skill else 0
+				player_damage_mitigation[name_prof][skill_name]['total_dmg'] = enemy_avg_damage_per_skill['Total'][skill_name]['dmg'] if skill_name in enemy_avg_damage_per_skill['Total'] else 0
 				player_damage_mitigation[name_prof][skill_name]['skill_hits'] += skill['hits']
-				player_damage_mitigation[name_prof][skill_name]['total_hits'] = enemy_avg_damage_per_skill[skill_name]['hits'] if skill_name in enemy_avg_damage_per_skill else 0
+				player_damage_mitigation[name_prof][skill_name]['total_hits'] = enemy_avg_damage_per_skill['Total'][skill_name]['hits'] if skill_name in enemy_avg_damage_per_skill['Total'] else 0
 				if player_damage_mitigation[name_prof][skill_name]['total_hits'] > 0:
 					player_damage_mitigation[name_prof][skill_name]['avg_dmg'] = enemy_avg_dmg
 					player_damage_mitigation[name_prof][skill_name]['min_dmg'] = enemy_min_dmg
@@ -2769,12 +2815,9 @@ def get_damage_mitigation_data(fight_num: int, players: dict, targets: dict, ski
 							'avoided_damage': 0,
 							'min_avoided_damage': 0							
 						}
-					if skill_name not in enemy_avg_damage_per_skill:
-						enemy_avg_dmg = 1
-						enemy_min_dmg = 1
-					else:
-						enemy_min_dmg = sum(enemy_avg_damage_per_skill[skill_name]['min']) / len(enemy_avg_damage_per_skill[skill_name]['min']) if skill_name in enemy_avg_damage_per_skill else 0
-						enemy_avg_dmg = enemy_avg_damage_per_skill[skill_name]['dmg'] / enemy_avg_damage_per_skill[skill_name]['hits'] if enemy_avg_damage_per_skill[skill_name]['hits'] > 0 else 0
+
+					enemy_min_dmg = enemy_avg_damage_per_skill['Total'][skill_name]['min'] if skill_name in enemy_avg_damage_per_skill['Total'] else 1
+					enemy_avg_dmg = enemy_avg_damage_per_skill['Total'][skill_name]['dmg'] / enemy_avg_damage_per_skill['Total'][skill_name]['hits'] if skill_name in enemy_avg_damage_per_skill['Total'] and enemy_avg_damage_per_skill['Total'][skill_name]['hits'] > 0 else 1
 					player_minion_damage_mitigation[name_prof][minion_name][skill_name]['blocked'] += skill['blocked']
 					player_minion_damage_mitigation[name_prof][minion_name][skill_name]['evaded'] += skill['evaded']
 					player_minion_damage_mitigation[name_prof][minion_name][skill_name]['glanced'] += skill['glance']
@@ -2782,12 +2825,12 @@ def get_damage_mitigation_data(fight_num: int, players: dict, targets: dict, ski
 					player_minion_damage_mitigation[name_prof][minion_name][skill_name]['invulned'] += skill['invulned']
 					player_minion_damage_mitigation[name_prof][minion_name][skill_name]['interrupted'] += skill['interrupted']
 					player_minion_damage_mitigation[name_prof][minion_name][skill_name]['skill_hits'] += skill['hits']
-					player_minion_damage_mitigation[name_prof][minion_name][skill_name]['total_dmg'] = enemy_avg_damage_per_skill[skill_name]['dmg'] if skill_name in enemy_avg_damage_per_skill else 0
-					player_minion_damage_mitigation[name_prof][minion_name][skill_name]['total_hits'] = enemy_avg_damage_per_skill[skill_name]['hits'] if skill_name in enemy_avg_damage_per_skill else 0
+					player_minion_damage_mitigation[name_prof][minion_name][skill_name]['total_dmg'] = enemy_avg_damage_per_skill['Total'][skill_name]['dmg'] if skill_name in enemy_avg_damage_per_skill['Total'] else 0
+					player_minion_damage_mitigation[name_prof][minion_name][skill_name]['total_hits'] = enemy_avg_damage_per_skill['Total'][skill_name]['hits'] if skill_name in enemy_avg_damage_per_skill['Total'] else 0
 
 					if player_minion_damage_mitigation[name_prof][minion_name][skill_name]['skill_hits'] > 0:
 						player_minion_damage_mitigation[name_prof][minion_name][skill_name]['avg_dmg'] = enemy_avg_dmg
-						if skill_name in enemy_avg_damage_per_skill:
+						if skill_name in enemy_avg_damage_per_skill['Total']:
 							player_minion_damage_mitigation[name_prof][minion_name][skill_name]['min_dmg'] = enemy_min_dmg
 						else:
 							player_minion_damage_mitigation[name_prof][minion_name][skill_name]['min_dmg'] = 0
@@ -3127,7 +3170,7 @@ def parse_file(file_path, fight_num, guild_data, fight_data_charts, blacklist):
 
 	wvw_map = json_data["wvWMapData"]
 
-	team_color_map = {
+	team_colorMap = {
 	    wvw_map["redTeamID"]: "Red Team",
 	    wvw_map["blueTeamID"]: "Blue Team",
 	    wvw_map["greenTeamID"]: "Green Team",
@@ -3200,7 +3243,7 @@ def parse_file(file_path, fight_num, guild_data, fight_data_charts, blacklist):
 	top_stats['overall']['rallies'] = top_stats['overall'].get('rallies', 0) + top_stats['fight'][fight_num]['rallies']
 
 	#collect damage mitigation data
-	get_damage_mitigation_data(fight_num, players, targets, skill_map, buff_map)
+	get_damage_mitigation_data(fight_num, players, targets, skill_map, buff_map, team_colorMap)
 
 	get_illusion_of_life_data(players, fight_duration_ms)
 	

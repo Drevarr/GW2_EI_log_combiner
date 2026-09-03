@@ -2992,15 +2992,14 @@ def build_top_damage_by_skill(skill_casts_by_enemy: dict, skill_cast_by_role: di
 		caption (str): A string caption for the table.
 		tid_date_time (str): A string representing the timestamp or unique identifier for the TID.
 	"""
-	# Sort skills by total damage in descending order
+	#Sort skills by total damage in descending order
 	sorted_total_damage_taken = dict(sorted(total_damage_taken.items(), key=lambda item: item[1]["totalDamage"], reverse=True))
 	sorted_target_damage_dist = dict(sorted(target_damage_dist.items(), key=lambda item: item[1]["totalDamage"], reverse=True))
 
-	# Calculate total damage values for percentage calculations
+	#Calculate total damage values for percentage calculations
 	total_damage_taken_value = sum(skill["totalDamage"] for skill in sorted_total_damage_taken.values())
 	total_damage_distributed_value = sum(skill["totalDamage"] for skill in sorted_target_damage_dist.values())
 
-	# Prepare HTML rows for the table
 	rows = []
 	rows.append("\n!!!@@ Note: Enemy Total Casts may be inaccurate, it is based on data available in target['rotation'].@@\n\n")
 	rows.append("\n!!!@@ Note: Excludes Siege skills, Dragon Banner and select keep lord skills.@@\n\n")
@@ -3010,12 +3009,11 @@ def build_top_damage_by_skill(skill_casts_by_enemy: dict, skill_cast_by_role: di
 	rows.append("\n\n")
 	rows.append('\n<div class="flex-row">\n\n    <div class="flex-col">\n\n')
 
-	# Header for damage output table
+	#Header for damage output table
 	header = "|thead-dark table-caption-top-left table-hover table-center sortable|k\n"
 	header += "|!Skill Name | !Damage | !Down Contrib | !Total Casts | !Connected Hits | !% of Total|h"
 	rows.append(header)
 	
-	# Populate the table with top 25 skills by damage output
 	siege_skill_ids = config.siege_skill_ids
 	i = 0
 	for skill_id, skill in sorted_target_damage_dist.items():
@@ -3034,12 +3032,11 @@ def build_top_damage_by_skill(skill_casts_by_enemy: dict, skill_cast_by_role: di
 	rows.append(f"| Squad Damage Output |c")
 	rows.append('\n\n</div>\n\n    <div class="flex-col">\n\n')
 
-	# Header for damage taken table
+	#Header for damage taken table
 	header = "|thead-dark table-caption-top-left table-hover table-center sortable|k\n"
 	header += "|!Skill Name | !Damage | !Total Casts | !Connected Hits | !% of Total|h"
 	rows.append(header)
 
-	# Populate the table with top 25 skills by damage taken
 	siege_skill_ids = config.siege_skill_ids
 	i=0
 	for skill_id, skill in sorted_total_damage_taken.items():
@@ -3334,7 +3331,7 @@ def build_player_skill_tids(
 
             if is_outgoing:
                 down_contrib = stats.get('downContribution', 0)
-                pct = damage / total_damage * 100
+                pct = damage / total_damage * 100 if total_damage else 0
                 if connect_hits == 0:
                     connect_hits = 1
                 if pct >= 1:
@@ -3343,7 +3340,7 @@ def build_player_skill_tids(
                     rows.append(row)
             else:
                 shield_damage = stats.get('shieldDamage', 0)
-                pct = damage / total_damage * 100
+                pct = damage / total_damage * 100 if total_damage else 0
                 if connect_hits == 0:
                     connect_hits = 1
                 if pct >= 1:
