@@ -2622,13 +2622,14 @@ def get_rally_mechanics_by_fight(mechanics_map, players):
 	return rallies
 
 
-def add_skill_damage(bucket, skill_name, skill):
+def add_skill_damage(bucket, skill_name, skill_icon, skill):
     if skill_name not in bucket:
         bucket[skill_name] = {
-            'dmg': 0,
-            'hits': 0,
+            'dmg': skill['totalDamage'],
+            'hits': skill['connectedHits'],
             'min': skill['min'],
-            'max': skill['max']
+            'max': skill['max'],
+			'icon': skill_icon
         }
     else:
         bucket[skill_name]['dmg'] += skill['totalDamage']
@@ -2667,20 +2668,25 @@ def get_damage_mitigation_data(fight_num: int, players: dict, targets: dict, ski
 
 			if f"s{skill_id}" in skill_data:
 				skill_name = skill_data[f"s{skill_id}"]['name']
+				skill_icon = skill_data[f"s{skill_id}"]['icon']
 			elif f"b{skill_id}" in buff_data:
 				skill_name = buff_data[f"b{skill_id}"]['name']
+				skill_icon = buff_data[f"b{skill_id}"]['icon']
 			else:
 				skill_name = f"Unknown Skill {skill_id}"
+				skill_icon = "unknown.png"
 
 			add_skill_damage(
 				enemy_avg_damage_per_skill['Total'],
 				skill_name,
+				skill_icon,
 				skill
 			)
 
 			add_skill_damage(
 				enemy_avg_damage_per_skill[team_color],
 				skill_name,
+				skill_icon,
 				skill
 			)
 
