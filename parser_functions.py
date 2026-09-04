@@ -130,7 +130,8 @@ def get_fight_data(player: Dict[str, Any], fight_num: int, data_store: Dict[int,
         data_store[fight_num] = {
             "damage1S": defaultdict(float),
             "damageTaken1S": defaultdict(float),
-            "players": {}
+            "players": {},
+			"enemies": {}
         }
     
     # Reference to the specific fight structure for cleaner access
@@ -172,6 +173,46 @@ def get_fight_data(player: Dict[str, Any], fight_num: int, data_store: Dict[int,
         for i in range(1, len(taken_series)):
             delta_taken = taken_series[i] - taken_series[i-1]
             current_fight["damageTaken1S"][i] += delta_taken
+
+def get_enemy_fight_data(enemy: Dict[str, Any], fight_num: int, data_store: Dict[int, Dict[str, Any]]) -> None:
+    """
+    Process player combat data and update the global fight_data structure.
+
+    Args:
+        player (dict): The player data dictionary.
+        fight_num (int): The unique identifier for the current fight.
+        data_store (dict): The master dictionary storing fight information.
+    """
+    # 1. Initialize fight data if not present
+    if fight_num not in data_store:
+        data_store[fight_num] = {
+            "damage1S": defaultdict(float),
+            "damageTaken1S": defaultdict(float),
+            "players": {},
+			"enemies": {}
+        }
+    
+    # Reference to the specific fight structure for cleaner access
+    current_fight = data_store[fight_num]
+
+    # 2. Construct Identity
+    enemy_id = enemy.get('name')
+    
+    # 3. Process Damage Dealt (Conditional on DPS threshold)
+    dps_list = enemy.get("dpsAll", [])
+    if dps_list and dps_list[0].get("dps", 0) >= 700:
+        if enemy_id not in current_fight["players"]:
+            current_fight["enemies"][enemy_id] = {
+                "damage1S": defaultdict(float)
+            }
+        
+        damage_series = enemy["damage1S"][0]
+        prior_damage = 0
+		
+        for sec_index, cur_total_damage in enumerate(damage_series):
+            delta_damage = cur_total_damage - prior_damage
+            current_fight["enemies"][enemy_id]["damage1S"][sec_index] += delta_damage
+            prior_damage = cur_total_damage
 
 
 def check_burst1S_high_score(fight_data, player, fight_num):
@@ -3232,6 +3273,10 @@ def parse_file(file_path, fight_num, guild_data, fight_data_charts, blacklist):
 
 	#collect enemy skill casts from rotation
 	get_skill_cast_by_enemy_prof(targets)
+	for target in targets:
+		if target["isFake"]:
+			continue
+		get_enemy_fight_data(target, fight_num, fight_data)
 
 	
 	#collect damage mods data
