@@ -1980,7 +1980,7 @@ def build_skill_cast_summary(skill_casts_by_role: dict, skill_data: dict, captio
 		header = "|thead-dark table-caption-top table-hover sortable|k\n"
 		header += f"| {caption} |c\n"
 		header += "|!Name | !Prof |!Account | !{{FightTime}} |!"
-		apm_entry = f'<div class="xtooltip"> APM <span class="xtooltiptext" style="padding-left: 5px"> APM without Autos & Procs/<br>APM without Autos /<br>Total Actions per Minute</span></div>'
+		apm_entry = f'<div class="xtooltip"> APM <span class="xtooltiptext" style="padding-left: 5px"> APM without Autos & Procs/<br>APM without Autos/<br>APM without Procs /<br>Total Actions per Minute</span></div>'
 		header += f" {apm_entry}|"
 		# Add the skill names to the header
 		i = 0
@@ -2010,9 +2010,10 @@ def build_skill_cast_summary(skill_casts_by_role: dict, skill_data: dict, captio
 			time_mins = time_secs / 60
 			apm = round(player_data['total']/time_mins)
 			apm_no_auto = round(player_data['total_no_auto']/time_mins)
+			apm_no_procs = round(player_data['total_no_proc']/time_mins)
 			apm_no_auto_no_procs = round(player_data['total_no_auto_no_proc']/time_mins)
 		
-			row = f"|{name} |" + " " + f"{profession} " + f"|{account} |" + f"{time_secs:,.1f}|" + f" {apm_no_auto_no_procs}/{apm_no_auto}/{apm} |"
+			row = f"|{name} |" + " " + f"{profession} " + f"|{account} |" + f"{time_secs:,.1f}|" + f" {apm_no_auto_no_procs}/{apm_no_auto}/{apm_no_procs}/{apm} |"
 			# Add the skill casts per minute to the row
 			i = 0
 			for skill, count in sorted_cast_skills:
@@ -3492,6 +3493,92 @@ def build_squad_composition(top_stats: dict, tid_date_time: str, tid_list: list)
 		tid_list
 	)
 
+def build_squad_compositions_by_fight(top_stats: dict, tid_date_time: str, tid_list: list) -> None:
+	"""
+	Build a tid of the squad composition for each fight.
+
+	This function will build a table of the squad composition for each fight. It
+	will also add the table to the tid_list for output.
+
+	Args:
+		top_stats (dict): The top_stats dictionary containing the overall stats.
+		tid_date_time (str): A string representing the timestamp or unique identifier
+			for the TID.
+		tid_list (list): A list of TIDs to which the generated TID should be appended.
+	"""
+			
+	
+	rows = []
+
+	# Add the select component to the table
+	rows.append('<div class="flex-row">')
+	rows.append('<div class="flex-col">')
+	rows.append("\n\n|thead-dark table-caption-top table-hover table-center|k")
+	rows.append("| Squad Composition |h")
+	rows.append('</div>')
+	rows.append('<div class="flex-col">')
+	rows.append("\n\n|thead-dark table-caption-top table-hover table-center|k")
+	rows.append("| Enemy Composition |h")
+	rows.append('</div>\n\n</div>\n')
+
+	for fight in top_stats['parties_by_fight']:
+		# Add the table header for the fight
+		rows.append('<div class="flex-row">\n\n')
+		rows.append('<div class="flex-col">\n\n')
+		header = "\n\n|thead-dark table-caption-top table-hover sortable table-center|k\n"
+		header += f"|Fight - {fight} |c"
+		rows.append(header)			
+		for group in top_stats['parties_by_fight'][fight]:
+			# Add the table rows for the group
+			row = f"|{group:02} |"
+			for player in top_stats['parties_by_fight'][fight][group]:
+				profession, name = player.split("|")
+				profession = "{{"+profession+"}}"
+				tooltip = f" {name} "
+				detailEntry = f'<div class="xtooltip"> {profession} <span class="xtooltiptext" style="padding_left: 5px;">'+name+'</span></div>'
+				row += f" {detailEntry} |"
+			rows.append(row)			
+		rows.append("</div>\n\n")
+
+		rows.append('<div class="flex-col">\n\n')
+		for team in top_stats["enemies_by_fight"][fight]:
+			#rows.append('<div class="flex-col">\n\n')
+			header = "\n\n|thead-dark table-caption-top table-hover sortable table-center|k\n"
+			header += f"|Fight - {fight} : {team} Composition |c"
+			rows.append(header)
+			sorted_profs = dict(sorted(top_stats['enemies_by_fight'][fight][team].items(), key=lambda x: x[1], reverse=True))
+			#len_profs = len(top_stats['enemies_by_fight'][fight])
+			#table_size = len(top_stats['parties_by_fight'][fight])
+			row_length = 5
+
+			count = 0
+			row = ""
+
+			#for key, value in top_stats['enemies_by_fight'][fight].items():
+			for key, value in sorted_profs.items():
+				row += "|{{"+key+"}} : "+str(value)
+				count += 1
+				if count % row_length == 0:
+					row +="|\n"
+				else:
+					row += " |"
+			row +="\n"
+			rows.append(row)
+		rows.append("</div>\n\n")
+
+		rows.append("</div>\n\n\n")
+		rows.append("---\n\n\n")
+		text = "\n".join(rows)
+
+		tid_title = f"{tid_date_time}-Squad-Composition-Fight-{fight}"
+		tid_caption = "Squad Composition Fight - {fight}"
+		tid_tags = tid_date_time
+
+		append_tid_for_output(
+			create_new_tid_from_template(tid_title, tid_caption, text, tid_tags),
+			tid_list
+		)
+		
 def build_on_tag_review(death_on_tag, players, tid_date_time):
 	"""
 	Build a table of on tag review stats for all players in the log running the extension.

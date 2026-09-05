@@ -373,7 +373,7 @@ if __name__ == '__main__':
 
 	#get squad comp and output table
 	build_squad_composition(top_stats, tid_date_time, tid_list)
-
+	#build_squad_compositions_by_fight(top_stats, tid_date_time, tid_list)
 	
 	#get heal stats found and output table
 	build_healing_summary(top_stats, "Heal Stats", tid_date_time)
