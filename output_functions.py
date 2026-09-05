@@ -2219,7 +2219,7 @@ def build_main_tid(datetime, tag_list, guild_name, description_append):
 	main_text = "{{"+datetime+"-Tag_Stats}}\n\n{{"+datetime+"-Menu}}"
 
 	append_tid_for_output(
-		create_new_tid_from_template(main_title, main_caption, main_text, main_tags, main_modified, main_created, main_creator),
+		create_new_tid_from_template(main_title, main_caption, main_text, main_tags, creator=main_creator),
 		tid_list
 	)
 
