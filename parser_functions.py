@@ -40,10 +40,10 @@ team_code_missing = []
 mesmer_shatter_skills = config.mesmer_shatter_skills
 mesmer_clone_usage = {}
 enemy_avg_damage_per_skill = {
-    'Total': {},
-    'Red Team': {},
-    'Blue Team': {},
-    'Green Team': {}
+	'Total': {},
+	'Red Team': {},
+	'Blue Team': {},
+	'Green Team': {}
 }
 player_damage_mitigation = {}
 player_minion_damage_mitigation = {}
@@ -89,130 +89,148 @@ killing_blow_rallies = {
 health_data = {}
 
 def get_player_account(player: Dict[str, Any]) -> str:
-    """
-    Get the account name of a player, replacing hyphens with dots.
+	"""
+	Get the account name of a player, replacing hyphens with dots.
 
-    Args:
-        player (dict): The player data from the log.
+	Args:
+		player (dict): The player data from the log.
 
-    Returns:
-        str: The formatted account name.
+	Returns:
+		str: The formatted account name.
 
-    Raises:
-        KeyError: If the 'account' key is missing.
-        TypeError: If the 'account' value is not a string.
-    """
-    # Use .get() to handle missing keys or direct access if existence is guaranteed
-    account = player.get('account')
+	Raises:
+		KeyError: If the 'account' key is missing.
+		TypeError: If the 'account' value is not a string.
+	"""
+	# Use .get() to handle missing keys or direct access if existence is guaranteed
+	account = player.get('account')
 
-    if account is None:
-        raise KeyError("The 'account' key is missing from the player dictionary.")
-    
-    if not isinstance(account, str):
-        raise TypeError(f"Expected 'account' to be a string, got {type(account).__name__}")
+	if account is None:
+		raise KeyError("The 'account' key is missing from the player dictionary.")
+	
+	if not isinstance(account, str):
+		raise TypeError(f"Expected 'account' to be a string, got {type(account).__name__}")
 
-    # Logic Simplification: .replace() is sufficient.
-    # The original 'split' check was redundant as split() always returns a list of at least length 1.
-    return account.replace("-", ".")
+	# Logic Simplification: .replace() is sufficient.
+	# The original 'split' check was redundant as split() always returns a list of at least length 1.
+	return account.replace("-", ".")
 
 
 def get_fight_data(player: Dict[str, Any], fight_num: int, data_store: Dict[int, Dict[str, Any]]) -> None:
-    """
-    Process player combat data and update the global fight_data structure.
+	"""
+	Process player combat data and update the global fight_data structure.
 
-    Args:
-        player (dict): The player data dictionary.
-        fight_num (int): The unique identifier for the current fight.
-        data_store (dict): The master dictionary storing fight information.
-    """
-    # 1. Initialize fight data if not present
-    if fight_num not in data_store:
-        data_store[fight_num] = {
-            "damage1S": defaultdict(float),
-            "damageTaken1S": defaultdict(float),
-            "players": {},
+	Args:
+		player (dict): The player data dictionary.
+		fight_num (int): The unique identifier for the current fight.
+		data_store (dict): The master dictionary storing fight information.
+	"""
+	# 1. Initialize fight data if not present
+	if fight_num not in data_store:
+		data_store[fight_num] = {
+			"damage1S": defaultdict(float),
+			"damageTaken1S": defaultdict(float),
+			"players": {},
 			"enemies": {}
-        }
-    
-    # Reference to the specific fight structure for cleaner access
-    current_fight = data_store[fight_num]
-    
-    # 2. Construct Identity
-    account = get_player_account(player)
-    player_id = f"{account}-{player.get('profession')}-{player.get('name')}"
-    
-    # 3. Process Damage Dealt (Conditional on DPS threshold)
-    dps_list = player.get("dpsAll", [])
-    if dps_list and dps_list[0].get("dps", 0) >= 700:
-        if player_id not in current_fight["players"]:
-            current_fight["players"][player_id] = {
-                "damage1S": defaultdict(float),
-                "damageTaken1S": 0.0 # Placeholder for total/avg if needed
-            }
-        
-        for target in player.get("targetDamage1S", []):
-            # target[0] is assumed to be the list of cumulative damage per second
-            damage_series = target[0]
-            prior_damage = 0
-            
-            for sec_index, cur_total_damage in enumerate(damage_series):
-                delta_damage = cur_total_damage - prior_damage
-                
-                # Update global damage for this second
-                current_fight["damage1S"][sec_index] += delta_damage
-                # Update individual player damage for this second
-                current_fight["players"][player_id]["damage1S"][sec_index] += delta_damage
-                
-                prior_damage = cur_total_damage
-
-    # 4. Process Damage Taken
-    taken_series = player.get("damageTaken1S", [[]])[0]
-    if taken_series:
-        # Optimization: Use zip to calculate deltas between current and previous values
-        # This avoids manual index tracking and 'last_index' logic
-        for i in range(1, len(taken_series)):
-            delta_taken = taken_series[i] - taken_series[i-1]
-            current_fight["damageTaken1S"][i] += delta_taken
-
-def get_enemy_fight_data(enemy: Dict[str, Any], fight_num: int, data_store: Dict[int, Dict[str, Any]]) -> None:
-    """
-    Process player combat data and update the global fight_data structure.
-
-    Args:
-        player (dict): The player data dictionary.
-        fight_num (int): The unique identifier for the current fight.
-        data_store (dict): The master dictionary storing fight information.
-    """
-    # 1. Initialize fight data if not present
-    if fight_num not in data_store:
-        data_store[fight_num] = {
-            "damage1S": defaultdict(float),
-            "damageTaken1S": defaultdict(float),
-            "players": {},
-			"enemies": {}
-        }
-    
-    # Reference to the specific fight structure for cleaner access
-    current_fight = data_store[fight_num]
-
-    # 2. Construct Identity
-    enemy_id = enemy.get('name')
-    
-    # 3. Process Damage Dealt (Conditional on DPS threshold)
-    dps_list = enemy.get("dpsAll", [])
-    if dps_list and dps_list[0].get("dps", 0) >= 700:
-        if enemy_id not in current_fight["players"]:
-            current_fight["enemies"][enemy_id] = {
-                "damage1S": defaultdict(float)
-            }
-        
-        damage_series = enemy["damage1S"][0]
-        prior_damage = 0
+		}
+	
+	# Reference to the specific fight structure for cleaner access
+	current_fight = data_store[fight_num]
+	
+	# 2. Construct Identity
+	account = get_player_account(player)
+	player_id = f"{account}-{player.get('profession')}-{player.get('name')}"
+	
+	# 3. Process Damage Dealt (Conditional on DPS threshold)
+	dps_list = player.get("dpsAll", [])
+	if dps_list and dps_list[0].get("dps", 0) >= 700:
+		if player_id not in current_fight["players"]:
+			current_fight["players"][player_id] = {
+				"damage1S": defaultdict(float),
+				"damageTaken1S": 0.0 # Placeholder for total/avg if needed
+			}
 		
-        for sec_index, cur_total_damage in enumerate(damage_series):
-            delta_damage = cur_total_damage - prior_damage
-            current_fight["enemies"][enemy_id]["damage1S"][sec_index] += delta_damage
-            prior_damage = cur_total_damage
+		for target in player.get("targetDamage1S", []):
+			# target[0] is assumed to be the list of cumulative damage per second
+			damage_series = target[0]
+			prior_damage = 0
+			
+			for sec_index, cur_total_damage in enumerate(damage_series):
+				delta_damage = cur_total_damage - prior_damage
+				
+				# Update global damage for this second
+				current_fight["damage1S"][sec_index] += delta_damage
+				# Update individual player damage for this second
+				current_fight["players"][player_id]["damage1S"][sec_index] += delta_damage
+				
+				prior_damage = cur_total_damage
+
+	# 4. Process Damage Taken
+	taken_series = player.get("damageTaken1S", [[]])[0]
+	if taken_series:
+		# Optimization: Use zip to calculate deltas between current and previous values
+		# This avoids manual index tracking and 'last_index' logic
+		for i in range(1, len(taken_series)):
+			delta_taken = taken_series[i] - taken_series[i-1]
+			current_fight["damageTaken1S"][i] += delta_taken
+
+def get_enemy_fight_data(enemy: Dict[str, Any], fight_num: int, data_store: Dict[int, Dict[str, Any]], team_colorMap:Dict) -> None:
+	"""
+	Process player combat data and update the global fight_data structure.
+
+	Args:
+		player (dict): The player data dictionary.
+		fight_num (int): The unique identifier for the current fight.
+		data_store (dict): The master dictionary storing fight information.
+	"""
+	# 1. Initialize fight data if not present
+	if fight_num not in data_store:
+		data_store[fight_num] = {
+			"damage1S": defaultdict(float),
+			"damageTaken1S": defaultdict(float),
+			"players": {},
+			"enemies": {}
+		}
+	
+	# Reference to the specific fight structure for cleaner access
+	current_fight = data_store[fight_num]
+
+	# 2. Construct Identity
+	enemy_id = enemy.get('name')
+	enemy_prof = enemy_id.split()[0]
+	enemy_team = team_colorMap[enemy['teamID']]
+	damage = 0
+	down_contribution = 0	
+	for skill in enemy['totalDamageDist'][0]:
+		if skill['id'] in siege_skills:
+			continue
+		damage += skill.get('totalDamage',0)
+		down_contribution += skill.get('downContribution',0)		
+	if enemy_team not in current_fight:
+		current_fight[enemy_team]={}
+	if enemy_prof not in current_fight[enemy_team]:
+		current_fight[enemy_team][enemy_prof] ={
+			"damage": 0,
+			"down_contribution": 0,
+		}			
+	current_fight[enemy_team][enemy_prof]['damage'] = current_fight[enemy_team][enemy_prof].get('damage', 0) + damage
+	current_fight[enemy_team][enemy_prof]['down_contribution'] = current_fight[enemy_team][enemy_prof].get('down_contribution', 0) + down_contribution
+
+	# 3. Process Damage Dealt (Conditional on DPS threshold)
+	dps_list = enemy.get("dpsAll", [])
+	if dps_list and dps_list[0].get("dps", 0) >= 700:
+		if enemy_id not in current_fight["enemies"]:
+			current_fight["enemies"][enemy_id] = {
+				"damage1S": defaultdict(float)
+			}
+		
+		damage_series = enemy["damage1S"][0]
+		prior_damage = 0
+		
+		for sec_index, cur_total_damage in enumerate(damage_series):
+			delta_damage = cur_total_damage - prior_damage
+			current_fight["enemies"][enemy_id]["damage1S"][sec_index] += delta_damage
+			prior_damage = cur_total_damage
 
 
 def check_burst1S_high_score(fight_data, player, fight_num):
@@ -462,10 +480,10 @@ def check_target_for_buff_start_end(targets, players, damage_buff_ids):
 
 
 def check_dragon_banner(rotation):
-    return any(
-        skill.get('id') in db_skill_ids
-        for skill in rotation
-    )
+	return any(
+		skill.get('id') in db_skill_ids
+		for skill in rotation
+	)
 
 
 def update_high_score(stat_name: str, key: str, value: float) -> None:
@@ -586,128 +604,128 @@ def get_commander_tag_data(fight_json):
 
 
 def get_player_death_on_tag(
-    player,
-    commander_tag_positions,
-    dead_tag_mark,
-    dead_tag,
-    inch_to_pixel,
-    polling_rate,
+	player,
+	commander_tag_positions,
+	dead_tag_mark,
+	dead_tag,
+	inch_to_pixel,
+	polling_rate,
 ):
-    """
-    Calculate the distance to the commander tag for each player in the log,
-    and store it in the death_on_tag dictionary.
+	"""
+	Calculate the distance to the commander tag for each player in the log,
+	and store it in the death_on_tag dictionary.
 
-    Args:
-        player (dict): The player data.
-        commander_tag_positions (list[tuple[float, float]]): Positions of the commander tag.
-        dead_tag_mark (int): The mark at which the commander tag was last alive.
-        dead_tag (bool): Whether the commander tag was dead.
-        inch_to_pixel (float): Conversion factor between inches and pixels.
-        polling_rate (int): The rate at which the combat log is polled.
-    """
+	Args:
+		player (dict): The player data.
+		commander_tag_positions (list[tuple[float, float]]): Positions of the commander tag.
+		dead_tag_mark (int): The mark at which the commander tag was last alive.
+		dead_tag (bool): Whether the commander tag was dead.
+		inch_to_pixel (float): Conversion factor between inches and pixels.
+		polling_rate (int): The rate at which the combat log is polled.
+	"""
 
-    # helpers
-    def safe_position(positions, idx):
-        """Return a valid position from positions with bounds checking."""
-        if not positions:
-            return (0, 0)
-        if idx < len(positions):
-            return positions[idx]
-        elif idx - 1 < len(positions):
-            return positions[idx - 1]
-        return positions[-1]
+	# helpers
+	def safe_position(positions, idx):
+		"""Return a valid position from positions with bounds checking."""
+		if not positions:
+			return (0, 0)
+		if idx < len(positions):
+			return positions[idx]
+		elif idx - 1 < len(positions):
+			return positions[idx - 1]
+		return positions[-1]
 
-    def avg_distance(positions, tag_positions, poll, inch_to_pixel):
-        """Return average distance between player and tag up to poll index."""
-        distances = [
-            math.hypot(px - tx, py - ty)
-            for (px, py), (tx, ty) in zip(positions[:poll], tag_positions[:poll])
-        ]
-        if not distances:
-            return 0
-        return round((sum(distances) / len(distances)) / inch_to_pixel)
+	def avg_distance(positions, tag_positions, poll, inch_to_pixel):
+		"""Return average distance between player and tag up to poll index."""
+		distances = [
+			math.hypot(px - tx, py - ty)
+			for (px, py), (tx, ty) in zip(positions[:poll], tag_positions[:poll])
+		]
+		if not distances:
+			return 0
+		return round((sum(distances) / len(distances)) / inch_to_pixel)
 
-    # Setup player entry
-    name_prof = f"{player.get('name', 'Unknown')}|{player.get('profession', 'Unknown')}|{get_player_account(player)}"
-    if name_prof not in death_on_tag:
-        death_on_tag[name_prof] = {
-            "name": player.get("name", ""),
-            "profession": player.get("profession", ""),
-            "account": get_player_account(player),
-            "distToTag": [],
-            "On_Tag": 0,
-            "Off_Tag": 0,
-            "Run_Back": 0,
-            "After_Tag_Death": 0,
-            "Total": 0,
-            "Ranges": [],
-        }
-    entry = death_on_tag[name_prof]
+	# Setup player entry
+	name_prof = f"{player.get('name', 'Unknown')}|{player.get('profession', 'Unknown')}|{get_player_account(player)}"
+	if name_prof not in death_on_tag:
+		death_on_tag[name_prof] = {
+			"name": player.get("name", ""),
+			"profession": player.get("profession", ""),
+			"account": get_player_account(player),
+			"distToTag": [],
+			"On_Tag": 0,
+			"Off_Tag": 0,
+			"Run_Back": 0,
+			"After_Tag_Death": 0,
+			"Total": 0,
+			"Ranges": [],
+		}
+	entry = death_on_tag[name_prof]
 
-    # Distance to commander (static)
-    stats_all = player.get("statsAll", [{}])
-    dist_to_com = stats_all[0].get("distToCom", "Infinity")
-    player_dist_to_tag = 0 if dist_to_com == "Infinity" else round(dist_to_com)
+	# Distance to commander (static)
+	stats_all = player.get("statsAll", [{}])
+	dist_to_com = stats_all[0].get("distToCom", "Infinity")
+	player_dist_to_tag = 0 if dist_to_com == "Infinity" else round(dist_to_com)
 
-    # Combat replay data
-    combat_data = player.get("combatReplayData", {})
-    if not combat_data or "positions" not in combat_data:
-        return  # nothing to process
+	# Combat replay data
+	combat_data = player.get("combatReplayData", {})
+	if not combat_data or "positions" not in combat_data:
+		return  # nothing to process
 
-    player_positions = combat_data["positions"]
-    player_deaths = dict(combat_data.get("dead", {}))
-    player_downs = dict(combat_data.get("down", {}))
-    player_offset = math.floor(combat_data.get("start", 0) / polling_rate)
+	player_positions = combat_data["positions"]
+	player_deaths = dict(combat_data.get("dead", {}))
+	player_downs = dict(combat_data.get("down", {}))
+	player_offset = math.floor(combat_data.get("start", 0) / polling_rate)
 
-    # Process deaths
-    if player_deaths and player_downs and commander_tag_positions:
-        for death_key, death_value in player_deaths.items():
-            if death_key < 0:
-                continue  # before squad combat log starts
+	# Process deaths
+	if player_deaths and player_downs and commander_tag_positions:
+		for death_key, death_value in player_deaths.items():
+			if death_key < 0:
+				continue  # before squad combat log starts
 
-            position_mark = max(0, math.floor(death_key / polling_rate)) - player_offset
+			position_mark = max(0, math.floor(death_key / polling_rate)) - player_offset
 
-            for down_key, down_value in player_downs.items():
-    			
-                if death_key != down_value:
-                    continue
+			for down_key, down_value in player_downs.items():
+				
+				if death_key != down_value:
+					continue
 
-                # Player & Tag positions at death
-                x1, y1 = safe_position(player_positions, position_mark)
-                x2, y2 = safe_position(commander_tag_positions, position_mark)
+				# Player & Tag positions at death
+				x1, y1 = safe_position(player_positions, position_mark)
+				x2, y2 = safe_position(commander_tag_positions, position_mark)
 
-                # Distance at death
-                death_distance = math.hypot(x1 - x2, y1 - y2)
-                death_range = round(death_distance / inch_to_pixel)
-                entry["Total"] += 1
+				# Distance at death
+				death_distance = math.hypot(x1 - x2, y1 - y2)
+				death_range = round(death_distance / inch_to_pixel)
+				entry["Total"] += 1
 
-                # Average distance calculation
-                if int(down_key) > int(dead_tag_mark) and dead_tag:
-                    # After commander tag death
-                    player_dead_poll = max(1, int(dead_tag_mark / polling_rate))
-                    player_dist_to_tag = avg_distance(
-                        player_positions, commander_tag_positions, player_dead_poll, inch_to_pixel
-                    )
-                    entry["After_Tag_Death"] += 1
-                else:
-                    # Before tag death
-                    player_dead_poll = position_mark
-                    player_dist_to_tag = avg_distance(
-                        player_positions, commander_tag_positions, player_dead_poll, inch_to_pixel
-                    )
+				# Average distance calculation
+				if int(down_key) > int(dead_tag_mark) and dead_tag:
+					# After commander tag death
+					player_dead_poll = max(1, int(dead_tag_mark / polling_rate))
+					player_dist_to_tag = avg_distance(
+						player_positions, commander_tag_positions, player_dead_poll, inch_to_pixel
+					)
+					entry["After_Tag_Death"] += 1
+				else:
+					# Before tag death
+					player_dead_poll = position_mark
+					player_dist_to_tag = avg_distance(
+						player_positions, commander_tag_positions, player_dead_poll, inch_to_pixel
+					)
 
-                    # Classification
-                    if death_range <= On_Tag:
-                        entry["On_Tag"] += 1
-                    elif death_range <= Run_Back:
-                        entry["Off_Tag"] += 1
-                        entry["Ranges"].append(death_range)
-                    else:
-                        entry["Run_Back"] += 1
+					# Classification
+					if death_range <= On_Tag:
+						entry["On_Tag"] += 1
+					elif death_range <= Run_Back:
+						entry["Off_Tag"] += 1
+						entry["Ranges"].append(death_range)
+					else:
+						entry["Run_Back"] += 1
 
-    # Record distance
-    if player_dist_to_tag <= Run_Back:
-        entry["distToTag"].append(player_dist_to_tag)
+	# Record distance
+	if player_dist_to_tag <= Run_Back:
+		entry["distToTag"].append(player_dist_to_tag)
 
 
 def get_player_fight_dps(dpsTargets: dict, name: str, profession: str, account: str, fight_num: int, fight_time: int) -> None:
@@ -2095,11 +2113,11 @@ def get_skill_cast_by_prof_role(active_time, player: dict, stat_category: str, p
 	"""
 	Accumulate skill cast counts for one player directly into top_stats.
 
-    Args:
-        active_time: Player active time in milliseconds.
-        player: The player dictionary.
-        stat_category: The category of stats to collect (e.g. 'skills').
-        player_key: Composite key "Name|Profession|Account" identifying the player.
+	Args:
+		active_time: Player active time in milliseconds.
+		player: The player dictionary.
+		stat_category: The category of stats to collect (e.g. 'skills').
+		player_key: Composite key "Name|Profession|Account" identifying the player.
 	"""
 
 	profession = player['profession']
@@ -2112,14 +2130,14 @@ def get_skill_cast_by_prof_role(active_time, player: dict, stat_category: str, p
 	prof_stats = top_stats['skill_casts_by_role'][profession]
 
 	prof_stats.setdefault(player_key, {
-        'ActiveTime': 0,
-        'total': 0,
-        'total_no_auto': 0,
+		'ActiveTime': 0,
+		'total': 0,
+		'total_no_auto': 0,
 		'total_no_proc': 0,
-        'total_no_auto_no_proc': 0,
-        'account': account,
-        'Skills': {}
-    })
+		'total_no_auto_no_proc': 0,
+		'account': account,
+		'Skills': {}
+	})
 	player_stats = prof_stats[player_key]
 
 	player_stats['ActiveTime'] += active_seconds
@@ -2146,272 +2164,272 @@ def get_skill_cast_by_prof_role(active_time, player: dict, stat_category: str, p
 			player_stats['Skills'][skill_id] = player_stats['Skills'].get(skill_id, 0) + sub_count
 
 def _accumulate_heal_or_barrier(
-    player: dict,
-    players: dict,
-    stat_category: str,
-    name_prof: str,
-    top_stats: dict,
-    commander_summary_data: dict,
-    update_high_score: callable,
-    stats_per_fight: dict,
-    fight_num: int,
-    fight_time: int,
-    field_name: str,
-    target_list_key: str,
-    targets_key: str,  # <-- explicitly passed now
-    is_healing: bool,
+	player: dict,
+	players: dict,
+	stat_category: str,
+	name_prof: str,
+	top_stats: dict,
+	commander_summary_data: dict,
+	update_high_score: callable,
+	stats_per_fight: dict,
+	fight_num: int,
+	fight_time: int,
+	field_name: str,
+	target_list_key: str,
+	targets_key: str,  # <-- explicitly passed now
+	is_healing: bool,
 ) -> float:
-    """
-    Common handler for healing and barrier accumulation.
+	"""
+	Common handler for healing and barrier accumulation.
 
-    Returns the per-fight rate (total_net / fight_time_seconds).
-    """
-    total_net = 0
-    total_downed = 0
+	Returns the per-fight rate (total_net / fight_time_seconds).
+	"""
+	total_net = 0
+	total_downed = 0
 
-    if stat_category not in player:
-        return 0.0
+	if stat_category not in player:
+		return 0.0
 
-    healer_name = player['name']
-    healer_group = player['group']
-    player_stats = top_stats['player'][name_prof][stat_category]
-    fight_stats = top_stats['fight'][fight_num][stat_category]
-    overall_stats = top_stats['overall'][stat_category]
+	healer_name = player['name']
+	healer_group = player['group']
+	player_stats = top_stats['player'][name_prof][stat_category]
+	fight_stats = top_stats['fight'][fight_num][stat_category]
+	overall_stats = top_stats['overall'][stat_category]
 
-    for index, target in enumerate(player[stat_category][target_list_key]):
-        target_data = players[index]
-        target_name = target_data['name']
-        target_group = target_data['group']
-        has_commander_tag = target_data['hasCommanderTag']
-        not_in_squad = target_data['notInSquad']
+	for index, target in enumerate(player[stat_category][target_list_key]):
+		target_data = players[index]
+		target_name = target_data['name']
+		target_group = target_data['group']
+		has_commander_tag = target_data['hasCommanderTag']
+		not_in_squad = target_data['notInSquad']
 
-        raw_value = target[0][field_name]
-        downed_value = target[0]['downedHealing'] if is_healing else 0
-        net_value = raw_value - downed_value
+		raw_value = target[0][field_name]
+		downed_value = target[0]['downedHealing'] if is_healing else 0
+		net_value = raw_value - downed_value
 
-        if not net_value and not downed_value:
-            continue
+		if not net_value and not downed_value:
+			continue
 
-        total_net += net_value
-        total_downed += downed_value
+		total_net += net_value
+		total_downed += downed_value
 
-        # Commander summary
-        if has_commander_tag:
-            commander_key = f"{target_name}|{target_data['profession']}|{target_data['account']}"
-            commander_summary_data[commander_key]['heal_stats'].setdefault(
-                name_prof,
-                {'outgoing_healing': 0, 'downed_healing': 0, 'outgoing_barrier': 0}
-            )
-            if is_healing:
-                commander_summary_data[commander_key]['heal_stats'][name_prof]['outgoing_healing'] += net_value
-                commander_summary_data[commander_key]['heal_stats'][name_prof]['downed_healing'] += downed_value
-            else:
-                commander_summary_data[commander_key]['heal_stats'][name_prof]['outgoing_barrier'] += net_value
+		# Commander summary
+		if has_commander_tag:
+			commander_key = f"{target_name}|{target_data['profession']}|{target_data['account']}"
+			commander_summary_data[commander_key]['heal_stats'].setdefault(
+				name_prof,
+				{'outgoing_healing': 0, 'downed_healing': 0, 'outgoing_barrier': 0}
+			)
+			if is_healing:
+				commander_summary_data[commander_key]['heal_stats'][name_prof]['outgoing_healing'] += net_value
+				commander_summary_data[commander_key]['heal_stats'][name_prof]['downed_healing'] += downed_value
+			else:
+				commander_summary_data[commander_key]['heal_stats'][name_prof]['outgoing_barrier'] += net_value
 
-        # Player-level totals
-        player_stats['outgoing_' + field_name] = player_stats.get('outgoing_' + field_name, 0) + net_value
-        player_stats['downed_' + field_name] = player_stats.get('downed_' + field_name, 0) + downed_value
+		# Player-level totals
+		player_stats['outgoing_' + field_name] = player_stats.get('outgoing_' + field_name, 0) + net_value
+		player_stats['downed_' + field_name] = player_stats.get('downed_' + field_name, 0) + downed_value
 
-        # Squad vs off-squad
-        if not_in_squad:
-            player_stats['off_squad_' + field_name] = player_stats.get('off_squad_' + field_name, 0) + net_value
-            player_stats['off_squad_downed_' + field_name] = player_stats.get('off_squad_downed_' + field_name, 0) + downed_value
-        else:
-            player_stats['squad_' + field_name] = player_stats.get('squad_' + field_name, 0) + net_value
-            player_stats['squad_downed_' + field_name] = player_stats.get('squad_downed_' + field_name, 0) + downed_value
+		# Squad vs off-squad
+		if not_in_squad:
+			player_stats['off_squad_' + field_name] = player_stats.get('off_squad_' + field_name, 0) + net_value
+			player_stats['off_squad_downed_' + field_name] = player_stats.get('off_squad_downed_' + field_name, 0) + downed_value
+		else:
+			player_stats['squad_' + field_name] = player_stats.get('squad_' + field_name, 0) + net_value
+			player_stats['squad_downed_' + field_name] = player_stats.get('squad_downed_' + field_name, 0) + downed_value
 
-        # Group
-        if target_group == healer_group:
-            player_stats['group_' + field_name] = player_stats.get('group_' + field_name, 0) + net_value
-            player_stats['group_downed_' + field_name] = player_stats.get('group_downed_' + field_name, 0) + downed_value
+		# Group
+		if target_group == healer_group:
+			player_stats['group_' + field_name] = player_stats.get('group_' + field_name, 0) + net_value
+			player_stats['group_downed_' + field_name] = player_stats.get('group_downed_' + field_name, 0) + downed_value
 
-        # Self
-        if target_name == healer_name:
-            player_stats['self_' + field_name] = player_stats.get('self_' + field_name, 0) + net_value
-            player_stats['self_downed_' + field_name] = player_stats.get('self_downed_' + field_name, 0) + downed_value
+		# Self
+		if target_name == healer_name:
+			player_stats['self_' + field_name] = player_stats.get('self_' + field_name, 0) + net_value
+			player_stats['self_downed_' + field_name] = player_stats.get('self_downed_' + field_name, 0) + downed_value
 
-        # Per-target tracking (uses explicit targets_key to avoid string mismatch)
-        player_stats.setdefault(targets_key, {})
-        player_stats[targets_key].setdefault(target_name, {
-            'outgoing_' + field_name: 0,
-            'downed_' + field_name: 0
-        })
-        player_stats[targets_key][target_name]['outgoing_' + field_name] += net_value
-        player_stats[targets_key][target_name]['downed_' + field_name] += downed_value
+		# Per-target tracking (uses explicit targets_key to avoid string mismatch)
+		player_stats.setdefault(targets_key, {})
+		player_stats[targets_key].setdefault(target_name, {
+			'outgoing_' + field_name: 0,
+			'downed_' + field_name: 0
+		})
+		player_stats[targets_key][target_name]['outgoing_' + field_name] += net_value
+		player_stats[targets_key][target_name]['downed_' + field_name] += downed_value
 
-        # Fight-level
-        fight_stats['outgoing_' + field_name] = fight_stats.get('outgoing_' + field_name, 0) + net_value
-        fight_stats['downed_' + field_name] = fight_stats.get('downed_' + field_name, 0) + downed_value
+		# Fight-level
+		fight_stats['outgoing_' + field_name] = fight_stats.get('outgoing_' + field_name, 0) + net_value
+		fight_stats['downed_' + field_name] = fight_stats.get('downed_' + field_name, 0) + downed_value
 
-        # Overall
-        overall_stats['outgoing_' + field_name] = overall_stats.get('outgoing_' + field_name, 0) + net_value
-        overall_stats['downed_' + field_name] = overall_stats.get('downed_' + field_name, 0) + downed_value
+		# Overall
+		overall_stats['outgoing_' + field_name] = overall_stats.get('outgoing_' + field_name, 0) + net_value
+		overall_stats['downed_' + field_name] = overall_stats.get('downed_' + field_name, 0) + downed_value
 
-    rate = round(total_net / (fight_time / 1000), 2) if fight_time > 0 else 0.0
-    update_high_score(
-        f"{stat_category}_{field_name.capitalize()}",
-        f"{{{{{player['profession']}}}}}{player['name']}-{get_player_account(player)}-{fight_num} | {field_name.capitalize()}",
-        rate
-    )
-    stats_per_fight[stat_category]['squad_' + field_name][name_prof].append(rate)
-    return rate
+	rate = round(total_net / (fight_time / 1000), 2) if fight_time > 0 else 0.0
+	update_high_score(
+		f"{stat_category}_{field_name.capitalize()}",
+		f"{{{{{player['profession']}}}}}{player['name']}-{get_player_account(player)}-{fight_num} | {field_name.capitalize()}",
+		rate
+	)
+	stats_per_fight[stat_category]['squad_' + field_name][name_prof].append(rate)
+	return rate
 
 
 def get_healStats_data(
-    fight_num: int,
-    player: dict,
-    players: dict,
-    stat_category: str,
-    name_prof: str,
-    fight_time: int,
+	fight_num: int,
+	player: dict,
+	players: dict,
+	stat_category: str,
+	name_prof: str,
+	fight_time: int,
 ) -> None:
-    """
-    Collect data for extHealingStats and extBarrierStats.
+	"""
+	Collect data for extHealingStats and extBarrierStats.
 
-    Args:
-        fight_num: The fight number.
-        player: The player dictionary.
-        players: The players dictionary (indexed by target index).
-        stat_category: 'extHealingStats' or 'extBarrierStats'.
-        name_prof: Composite key "Name|Profession|Account".
-        fight_time: Fight duration in milliseconds.
-    """
-    if stat_category == 'extHealingStats':
-        _accumulate_heal_or_barrier(
-            player=player,
-            players=players,
-            stat_category=stat_category,
-            name_prof=name_prof,
-            top_stats=top_stats,
-            commander_summary_data=commander_summary_data,
-            update_high_score=update_high_score,
-            stats_per_fight=stats_per_fight,
-            fight_num=fight_num,
-            fight_time=fight_time,
-            field_name='healing',
-            target_list_key='outgoingHealingAllies',
-            targets_key='heal_targets',  # <-- fixed: was 'healing_targets'
-            is_healing=True,
-        )
-    elif stat_category == 'extBarrierStats':
-        _accumulate_heal_or_barrier(
-            player=player,
-            players=players,
-            stat_category=stat_category,
-            name_prof=name_prof,
-            top_stats=top_stats,
-            commander_summary_data=commander_summary_data,
-            update_high_score=update_high_score,
-            stats_per_fight=stats_per_fight,
-            fight_num=fight_num,
-            fight_time=fight_time,
-            field_name='barrier',
-            target_list_key='outgoingBarrierAllies',
-            targets_key='barrier_targets',
-            is_healing=False,
-        )
+	Args:
+		fight_num: The fight number.
+		player: The player dictionary.
+		players: The players dictionary (indexed by target index).
+		stat_category: 'extHealingStats' or 'extBarrierStats'.
+		name_prof: Composite key "Name|Profession|Account".
+		fight_time: Fight duration in milliseconds.
+	"""
+	if stat_category == 'extHealingStats':
+		_accumulate_heal_or_barrier(
+			player=player,
+			players=players,
+			stat_category=stat_category,
+			name_prof=name_prof,
+			top_stats=top_stats,
+			commander_summary_data=commander_summary_data,
+			update_high_score=update_high_score,
+			stats_per_fight=stats_per_fight,
+			fight_num=fight_num,
+			fight_time=fight_time,
+			field_name='healing',
+			target_list_key='outgoingHealingAllies',
+			targets_key='heal_targets',  # <-- fixed: was 'healing_targets'
+			is_healing=True,
+		)
+	elif stat_category == 'extBarrierStats':
+		_accumulate_heal_or_barrier(
+			player=player,
+			players=players,
+			stat_category=stat_category,
+			name_prof=name_prof,
+			top_stats=top_stats,
+			commander_summary_data=commander_summary_data,
+			update_high_score=update_high_score,
+			stats_per_fight=stats_per_fight,
+			fight_num=fight_num,
+			fight_time=fight_time,
+			field_name='barrier',
+			target_list_key='outgoingBarrierAllies',
+			targets_key='barrier_targets',
+			is_healing=False,
+		)
 
 def _accumulate_skill_dist(
-    player: dict,
-    stat_category: str,
-    name_prof: str,
-    dist_key: str,
-    value_field: str,
-    downed_field: str | None = None,
-    net_field: str | None = None,
+	player: dict,
+	stat_category: str,
+	name_prof: str,
+	dist_key: str,
+	value_field: str,
+	downed_field: str | None = None,
+	net_field: str | None = None,
 ) -> None:
-    """
-    Accumulate per-skill stats from a distance-based distribution list
-    (e.g. alliedHealingDist, alliedBarrierDist).
+	"""
+	Accumulate per-skill stats from a distance-based distribution list
+	(e.g. alliedHealingDist, alliedBarrierDist).
 
-    Args:
-        player: The player dictionary.
-        stat_category: The stat category key in player (e.g. 'extHealingStats').
-        name_prof: Composite key "Name|Profession|Account".
-        dist_key: Key in player[stat_category] containing the list (e.g. 'alliedHealingDist').
-        value_field: Field name for the main value (e.g. 'totalHealing', 'totalBarrier').
-        downed_field: Optional field name for downed value (e.g. 'totalDownedHealing').
-        net_field: Optional key name for the net value (total - downed). If None, no net key is created.
-    """
-    dist_list = player.get(stat_category, {}).get(dist_key)
-    if not dist_list:
-        return
+	Args:
+		player: The player dictionary.
+		stat_category: The stat category key in player (e.g. 'extHealingStats').
+		name_prof: Composite key "Name|Profession|Account".
+		dist_key: Key in player[stat_category] containing the list (e.g. 'alliedHealingDist').
+		value_field: Field name for the main value (e.g. 'totalHealing', 'totalBarrier').
+		downed_field: Optional field name for downed value (e.g. 'totalDownedHealing').
+		net_field: Optional key name for the net value (total - downed). If None, no net key is created.
+	"""
+	dist_list = player.get(stat_category, {}).get(dist_key)
+	if not dist_list:
+		return
 
-    skills = top_stats.setdefault('player', {}).setdefault(name_prof, {}).setdefault(
-        stat_category, {}
-    ).setdefault('skills', {})
+	skills = top_stats.setdefault('player', {}).setdefault(name_prof, {}).setdefault(
+		stat_category, {}
+	).setdefault('skills', {})
 
-    for target in dist_list:
-        for skill in target[0]:
-            skill_id = f"s{skill['id']}"
-            hits = skill['hits']
-            min_value = skill['min']
-            max_value = skill['max']
+	for target in dist_list:
+		for skill in target[0]:
+			skill_id = f"s{skill['id']}"
+			hits = skill['hits']
+			min_value = skill['min']
+			max_value = skill['max']
 
-            entry = skills.setdefault(skill_id, {})
+			entry = skills.setdefault(skill_id, {})
 
-            entry['hits'] = entry.get('hits', 0) + hits
+			entry['hits'] = entry.get('hits', 0) + hits
 
-            current_min = entry.get('min', 0)
-            if min_value < current_min or current_min == 0:
-                entry['min'] = min_value
+			current_min = entry.get('min', 0)
+			if min_value < current_min or current_min == 0:
+				entry['min'] = min_value
 
-            current_max = entry.get('max', 0)
-            if max_value > current_max or current_max == 0:
-                entry['max'] = max_value
+			current_max = entry.get('max', 0)
+			if max_value > current_max or current_max == 0:
+				entry['max'] = max_value
 
-            total_value = skill[value_field]
-            entry[value_field] = entry.get(value_field, 0) + total_value
+			total_value = skill[value_field]
+			entry[value_field] = entry.get(value_field, 0) + total_value
 
-            if downed_field and skill.get(downed_field):
-                downed_value = skill[downed_field]
-                entry['downed' + value_field.replace('total', '')] = (
-                    entry.get('downed' + value_field.replace('total', ''), 0) + downed_value
-                )
+			if downed_field and skill.get(downed_field):
+				downed_value = skill[downed_field]
+				entry['downed' + value_field.replace('total', '')] = (
+					entry.get('downed' + value_field.replace('total', ''), 0) + downed_value
+				)
 
-            if net_field:
-                net_value = total_value - skill[downed_field]
-                entry[net_field] = entry.get(net_field, 0) + net_value
+			if net_field:
+				net_value = total_value - skill[downed_field]
+				entry[net_field] = entry.get(net_field, 0) + net_value
 
 
 def get_healing_skill_data(player: dict, stat_category: str, name_prof: str) -> None:
-    """
-    Collect per-skill healing stats from alliedHealingDist.
+	"""
+	Collect per-skill healing stats from alliedHealingDist.
 
-    Args:
-        player: The player dictionary.
-        stat_category: Should be 'extHealingStats'.
-        name_prof: Composite key "Name|Profession|Account".
-    """
-    _accumulate_skill_dist(
-        player=player,
-        stat_category=stat_category,
-        name_prof=name_prof,
-        dist_key='alliedHealingDist',
-        value_field='totalHealing',
-        downed_field='totalDownedHealing',
-        net_field='healing',
-    )
+	Args:
+		player: The player dictionary.
+		stat_category: Should be 'extHealingStats'.
+		name_prof: Composite key "Name|Profession|Account".
+	"""
+	_accumulate_skill_dist(
+		player=player,
+		stat_category=stat_category,
+		name_prof=name_prof,
+		dist_key='alliedHealingDist',
+		value_field='totalHealing',
+		downed_field='totalDownedHealing',
+		net_field='healing',
+	)
 
 
 def get_barrier_skill_data(player: dict, stat_category: str, name_prof: str) -> None:
-    """
-    Collect per-skill barrier stats from alliedBarrierDist.
+	"""
+	Collect per-skill barrier stats from alliedBarrierDist.
 
-    Args:
-        player: The player dictionary.
-        stat_category: Should be 'extBarrierStats'.
-        name_prof: Composite key "Name|Profession|Account".
-    """
-    _accumulate_skill_dist(
-        player=player,
-        stat_category=stat_category,
-        name_prof=name_prof,
-        dist_key='alliedBarrierDist',
-        value_field='totalBarrier',
-        downed_field=None,
-        net_field=None,
-    )
+	Args:
+		player: The player dictionary.
+		stat_category: Should be 'extBarrierStats'.
+		name_prof: Composite key "Name|Profession|Account".
+	"""
+	_accumulate_skill_dist(
+		player=player,
+		stat_category=stat_category,
+		name_prof=name_prof,
+		dist_key='alliedBarrierDist',
+		value_field='totalBarrier',
+		downed_field=None,
+		net_field=None,
+	)
 
 
 
@@ -2667,25 +2685,25 @@ def get_rally_mechanics_by_fight(mechanics_map, players):
 
 
 def add_skill_damage(bucket, skill_name, skill_icon, skill):
-    if skill_name not in bucket:
-        bucket[skill_name] = {
-            'dmg': skill['totalDamage'],
-            'hits': skill['connectedHits'],
-            'min': skill['min'],
-            'max': skill['max'],
+	if skill_name not in bucket:
+		bucket[skill_name] = {
+			'dmg': skill['totalDamage'],
+			'hits': skill['connectedHits'],
+			'min': skill['min'],
+			'max': skill['max'],
 			'icon': skill_icon
-        }
-    else:
-        bucket[skill_name]['dmg'] += skill['totalDamage']
-        bucket[skill_name]['hits'] += skill['connectedHits']
-        bucket[skill_name]['min'] = min(
-            bucket[skill_name]['min'],
-            skill['min']
-        )
-        bucket[skill_name]['max'] = max(
-            bucket[skill_name]['max'],
-            skill['max']
-        )
+		}
+	else:
+		bucket[skill_name]['dmg'] += skill['totalDamage']
+		bucket[skill_name]['hits'] += skill['connectedHits']
+		bucket[skill_name]['min'] = min(
+			bucket[skill_name]['min'],
+			skill['min']
+		)
+		bucket[skill_name]['max'] = max(
+			bucket[skill_name]['max'],
+			skill['max']
+		)
 
 
 def get_damage_mitigation_data(fight_num: int, players: dict, targets: dict, skill_data: dict, buff_data: dict, team_colorMap: dict) -> None:
@@ -2772,12 +2790,8 @@ def get_damage_mitigation_data(fight_num: int, players: dict, targets: dict, ski
 						'min_avoided_damage': 0
 					}
 
-				if skill_name not in enemy_avg_damage_per_skill:
-					enemy_avg_dmg = 1
-					enemy_min_dmg = 1
-				else:
-					enemy_min_dmg = enemy_avg_damage_per_skill['Total'][skill_name]['min'] if skill_name in enemy_avg_damage_per_skill['Total'] else 0
-					enemy_avg_dmg = enemy_avg_damage_per_skill['Total'][skill_name]['dmg'] / enemy_avg_damage_per_skill['Total'][skill_name]['hits'] if enemy_avg_damage_per_skill['Total'][skill_name]['hits'] > 0 else 0
+				enemy_min_dmg = enemy_avg_damage_per_skill['Total'][skill_name]['min'] if skill_name in enemy_avg_damage_per_skill['Total'] else 1
+				enemy_avg_dmg = enemy_avg_damage_per_skill['Total'][skill_name]['dmg'] / enemy_avg_damage_per_skill['Total'][skill_name]['hits'] if skill_name in enemy_avg_damage_per_skill['Total'] and enemy_avg_damage_per_skill['Total'][skill_name]['hits'] > 0 else 1
 				player_damage_mitigation[name_prof][skill_name]['blocked'] += skill['blocked']
 				player_damage_mitigation[name_prof][skill_name]['evaded'] += skill['evaded']
 				player_damage_mitigation[name_prof][skill_name]['glanced'] += skill['glance']
@@ -2978,61 +2992,61 @@ def get_minions_by_player(player_data: dict, player_name: str, profession: str) 
 
 
 def fetch_guild_data(guild_id: str, api_key: str, max_retries: int = 3, backoff_factor: float = 0.5) -> Optional[Dict]:
-    """
-    Fetches guild data from the Guild Wars 2 API with retry logic and enhanced error handling.
+	"""
+	Fetches guild data from the Guild Wars 2 API with retry logic and enhanced error handling.
 
-    Args:
-        guild_id: The ID of the guild to fetch data for.
-        api_key: The API key to use for the request.
-        max_retries: Maximum number of retry attempts for failed requests (default: 3).
-        backoff_factor: Factor for exponential backoff delay between retries (default: 0.5).
+	Args:
+		guild_id: The ID of the guild to fetch data for.
+		api_key: The API key to use for the request.
+		max_retries: Maximum number of retry attempts for failed requests (default: 3).
+		backoff_factor: Factor for exponential backoff delay between retries (default: 0.5).
 
-    Returns:
-        A dictionary containing the guild data if the request is successful, otherwise None.
-    """
-    url = f"https://api.guildwars2.com/v2/guild/{guild_id}/members?access_token={api_key}"
-    
-    for attempt in range(1, max_retries + 1):
-        try:
-            response = requests.get(url, timeout=10)
-            response.raise_for_status()
-            return json.loads(response.text)
-        
-        except Timeout:
-            print(f"Warning: Timeout fetching guild data for guild ID {guild_id}, attempt {attempt}/{max_retries}")
-            if attempt == max_retries:
-                print(f"Error: Max retries reached for guild ID {guild_id}: Timeout")
-                return None
-            time.sleep(backoff_factor * (2 ** (attempt - 1)))  # Exponential backoff
-        
-        except ConnectionError:
-            print(f"Warning: Connection error for guild ID {guild_id}, attempt {attempt}/{max_retries}")
-            if attempt == max_retries:
-                print(f"Error: Max retries reached for guild ID {guild_id}: Connection error")
-                return None
-            time.sleep(backoff_factor * (2 ** (attempt - 1)))
-        
-        except HTTPError as e:
-            status_code = e.response.status_code
-            if status_code == 429:  # Rate limit exceeded
-                print(f"Warning: Rate limit exceeded for guild ID {guild_id}, attempt {attempt}/{max_retries}")
-                retry_after = int(e.response.headers.get('Retry-After', 5))
-                time.sleep(retry_after)
-            elif status_code >= 500:  # Server errors
-                print(f"Warning: Server error {status_code} for guild ID {guild_id}, attempt {attempt}/{max_retries}")
-                if attempt == max_retries:
-                    print(f"Error: Max retries reached for guild ID {guild_id}: Server error {status_code}")
-                    return None
-                time.sleep(backoff_factor * (2 ** (attempt - 1)))
-            else:
-                print(f"Error: HTTP error {status_code} for guild ID {guild_id}: {str(e)}")
-                return None
-        
-        except RequestException as e:
-            print(f"Error: Unexpected error for guild ID {guild_id}: {str(e)}")
-            return None
-    
-    return None
+	Returns:
+		A dictionary containing the guild data if the request is successful, otherwise None.
+	"""
+	url = f"https://api.guildwars2.com/v2/guild/{guild_id}/members?access_token={api_key}"
+	
+	for attempt in range(1, max_retries + 1):
+		try:
+			response = requests.get(url, timeout=10)
+			response.raise_for_status()
+			return json.loads(response.text)
+		
+		except Timeout:
+			print(f"Warning: Timeout fetching guild data for guild ID {guild_id}, attempt {attempt}/{max_retries}")
+			if attempt == max_retries:
+				print(f"Error: Max retries reached for guild ID {guild_id}: Timeout")
+				return None
+			time.sleep(backoff_factor * (2 ** (attempt - 1)))  # Exponential backoff
+		
+		except ConnectionError:
+			print(f"Warning: Connection error for guild ID {guild_id}, attempt {attempt}/{max_retries}")
+			if attempt == max_retries:
+				print(f"Error: Max retries reached for guild ID {guild_id}: Connection error")
+				return None
+			time.sleep(backoff_factor * (2 ** (attempt - 1)))
+		
+		except HTTPError as e:
+			status_code = e.response.status_code
+			if status_code == 429:  # Rate limit exceeded
+				print(f"Warning: Rate limit exceeded for guild ID {guild_id}, attempt {attempt}/{max_retries}")
+				retry_after = int(e.response.headers.get('Retry-After', 5))
+				time.sleep(retry_after)
+			elif status_code >= 500:  # Server errors
+				print(f"Warning: Server error {status_code} for guild ID {guild_id}, attempt {attempt}/{max_retries}")
+				if attempt == max_retries:
+					print(f"Error: Max retries reached for guild ID {guild_id}: Server error {status_code}")
+					return None
+				time.sleep(backoff_factor * (2 ** (attempt - 1)))
+			else:
+				print(f"Error: HTTP error {status_code} for guild ID {guild_id}: {str(e)}")
+				return None
+		
+		except RequestException as e:
+			print(f"Error: Unexpected error for guild ID {guild_id}: {str(e)}")
+			return None
+	
+	return None
 
 def find_member(guild_data: list, member_account: str) -> str:
 	"""
@@ -3221,9 +3235,9 @@ def parse_file(file_path, fight_num, guild_data, fight_data_charts, blacklist):
 	wvw_map = json_data["wvWMapData"]
 
 	team_colorMap = {
-	    wvw_map["redTeamID"]: "Red Team",
-	    wvw_map["blueTeamID"]: "Blue Team",
-	    wvw_map["greenTeamID"]: "Green Team",
+		wvw_map["redTeamID"]: "Red Team",
+		wvw_map["blueTeamID"]: "Blue Team",
+		wvw_map["greenTeamID"]: "Green Team",
 	}
 
 	top_stats['overall']['last_fight'] = f"{fight_date}-{fight_end}"
@@ -3279,7 +3293,7 @@ def parse_file(file_path, fight_num, guild_data, fight_data_charts, blacklist):
 	for target in targets:
 		if target["isFake"]:
 			continue
-		get_enemy_fight_data(target, fight_num, fight_data)
+		get_enemy_fight_data(target, fight_num, fight_data, team_colorMap)
 
 	
 	#collect damage mods data

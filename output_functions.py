@@ -2977,6 +2977,22 @@ def build_minions_tid(minions: dict, players: dict, skill_data: dict, caption: s
 			create_new_tid_from_template(minion_stats_title, prof_caption, text, tid_date_time),
 			tid_list
 		)
+def build_top_damage_by_skill_tab(enemy_avg_damage_per_skill: dict, caption: str, tid_date_time: str):
+	tabs_macro=f'<<tabs "[[{tid_date_time}-Top-Damage-By-Skill-Totals]] '
+
+	for team in enemy_avg_damage_per_skill:
+		if team == "Total":
+			continue
+		if enemy_avg_damage_per_skill[team]:
+			top_skills_title = f"{tid_date_time}-{caption.replace(' ', '-')}-{team.replace(' ', '-')}"
+			tabs_macro += f'[[{top_skills_title}]]'
+
+	tabs_macro +=f'" "{tid_date_time}-Top-Damage-By-Skill-Totals" "$:/temp/sel_topDamageBySkill">>'
+	top_skills_title = f"{tid_date_time}-{caption.replace(' ', '-')}"
+	append_tid_for_output(
+		create_new_tid_from_template(top_skills_title, caption, tabs_macro, creator="Drevarr@github.com"),
+		tid_list
+	)
 
 def build_top_damage_by_skill(skill_casts_by_enemy: dict, skill_cast_by_role: dict, total_damage_taken: dict, target_damage_dist: dict, skill_data: dict, buff_data: dict, caption: str, tid_date_time: str) -> None:
 	"""
@@ -3076,7 +3092,7 @@ def build_enemy_team_top_damage_by_skill(enemy_avg_damage_per_skill: dict, capti
 			total_damage_distributed_value = sum(skill["dmg"] for skill in sorted_team_damage.values())
 
 			rows = []
-			#rows.append("\n!!!@@ Note: Enemy Total Casts may be inaccurate, it is based on data available in target['rotation'].@@\n\n")
+			rows.append("\n!!!@@Note@@: Enemy Team data based on `target[totalDamageDist]` which includes damage to notInSquad Players, NPC, pet, minions and gadgets.\n\n")
 			#rows.append("\n!!!@@ Note: Excludes Siege skills, Dragon Banner and select keep lord skills.@@\n\n")
 			rows.append('<div style="overflow-y: auto; width: 100%; overflow-x:auto;">\n\n')
 			rows.append("|thead-dark table-borderless w-75 table-center|k")
@@ -3104,11 +3120,11 @@ def build_enemy_team_top_damage_by_skill(enemy_avg_damage_per_skill: dict, capti
 			text = "\n".join(rows)
 
 			# Define the title for the TID
-			top_skills_title = f"{tid_date_time}-{team}-{caption.replace(' ', '-')}"
+			top_skills_title = f"{tid_date_time}-{caption.replace(' ', '-')}-{team.replace(' ', '-')}"
 
 			# Append the TID for output
 			append_tid_for_output(
-				create_new_tid_from_template(top_skills_title, caption, text, tid_date_time),
+				create_new_tid_from_template(top_skills_title, team, text, tid_date_time),
 				tid_list
 			)
 
