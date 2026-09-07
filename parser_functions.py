@@ -198,6 +198,8 @@ def get_enemy_fight_data(enemy: Dict[str, Any], fight_num: int, data_store: Dict
 	# 2. Construct Identity
 	enemy_id = enemy.get('name')
 	enemy_prof = enemy_id.split()[0]
+	if enemy['teamID'] not in team_colorMap:
+		return
 	enemy_team = team_colorMap[enemy['teamID']]
 	damage = 0
 	down_contribution = 0	
