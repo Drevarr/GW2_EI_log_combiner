@@ -205,7 +205,7 @@ def get_enemy_fight_data(enemy: Dict[str, Any], fight_num: int, data_store: Dict
 	elif enemy['teamID'] in team_colors:
 		enemy_team = f"{team_colors[enemy['teamID']]} Team"
 	else:
-		enemy_team = f"Unk Team-{enemy['teamID']}"
+		enemy_team = f"Unknown {enemy['teamID']} Team"
 	damage = 0
 	down_contribution = 0	
 	for skill in enemy['totalDamageDist'][0]:
