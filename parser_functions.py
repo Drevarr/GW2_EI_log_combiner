@@ -3236,11 +3236,26 @@ def parse_file(file_path, fight_num, guild_data, fight_data_charts, blacklist):
 
 	wvw_map = json_data["wvWMapData"]
 
-	team_colorMap = {
-		wvw_map["redTeamID"]: "Red Team",
-		wvw_map["blueTeamID"]: "Blue Team",
-		wvw_map["greenTeamID"]: "Green Team",
+	team_ids = {
+		"Red Team": wvw_map["redTeamID"],
+		"Blue Team": wvw_map["blueTeamID"],
+		"Green Team": wvw_map["greenTeamID"],
 	}
+
+	# Fallback to get unresolved team colours from objective data
+	unresolved = [colour for colour, team in team_ids.items() if not team]
+	if len(unresolved) == 1:
+		known = {team for team in team_ids.values() if team}
+		owners = {
+			owner[0]
+			for objective in wvw_map.get("objectiveData", [])
+			for owner in objective.get("owners", [])
+			if owner and owner[0] and owner[0] not in known
+		}
+		if len(owners) == 1:
+			team_ids[unresolved[0]] = owners.pop()
+
+	team_colorMap = {team: colour for colour, team in team_ids.items() if team}
 
 	top_stats['overall']['last_fight'] = f"{fight_date}-{fight_end}"
 	#Initialize fight_num stats
