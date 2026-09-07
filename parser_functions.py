@@ -2729,8 +2729,10 @@ def get_damage_mitigation_data(fight_num: int, players: dict, targets: dict, ski
 			continue
 		if target['teamID'] in team_colorMap:
 			team_color = team_colorMap[target['teamID']]
+		elif target['teamID'] in team_colors:
+			team_color = f"{team_colors[target['teamID']]} Team"
 		else:
-			continue
+			team_color = f"Unknown {target['teamID']} Team"
 
 		for skill in target['totalDamageDist'][0]:
 			skill_id = skill['id']
