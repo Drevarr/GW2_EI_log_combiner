@@ -131,7 +131,8 @@ def get_fight_data(player: Dict[str, Any], fight_num: int, data_store: Dict[int,
 			"damage1S": defaultdict(float),
 			"damageTaken1S": defaultdict(float),
 			"players": {},
-			"enemies": {}
+			"enemies": {},
+			"teams": {}
 		}
 	
 	# Reference to the specific fight structure for cleaner access
@@ -189,7 +190,8 @@ def get_enemy_fight_data(enemy: Dict[str, Any], fight_num: int, data_store: Dict
 			"damage1S": defaultdict(float),
 			"damageTaken1S": defaultdict(float),
 			"players": {},
-			"enemies": {}
+			"enemies": {},
+			"teams": {}
 		}
 	
 	# Reference to the specific fight structure for cleaner access
@@ -198,7 +200,12 @@ def get_enemy_fight_data(enemy: Dict[str, Any], fight_num: int, data_store: Dict
 	# 2. Construct Identity
 	enemy_id = enemy.get('name')
 	enemy_prof = enemy_id.split()[0]
-	enemy_team = team_colorMap[enemy['teamID']]
+	if enemy['teamID'] in team_colorMap:
+		enemy_team = team_colorMap[enemy['teamID']]
+	elif enemy['teamID'] in team_colors:
+		enemy_team = f"{team_colors[enemy['teamID']]} Team"
+	else:
+		enemy_team = f"Unk Team-{enemy['teamID']}"
 	damage = 0
 	down_contribution = 0	
 	for skill in enemy['totalDamageDist'][0]:
@@ -206,15 +213,15 @@ def get_enemy_fight_data(enemy: Dict[str, Any], fight_num: int, data_store: Dict
 			continue
 		damage += skill.get('totalDamage',0)
 		down_contribution += skill.get('downContribution',0)		
-	if enemy_team not in current_fight:
-		current_fight[enemy_team]={}
-	if enemy_prof not in current_fight[enemy_team]:
-		current_fight[enemy_team][enemy_prof] ={
+	if enemy_team not in current_fight["teams"]:
+		current_fight["teams"][enemy_team]={}
+	if enemy_prof not in current_fight["teams"][enemy_team]:
+		current_fight["teams"][enemy_team][enemy_prof] ={
 			"damage": 0,
 			"down_contribution": 0,
 		}			
-	current_fight[enemy_team][enemy_prof]['damage'] = current_fight[enemy_team][enemy_prof].get('damage', 0) + damage
-	current_fight[enemy_team][enemy_prof]['down_contribution'] = current_fight[enemy_team][enemy_prof].get('down_contribution', 0) + down_contribution
+	current_fight["teams"][enemy_team][enemy_prof]['damage'] = current_fight["teams"][enemy_team][enemy_prof].get('damage', 0) + damage
+	current_fight["teams"][enemy_team][enemy_prof]['down_contribution'] = current_fight["teams"][enemy_team][enemy_prof].get('down_contribution', 0) + down_contribution
 
 	# 3. Process Damage Dealt (Conditional on DPS threshold)
 	dps_list = enemy.get("dpsAll", [])
