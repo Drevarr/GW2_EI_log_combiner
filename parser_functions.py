@@ -1146,6 +1146,18 @@ def calculate_dps_stats(fight_json, blacklist):
 			
 			get_stacking_uptime_data(player, player_damage, duration, fight_ticks, blacklist)
 
+	# Players eligible for chunk damage, resolved once per fight
+	chunk_players = []
+	for player in fight_json['players']:
+		if player['notInSquad']:
+			continue
+		if player['account'] in blacklist:
+			continue
+		if round(sum_breakpoints(get_combat_time_breakpoints(player)) / 1000):
+			chunk_players.append(
+				(player, player['profession'] + " " + player['name'] + " " + get_player_account(player))
+			)
+
 	# Chunk damage: Damage done within X seconds of target down
 	for index, target in enumerate(fight_json['targets']):
 		if 'enemyPlayer' in target and target['enemyPlayer'] == True and 'combatReplayData' in target and len(target['combatReplayData']['down']):
@@ -1163,35 +1175,19 @@ def calculate_dps_stats(fight_json, blacklist):
 						startIndex = max(startIndex, lastDownIndex)
 
 					squad_damage_on_target = 0
-					for player in fight_json['players']:
-						if player['notInSquad']:
-							continue
-						if player['account'] in blacklist:
-							continue
-						combat_time = round(sum_breakpoints(get_combat_time_breakpoints(player)) / 1000)
-						if combat_time:
-							player_prof_name = player['profession'] + " " + player['name'] + " " + get_player_account(player)	
-							damage_on_target = player["targetDamage1S"][index][0]
-							player_damage = damage_on_target[downIndex] - damage_on_target[startIndex]
-							#player_damage = player["targetDamage1S"][downIndex][0] - player["targetDamage1S"][startIndex][0]
+					for player, player_prof_name in chunk_players:
+						damage_on_target = player["targetDamage1S"][index][0]
+						player_damage = damage_on_target[downIndex] - damage_on_target[startIndex]
 
-							DPSStats[player_prof_name]["chunkDamage"][chunk_damage_seconds] += player_damage
-							squad_damage_on_target += player_damage
+						DPSStats[player_prof_name]["chunkDamage"][chunk_damage_seconds] += player_damage
+						squad_damage_on_target += player_damage
 
-							if chunk_damage_seconds == 5:
-								for i in range(startIndex, downIndex):
-									ch5_ca_damage_1s[player_prof_name][i] += damage_on_target[i + 1] - damage_on_target[i]
+						if chunk_damage_seconds == 5:
+							for i in range(startIndex, downIndex):
+								ch5_ca_damage_1s[player_prof_name][i] += damage_on_target[i + 1] - damage_on_target[i]
 
-					for player in fight_json['players']:
-						if player['notInSquad']:
-							continue
-						if player['account'] in blacklist:
-							continue
-						combat_time = round(sum_breakpoints(get_combat_time_breakpoints(player)) / 1000)
-						if combat_time:
-							player_prof_name = player['profession'] + " " + player['name'] + " " + get_player_account(player)
-
-							DPSStats[player_prof_name]["chunkDamageTotal"][chunk_damage_seconds] += squad_damage_on_target
+					for player, player_prof_name in chunk_players:
+						DPSStats[player_prof_name]["chunkDamageTotal"][chunk_damage_seconds] += squad_damage_on_target
 
 	# Carrion damage: damage to downs that die 
 	for index, target in enumerate(fight_json['targets']):
@@ -3193,12 +3189,18 @@ def parse_file(file_path, fight_num, guild_data, fight_data_charts, blacklist):
 	"""
 	json_stats = config.json_stats
 
+	try:
+		import orjson
+		_loads = orjson.loads
+	except ImportError:
+		_loads = json.loads
+
 	if file_path.endswith('.gz'):
-		with gzip.open(file_path, mode="r") as f:
-			json_data = json.loads(f.read().decode('utf-8'))
+		with gzip.open(file_path, mode="rb") as f:
+			json_data = _loads(f.read())
 	else:
-		json_datafile = open(file_path, encoding='utf-8')
-		json_data = json.load(json_datafile)
+		with open(file_path, 'rb') as f:
+			json_data = _loads(f.read())
 
 	if 'usedExtensions' not in json_data:
 		players_running_healing_addon = []
