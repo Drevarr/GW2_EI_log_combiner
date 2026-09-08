@@ -132,17 +132,33 @@ def get_fight_data(player: Dict[str, Any], fight_num: int, data_store: Dict[int,
 			"damageTaken1S": defaultdict(float),
 			"players": {},
 			"enemies": {},
-			"teams": {}
+			"teams": {},
+			"squad": {}
 		}
 	
-	# Reference to the specific fight structure for cleaner access
 	current_fight = data_store[fight_num]
 	
-	# 2. Construct Identity
 	account = get_player_account(player)
-	player_id = f"{account}-{player.get('profession')}-{player.get('name')}"
-	
-	# 3. Process Damage Dealt (Conditional on DPS threshold)
+	prof = player.get('profession')
+	player_id = f"{account}-{prof}-{player.get('name')}"
+
+
+	if prof not in current_fight["squad"]:
+		current_fight["squad"][prof] = {
+			"totalDmg": 0,
+			"downContribution": 0
+		}
+	damage = 0
+	down_contribution = 0	
+	for skill in player['totalDamageDist'][0]:
+		if skill['id'] in siege_skills:
+			continue
+		damage += skill.get('totalDamage',0)
+		down_contribution += skill.get('downContribution',0)
+
+		current_fight["squad"][prof]["damage"] = current_fight["squad"][prof].get("damage",0) + damage
+		current_fight["squad"][prof]["down_contribution"] = current_fight["squad"][prof].get("down_contribution",0) + down_contribution
+
 	dps_list = player.get("dpsAll", [])
 	if dps_list and dps_list[0].get("dps", 0) >= 700:
 		if player_id not in current_fight["players"]:
@@ -152,7 +168,6 @@ def get_fight_data(player: Dict[str, Any], fight_num: int, data_store: Dict[int,
 			}
 		
 		for target in player.get("targetDamage1S", []):
-			# target[0] is assumed to be the list of cumulative damage per second
 			damage_series = target[0]
 			prior_damage = 0
 			
@@ -191,7 +206,8 @@ def get_enemy_fight_data(enemy: Dict[str, Any], fight_num: int, data_store: Dict
 			"damageTaken1S": defaultdict(float),
 			"players": {},
 			"enemies": {},
-			"teams": {}
+			"teams": {},
+			"squad": {}
 		}
 	
 	# Reference to the specific fight structure for cleaner access
