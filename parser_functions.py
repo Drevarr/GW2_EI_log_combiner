@@ -125,7 +125,6 @@ def get_fight_data(player: Dict[str, Any], fight_num: int, data_store: Dict[int,
 		fight_num (int): The unique identifier for the current fight.
 		data_store (dict): The master dictionary storing fight information.
 	"""
-	# 1. Initialize fight data if not present
 	if fight_num not in data_store:
 		data_store[fight_num] = {
 			"damage1S": defaultdict(float),
@@ -145,26 +144,24 @@ def get_fight_data(player: Dict[str, Any], fight_num: int, data_store: Dict[int,
 
 	if prof not in current_fight["squad"]:
 		current_fight["squad"][prof] = {
-			"totalDmg": 0,
-			"downContribution": 0
+			"damage": 0,
+			"down_contribution": 0
 		}
 	damage = 0
 	down_contribution = 0	
-	for skill in player['totalDamageDist'][0]:
-		if skill['id'] in siege_skills:
-			continue
-		damage += skill.get('totalDamage',0)
-		down_contribution += skill.get('downContribution',0)
+	for target in player['statsTargets']:
+		damage = target[0].get('totalDmg',0)
+		down_contribution = target[0].get('downContribution',0)
 
-		current_fight["squad"][prof]["damage"] = current_fight["squad"][prof].get("damage",0) + damage
-		current_fight["squad"][prof]["down_contribution"] = current_fight["squad"][prof].get("down_contribution",0) + down_contribution
+		current_fight["squad"][prof]["damage"] += damage
+		current_fight["squad"][prof]["down_contribution"] += down_contribution
 
 	dps_list = player.get("dpsAll", [])
 	if dps_list and dps_list[0].get("dps", 0) >= 700:
 		if player_id not in current_fight["players"]:
 			current_fight["players"][player_id] = {
 				"damage1S": defaultdict(float),
-				"damageTaken1S": 0.0 # Placeholder for total/avg if needed
+				"damageTaken1S": 0.0 
 			}
 		
 		for target in player.get("targetDamage1S", []):
@@ -173,19 +170,12 @@ def get_fight_data(player: Dict[str, Any], fight_num: int, data_store: Dict[int,
 			
 			for sec_index, cur_total_damage in enumerate(damage_series):
 				delta_damage = cur_total_damage - prior_damage
-				
-				# Update global damage for this second
 				current_fight["damage1S"][sec_index] += delta_damage
-				# Update individual player damage for this second
 				current_fight["players"][player_id]["damage1S"][sec_index] += delta_damage
-				
 				prior_damage = cur_total_damage
 
-	# 4. Process Damage Taken
 	taken_series = player.get("damageTaken1S", [[]])[0]
 	if taken_series:
-		# Optimization: Use zip to calculate deltas between current and previous values
-		# This avoids manual index tracking and 'last_index' logic
 		for i in range(1, len(taken_series)):
 			delta_taken = taken_series[i] - taken_series[i-1]
 			current_fight["damageTaken1S"][i] += delta_taken
@@ -199,7 +189,6 @@ def get_enemy_fight_data(enemy: Dict[str, Any], fight_num: int, data_store: Dict
 		fight_num (int): The unique identifier for the current fight.
 		data_store (dict): The master dictionary storing fight information.
 	"""
-	# 1. Initialize fight data if not present
 	if fight_num not in data_store:
 		data_store[fight_num] = {
 			"damage1S": defaultdict(float),
@@ -210,10 +199,8 @@ def get_enemy_fight_data(enemy: Dict[str, Any], fight_num: int, data_store: Dict
 			"squad": {}
 		}
 	
-	# Reference to the specific fight structure for cleaner access
 	current_fight = data_store[fight_num]
 
-	# 2. Construct Identity
 	enemy_id = enemy.get('name')
 	enemy_prof = enemy_id.split()[0]
 	if enemy['teamID'] in team_colorMap:
@@ -239,7 +226,6 @@ def get_enemy_fight_data(enemy: Dict[str, Any], fight_num: int, data_store: Dict
 	current_fight["teams"][enemy_team][enemy_prof]['damage'] = current_fight["teams"][enemy_team][enemy_prof].get('damage', 0) + damage
 	current_fight["teams"][enemy_team][enemy_prof]['down_contribution'] = current_fight["teams"][enemy_team][enemy_prof].get('down_contribution', 0) + down_contribution
 
-	# 3. Process Damage Dealt (Conditional on DPS threshold)
 	dps_list = enemy.get("dpsAll", [])
 	if dps_list and dps_list[0].get("dps", 0) >= 700:
 		if enemy_id not in current_fight["enemies"]:
