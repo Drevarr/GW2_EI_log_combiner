@@ -3472,28 +3472,21 @@ def build_squad_composition(top_stats: dict, tid_date_time: str, tid_list: list)
 
 		rows.append('<div class="flex-col">\n\n')
 		for team in top_stats["enemies_by_fight"][fight]:
-			#rows.append('<div class="flex-col">\n\n')
 			header = "\n\n|thead-dark table-caption-top table-hover sortable table-center|k\n"
 			header += f"|Fight - {fight} : {team} Composition |c"
 			rows.append(header)
 			sorted_profs = dict(sorted(top_stats['enemies_by_fight'][fight][team].items(), key=lambda x: x[1], reverse=True))
-			#len_profs = len(top_stats['enemies_by_fight'][fight])
-			#table_size = len(top_stats['parties_by_fight'][fight])
 			row_length = 4
 
-			count = 0
-			row = ""
+			cells = []
 
-			#for key, value in top_stats['enemies_by_fight'][fight].items():
 			for key, value in sorted_profs.items():
-				row += "|{{"+key+"}} : "+str(value)
-				count += 1
-				if count % row_length == 0:
-					row +="|\n"
-				else:
-					row += " |"
-			row +="\n"
-			rows.append(row)
+				cells.append(f"{{{{{key}}}}} : {value}")
+            
+			for i in range(0, len(cells), row_length):
+				row = "|" + "|".join(cells[i:i + row_length]) + "|"
+				rows.append(row)
+
 		rows.append("</div>\n\n")
 
 		rows.append("</div>\n\n\n")
