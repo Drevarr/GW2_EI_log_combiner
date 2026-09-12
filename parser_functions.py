@@ -132,7 +132,8 @@ def get_fight_data(player: Dict[str, Any], fight_num: int, data_store: Dict[int,
 			"players": {},
 			"enemies": {},
 			"teams": {},
-			"squad": {}
+			"squad": {},
+			"enemy_skills": {}
 		}
 	
 	current_fight = data_store[fight_num]
@@ -182,12 +183,13 @@ def get_fight_data(player: Dict[str, Any], fight_num: int, data_store: Dict[int,
 
 def get_enemy_fight_data(enemy: Dict[str, Any], fight_num: int, data_store: Dict[int, Dict[str, Any]], team_colorMap:Dict) -> None:
 	"""
-	Process player combat data and update the global fight_data structure.
+	Process enemy combat data and update the fight_data structure.
 
 	Args:
-		player (dict): The player data dictionary.
-		fight_num (int): The unique identifier for the current fight.
-		data_store (dict): The master dictionary storing fight information.
+		enemy: Enemy combat data dictionary.
+		fight_num: Unique identifier for the current fight.
+		data_store: Master dictionary storing fight information.
+		team_colorMap: Mapping of team IDs to team names.
 	"""
 	if fight_num not in data_store:
 		data_store[fight_num] = {
@@ -196,49 +198,93 @@ def get_enemy_fight_data(enemy: Dict[str, Any], fight_num: int, data_store: Dict
 			"players": {},
 			"enemies": {},
 			"teams": {},
-			"squad": {}
+			"squad": {},
+			"enemy_skills": {}
 		}
-	
+
 	current_fight = data_store[fight_num]
 
-	enemy_id = enemy.get('name')
-	enemy_prof = enemy_id.split()[0]
-	if enemy['teamID'] in team_colorMap:
-		enemy_team = team_colorMap[enemy['teamID']]
-	elif enemy['teamID'] in team_colors:
-		enemy_team = f"{team_colors[enemy['teamID']]} Team"
+	enemy_id = enemy.get("name", "Unknown")
+	enemy_prof = enemy_id.split(maxsplit=1)[0]
+
+	team_id = enemy.get("teamID")
+
+	if team_id in team_colorMap:
+		enemy_team = team_colorMap[team_id]
+	elif team_id in team_colors:
+		enemy_team = f"{team_colors[team_id]} Team"
 	else:
-		enemy_team = f"Unknown {enemy['teamID']} Team"
+		enemy_team = f"Unknown {team_id} Team"
+
 	damage = 0
-	down_contribution = 0	
-	for skill in enemy['totalDamageDist'][0]:
-		if skill['id'] in siege_skills:
+	down_contribution = 0
+
+	for skill in enemy.get("totalDamageDist", [[]])[0]:
+		skill_id = skill.get("id")
+
+		if skill_id in siege_skills:
 			continue
-		damage += skill.get('totalDamage',0)
-		down_contribution += skill.get('downContribution',0)		
-	if enemy_team not in current_fight["teams"]:
-		current_fight["teams"][enemy_team]={}
-	if enemy_prof not in current_fight["teams"][enemy_team]:
-		current_fight["teams"][enemy_team][enemy_prof] ={
+
+		skill_damage = skill.get("totalDamage", 0)
+		skill_down_contribution = skill.get("downContribution", 0)
+
+		damage += skill_damage
+		down_contribution += skill_down_contribution
+
+		enemy_skill = current_fight["enemy_skills"].setdefault(
+			skill_id,
+			{
+				"totalDamage": 0,
+				"downContribution": 0
+			}
+		)
+
+		enemy_skill["totalDamage"] += skill_damage
+		enemy_skill["downContribution"] += skill_down_contribution
+
+	team_data = current_fight["teams"].setdefault(
+		enemy_team,
+		{}
+	)
+
+	prof_data = team_data.setdefault(
+		enemy_prof,
+		{
 			"damage": 0,
-			"down_contribution": 0,
-		}			
-	current_fight["teams"][enemy_team][enemy_prof]['damage'] = current_fight["teams"][enemy_team][enemy_prof].get('damage', 0) + damage
-	current_fight["teams"][enemy_team][enemy_prof]['down_contribution'] = current_fight["teams"][enemy_team][enemy_prof].get('down_contribution', 0) + down_contribution
+			"down_contribution": 0
+		}
+	)
+
+	prof_data["damage"] += damage
+	prof_data["down_contribution"] += down_contribution
+
+	enemies_data = current_fight["enemies"].setdefault(
+		enemy_prof,
+		{
+			"totalDamage": 0,
+			"downContribution": 0
+		}
+	)
+
+	enemies_data["totalDamage"] += damage
+	enemies_data["downContribution"] += down_contribution
 
 	dps_list = enemy.get("dpsAll", [])
+
 	if dps_list and dps_list[0].get("dps", 0) >= 700:
 		if enemy_id not in current_fight["enemies"]:
 			current_fight["enemies"][enemy_id] = {
 				"damage1S": defaultdict(float)
 			}
-		
-		damage_series = enemy["damage1S"][0]
+
+		damage_series = enemy.get("damage1S", [[]])[0]
 		prior_damage = 0
-		
+
 		for sec_index, cur_total_damage in enumerate(damage_series):
 			delta_damage = cur_total_damage - prior_damage
+
 			current_fight["enemies"][enemy_id]["damage1S"][sec_index] += delta_damage
+
 			prior_damage = cur_total_damage
 
 
