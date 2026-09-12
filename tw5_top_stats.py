@@ -28,6 +28,7 @@ import config_output
 import discord_report as DR
 from parser_functions import *
 from output_functions import *
+from fight_review import *
 
 CURRENT_VERSION = "1.8.15"  
 REPO = "Drevarr/GW2_EI_log_combiner"
@@ -472,6 +473,10 @@ if __name__ == '__main__':
 	if build_commander_summary_menu:
 		build_commander_summary(commander_summary_data, skill_data, buff_data, tid_date_time, tid_list)
 		build_commander_summary_menu(commander_summary_data, tid_date_time, tid_list)
+
+	make_media_card_css(tid_list)
+	make_fight_reviews(top_stats, fight_data, skill_data, buff_data, tid_date_time, tid_list)
+	build_Fight_Review_menu_tabs(tid_date_time, tid_list)
 
 	if write_all_data_to_json:
 		output_top_stats_json(top_stats, buff_data, skill_data, damage_mod_data, high_scores, personal_damage_mod_data, personal_buff_data, fb_pages, mechanics, minions, mesmer_clone_usage, death_on_tag, DPSStats, commander_summary_data, enemy_avg_damage_per_skill, player_damage_mitigation, player_minion_damage_mitigation, stacking_uptime_Table, IOL_revive, fight_data, health_data, stats_per_fight, args.json_output_filename)

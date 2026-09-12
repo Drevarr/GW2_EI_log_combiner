@@ -2238,7 +2238,7 @@ def build_menu_tid(datetime: str, db_update: bool) -> None:
 	caption = "Menu"
 	if db_update:
 		text = (
-		f'<<tabs "[[{datetime}-Overview]] [[{datetime}-General-Stats]] [[{datetime}-Buffs]] '
+		f'<<tabs "[[{datetime}-Overview]] [[{datetime}-Fight-Reviews]] [[{datetime}-General-Stats]] [[{datetime}-Buffs]] '
 		f'[[{datetime}-Damage-Modifiers]] [[{datetime}-Mechanics]] [[{datetime}-Skill-Usage]] '
 		f'[[{datetime}-Minions]] [[{datetime}-High-Scores]] [[{datetime}-Top-Damage-By-Skill]] '
 		f'[[{datetime}-Player-Damage-By-Skill]] [[{datetime}-Player-Damage-Taken-By-Skill]] [[{datetime}-Squad-Composition]] [[{datetime}-On-Tag-Review]] '
@@ -2248,7 +2248,7 @@ def build_menu_tid(datetime: str, db_update: bool) -> None:
 		)
 	else:
 		text = (
-			f'<<tabs "[[{datetime}-Overview]] [[{datetime}-General-Stats]] [[{datetime}-Buffs]] '
+			f'<<tabs "[[{datetime}-Overview]] [[{datetime}-Fight-Reviews]] [[{datetime}-General-Stats]] [[{datetime}-Buffs]] '
 			f'[[{datetime}-Damage-Modifiers]] [[{datetime}-Mechanics]] [[{datetime}-Skill-Usage]] '
 			f'[[{datetime}-Minions]] [[{datetime}-High-Scores]] [[{datetime}-Top-Damage-By-Skill]] '
 			f'[[{datetime}-Player-Damage-By-Skill]] [[{datetime}-Player-Damage-Taken-By-Skill]] [[{datetime}-Squad-Composition]] [[{datetime}-On-Tag-Review]] '
