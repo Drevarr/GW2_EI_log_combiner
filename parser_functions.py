@@ -133,7 +133,17 @@ def get_fight_data(player: Dict[str, Any], fight_num: int, data_store: Dict[int,
 			"enemies": {},
 			"teams": {},
 			"squad": {},
-			"enemy_skills": {}
+			"enemy_skills": {},
+			"enemy_statsAll": {},
+			"squad_stats_all": {},
+			"down": {
+				"squad": {},
+				"enemy": {}
+			},
+			"dead": {
+				"squad": {},
+				"enemy": {}
+			}			
 		}
 	
 	current_fight = data_store[fight_num]
@@ -142,6 +152,25 @@ def get_fight_data(player: Dict[str, Any], fight_num: int, data_store: Dict[int,
 	prof = player.get('profession')
 	player_id = f"{account}-{prof}-{player.get('name')}"
 
+	cr_down = player['combatReplayData']['down']
+	cr_dead = player['combatReplayData']['dead']
+	for death in cr_dead:
+		dead_time = math.ceil(death[0]/1000)
+		current_fight["dead"]["squad"].setdefault(dead_time, []).append(player.get("name"))
+	for down in cr_down:
+		down_time = math.ceil(down[0]/1000)
+		current_fight["down"]["squad"].setdefault(down_time, []).append(player.get("name"))
+
+	avg_active_conditions = player['statsAll'][0].get('avgActiveConditions', 0)
+
+	squad_stats_all = current_fight["squad_stats_all"].setdefault(
+		"totals",
+		{
+			"avgActiveConditions": 0
+		}
+	)
+
+	squad_stats_all["avgActiveConditions"] += avg_active_conditions
 
 	if prof not in current_fight["squad"]:
 		current_fight["squad"][prof] = {
@@ -199,7 +228,17 @@ def get_enemy_fight_data(enemy: Dict[str, Any], fight_num: int, data_store: Dict
 			"enemies": {},
 			"teams": {},
 			"squad": {},
-			"enemy_skills": {}
+			"enemy_skills": {},
+			"enemy_stats_all": {},
+			"squad_stats_all": {},
+			"down": {
+				"squad": {},
+				"enemy": {}
+			},
+			"dead": {
+				"squad": {},
+				"enemy": {}
+			}	
 		}
 
 	current_fight = data_store[fight_num]
@@ -218,6 +257,18 @@ def get_enemy_fight_data(enemy: Dict[str, Any], fight_num: int, data_store: Dict
 
 	damage = 0
 	down_contribution = 0
+
+	cr_down = enemy['combatReplayData']['down']
+	cr_dead = enemy['combatReplayData']['dead']
+	for death in cr_dead:
+		dead_time = math.ceil(death[0]/1000)
+		current_fight["dead"]["enemy"].setdefault(dead_time, []).append(enemy_id)
+	for down in cr_down:
+		down_time = math.ceil(down[0]/1000)
+		current_fight["down"]["enemy"].setdefault(down_time, []).append(enemy_id)
+
+
+	avg_active_conditions = enemy['statsAll'][0].get('avgActiveConditions', 0)
 
 	for skill in enemy.get("totalDamageDist", [[]])[0]:
 		skill_id = skill.get("id")
@@ -268,6 +319,15 @@ def get_enemy_fight_data(enemy: Dict[str, Any], fight_num: int, data_store: Dict
 
 	enemies_data["totalDamage"] += damage
 	enemies_data["downContribution"] += down_contribution
+
+	enemies_stats_all = current_fight["enemy_stats_all"].setdefault(
+		"totals",
+		{
+			"avgActiveConditions": 0
+		}
+	)
+
+	enemies_stats_all["avgActiveConditions"] += avg_active_conditions
 
 	dps_list = enemy.get("dpsAll", [])
 

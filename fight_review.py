@@ -11,22 +11,59 @@ media_card_css = """.page-header{
 	display:flex;
 	align-items:flex-start;
 	justify-content:space-between;
-	gap:12px}
+	gap:12px
+}
 	
 .page-title{
 	font-size:20px;
 	font-weight:800;
-	color:#aeb6c2}
+	color:#aeb6c2
+}
 	
 .page-sub{
 	font-size:12px;
 	color:#94a3b8;
-	margin-top:2px}
+	margin-top:2px
+}
+
+.fight-nav{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin:16px 0 22px;
+    padding:6px;
+    background:#24282e;
+    border:1px solid #454b54;
+    border-radius:10px;
+}
+
+.fight-nav-btn{
+    padding:7px 12px;
+    border:0;
+    border-radius:7px;
+    background:transparent;
+    color:#aeb6c2;
+    font-size:11px;
+    font-weight:700;
+    cursor:pointer;
+}
+
+.fight-nav-btn:hover{
+    background:#353a42;
+    outline: 2px solid #1a73e8;
+    color:#f1f5f9;
+}
+
+.fight-nav-btn.active{
+    background:#353a42;
+    color:#f1f5f9;
+}
 
 .metric-grid{
     display:grid;
     grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
-    gap:14px
+    gap:14px;
+    margin-bottom:24px;
 }
 
 .metric-card{
@@ -90,11 +127,29 @@ media_card_css = """.page-header{
 }
 
 .metric-val{
-    font-size:26px;
-    font-weight:900;
+    font-size:22px;
+    font-weight:700;
     color:#f1f5f9;
     line-height:1;
     margin-bottom:5px
+}
+
+.metric-val-small-r{
+    font-size:50%;
+    font-weight:500;
+    color: #d6483e;
+}
+
+.metric-val-small-b{
+    font-size:50%;
+    font-weight:500;
+    color: #009bd9;
+}
+
+.metric-val-small-g{
+    font-size:50%;
+    font-weight:500;
+    color: 47ab4f;
 }
 
 .metric-sub{
@@ -198,6 +253,7 @@ media_card_css = """.page-header{
     font-weight:700;
     color:#64748b;
     text-align:right
+}
 }"""
 
 def make_media_card_css(tid_list):
@@ -347,10 +403,6 @@ def make_breakdown_card(title: str, top_list: list[dict]) -> str:
     )
 
 
-# ---------------------------------------------------------------------------
-# Data helpers
-# ---------------------------------------------------------------------------
-
 def get_top_skill_list(data: dict, f_data, fight_num: str, category: str,
                        stat: str, siege_skills: set[int],
                        skill_map: dict, buff_map: dict,
@@ -427,10 +479,6 @@ def summarize_fight_damage(data: dict, stat: str, top_n: int = 10) -> dict:
     }
 
 
-# ---------------------------------------------------------------------------
-# Fight card builder
-# ---------------------------------------------------------------------------
-
 def build_fight_cards(data: dict, fight_num: int, tid_date_time: str,
                       tid_list: list) -> str:
     rows: list[str] = []
@@ -445,6 +493,13 @@ def build_fight_cards(data: dict, fight_num: int, tid_date_time: str,
     squad_players = data["squad_count"]
     ally_players = data["non_squad_count"]
     enemy_players = data["enemy_count"]
+    enemy_teams = ""
+    if data["enemy_Red"]:
+        enemy_teams += f'<span class="metric-val-small-r"> R:{data["enemy_Red"]}</span>'
+    if data["enemy_Blue"]:
+        enemy_teams += f'<span class="metric-val-small-b"> B:{data["enemy_Blue"]}</span>'
+    if data["enemy_Green"]:
+        enemy_teams += f'<span class="metric-val-small-g"> G:{data["enemy_Green"]}</span>'
 
     squad_kills = data["enemy_killed"]
     squad_downs = data["enemy_downed"]
@@ -474,10 +529,22 @@ def build_fight_cards(data: dict, fight_num: int, tid_date_time: str,
 
     # --- Header ---
     rows.append('<h1 class="page-title">Fight ' + str(fight_num) + ' - Overview</h1>')
-    rows.append(f'<p class="page-sub">Location: {fight_name}  ·  Duration: {fight_duration} · ending at {fight_end}</p>    ')
     if fight_link:
-        rows.append(f'<p class="page-sub">[[Elite Insight Fight Log|{fight_link}]]</p>')
+        EI_link = f' · [[Elite Insight Fight Log|{fight_link}]]'
+    else:
+        EI_link = ""
+    rows.append(f'<div class="page-sub">Location: {fight_name}  ·  Duration: {fight_duration} · ending at {fight_end}{EI_link}</div>')
 
+    rows.append('<div class="fight-nav">')
+    rows.append('    <$button class="fight-nav-btn" selectedClass="fight-nav-btn.active" set="$:/state/FR" setTo="Outcome">Outcome</$button>')
+    rows.append('    <$button class="fight-nav-btn" selectedClass="fight-nav-btn.active" set="$:/state/FR" setTo="Combat">Combat</$button>')
+    rows.append('    <$button class="fight-nav-btn" selectedClass="fight-nav-btn.active"  set="$:/state/FR" setTo="Professions">Professions</$button>')
+    rows.append('    <$button class="fight-nav-btn" selectedClass="fight-nav-btn.active"  set="$:/state/FR" setTo="Skills">Skills</$button>')
+    #rows.append('    <$button class="fight-nav-btn" selectedClass="fight-nav-btn.active"  set="$:/state/FR" setTo="Players">Players</$button>')    
+    rows.append('</div>')
+
+    rows.append('<$reveal type="match" state="$:/state/FR" text="Outcome" default="Outcome">\n')
+                
     rows.append('<div class="metric-grid">')
 
     # Players (prefer_higher=True, custom format)
@@ -488,7 +555,7 @@ def build_fight_cards(data: dict, fight_num: int, tid_date_time: str,
         label="Players",
         trend=css_class,
         trend_value=diff,
-        metric_value=str(squad_players) + ' --- ' + str(ally_players) + ' --- ' + str(enemy_players),
+        metric_value=str(squad_players) + ' --- ' + str(ally_players) + ' --- ' + str(enemy_players)+ '(' + str(enemy_teams) +')',
         metric_sub="Squad --- Allies --- Enemy",
     ))
 
@@ -573,7 +640,14 @@ def build_fight_cards(data: dict, fight_num: int, tid_date_time: str,
     ))
 
     rows.append("</div>")
+    rows.append('</$reveal>\n')
+
+    rows.append('<$reveal type="match" state="$:/state/FR" text="Combat">\n')
+
+    rows.append(f'{{{{{tid_date_time}_Fight_{fight_num:02}_Damage_Output_Review}}}}')
+
     rows.append("\n---\n")
+    rows.append('\n</$reveal>')
 
     return "\n".join(rows)
 
@@ -594,6 +668,7 @@ def make_fight_reviews(top_stats: dict, fight_data, skill_map, buff_map, tid_dat
         rows.append(build_fight_cards(data, fight_num, tid_date_time, tid_list))
 
         # --- Profession breakdowns ---
+        rows.append('<$reveal type="match" state="$:/state/FR" text="Professions">\n')        
         rows.append('<div class="breakdown-row">')
 
         for label, source_key, stat_key in [
@@ -607,7 +682,10 @@ def make_fight_reviews(top_stats: dict, fight_data, skill_map, buff_map, tid_dat
 
         rows.append("</div>")
         rows.append("\n---\n")
+        rows.append('</$reveal>\n')
+
         rows.append("")
+        rows.append('<$reveal type="match" state="$:/state/FR" text="Skills">\n')        
         rows.append('<div class="breakdown-row">')
 
         # --- Skill breakdowns ---
@@ -623,6 +701,7 @@ def make_fight_reviews(top_stats: dict, fight_data, skill_map, buff_map, tid_dat
             rows.append(make_breakdown_card(label, top_list))
 
         rows.append("</div>")
+        rows.append("</$reveal>")
 
         # --- Build and push the TID ---
         tid_text = "\n".join(rows)
