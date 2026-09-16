@@ -179,21 +179,14 @@ def get_fight_data(player: Dict[str, Any], fight_num: int, data_store: Dict[int,
 		}
 	damage = 0
 	down_contribution = 0	
-	for target in player['statsTargets']:
-		damage = target[0].get('totalDmg',0)
-		down_contribution = target[0].get('downContribution',0)
-
-		current_fight["squad"][prof]["damage"] += damage
-		current_fight["squad"][prof]["down_contribution"] += down_contribution
-
 	dps_list = player.get("dpsAll", [])
 	if dps_list and dps_list[0].get("dps", 0) >= 700:
 		if player_id not in current_fight["players"]:
 			current_fight["players"][player_id] = {
 				"damage1S": defaultdict(float),
-				"damageTaken1S": 0.0 
+				"damage": 0,
+				"down_contribution": 0 
 			}
-		
 		for target in player.get("targetDamage1S", []):
 			damage_series = target[0]
 			prior_damage = 0
@@ -203,6 +196,19 @@ def get_fight_data(player: Dict[str, Any], fight_num: int, data_store: Dict[int,
 				current_fight["damage1S"][sec_index] += delta_damage
 				current_fight["players"][player_id]["damage1S"][sec_index] += delta_damage
 				prior_damage = cur_total_damage
+
+	for target in player['statsTargets']:
+		damage = target[0].get('totalDmg',0)
+		down_contribution = target[0].get('downContribution',0)
+
+		current_fight["squad"][prof]["damage"] += damage
+		current_fight["squad"][prof]["down_contribution"] += down_contribution
+
+		if player_id in current_fight["players"]:
+			current_fight["players"][player_id]['damage'] += damage
+			current_fight["players"][player_id]['down_contribution'] += down_contribution
+
+
 
 	taken_series = player.get("damageTaken1S", [[]])[0]
 	if taken_series:
@@ -231,6 +237,8 @@ def get_enemy_fight_data(enemy: Dict[str, Any], fight_num: int, data_store: Dict
 			"enemy_skills": {},
 			"enemy_stats_all": {},
 			"squad_stats_all": {},
+			"enemy_damage": {},
+			"squad_damage": {},			
 			"down": {
 				"squad": {},
 				"enemy": {}
