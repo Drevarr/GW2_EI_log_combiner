@@ -376,6 +376,45 @@ def make_profession_card(title: str, top_ten: dict) -> str:
     )
 
 
+def make_player_breakdown_card(title, players, stat, limit=10):
+    total_value = sum(
+        data.get(stat, 0)
+        for data in players.values()
+    )
+
+    sorted_players = sorted(
+        players.items(),
+        key=lambda item: item[1].get(stat, 0),
+        reverse=True
+    )
+
+    channel_items = []
+
+    for player_name, data in sorted_players[:limit]:
+        value = data.get(stat, 0)
+        pct = (value / total_value * 100) if total_value else 0
+
+        account, profession, name = player_name.split("-", 2)
+
+        display_name = f" ({{{{{profession}}}}}{name})"
+
+        channel_items.append(
+            f"""<div class="channel-item"
+                 title="{account}: {value:,} ({pct:.1f}% of total)">
+                <span class="ch-name">{display_name}</span>
+                <span class="ch-value">{value:,}</span>
+                <span class="ch-pct">{pct:.1f}%</span>
+            </div>"""
+        )
+
+    return f"""<div class="breakdown-card">
+        <h3 class="breakdown-title">{title} - Top {limit}</h3>
+        <div class="channel-list">
+            {''.join(channel_items)}
+        </div>
+    </div>"""
+
+
 def make_breakdown_card(title: str, top_list: list[dict]) -> str:
     channel_items: list[str] = []
 
@@ -540,7 +579,7 @@ def build_fight_cards(data: dict, fight_num: int, tid_date_time: str,
     rows.append('    <$button class="fight-nav-btn" selectedClass="fight-nav-btn.active" set="$:/state/FR" setTo="Combat">Combat</$button>')
     rows.append('    <$button class="fight-nav-btn" selectedClass="fight-nav-btn.active"  set="$:/state/FR" setTo="Professions">Professions</$button>')
     rows.append('    <$button class="fight-nav-btn" selectedClass="fight-nav-btn.active"  set="$:/state/FR" setTo="Skills">Skills</$button>')
-    #rows.append('    <$button class="fight-nav-btn" selectedClass="fight-nav-btn.active"  set="$:/state/FR" setTo="Players">Players</$button>')    
+    rows.append('    <$button class="fight-nav-btn" selectedClass="fight-nav-btn.active"  set="$:/state/FR" setTo="Players">Players</$button>')    
     rows.append('</div>')
 
     rows.append('<$reveal type="match" state="$:/state/FR" text="Outcome" default="Outcome">\n')
@@ -626,7 +665,7 @@ def build_fight_cards(data: dict, fight_num: int, tid_date_time: str,
         squad_cnt, enemy_cnt, prefer_higher=True,
     )
 
-    # Barrier Damage (prefer_higher=False -- less barrier damage is better)
+    # Barrier Damage
     css_class, barrier_diff = trend_info(
         squad_barrier_damage, enemy_barrier_damage, prefer_higher=True,
     )
@@ -651,10 +690,6 @@ def build_fight_cards(data: dict, fight_num: int, tid_date_time: str,
 
     return "\n".join(rows)
 
-
-# ---------------------------------------------------------------------------
-# Top-level entry point
-# ---------------------------------------------------------------------------
 
 def make_fight_reviews(top_stats: dict, fight_data, skill_map, buff_map, tid_date_time: str,
                        tid_list: list) -> None:
@@ -701,7 +736,26 @@ def make_fight_reviews(top_stats: dict, fight_data, skill_map, buff_map, tid_dat
             rows.append(make_breakdown_card(label, top_list))
 
         rows.append("</div>")
-        rows.append("</$reveal>")
+        rows.append("</$reveal>\n")
+
+        rows.append("")
+        rows.append('<$reveal type="match" state="$:/state/FR" text="Players">\n')        
+        rows.append('<div class="breakdown-row">')        
+        # --- Player breakdowns ---
+        for label, source_key, stat_key in [
+            ("Down Contribution by Player", "players", "down_contribution"),
+            ("Total Damage by Player", "players", "damage"),
+        ]:
+            rows.append(
+                make_player_breakdown_card(
+                    label,
+                    f_data[source_key],
+                    stat_key
+                )
+            )
+        rows.append("</div>")
+        rows.append("\n---\n")
+        rows.append('</$reveal>\n')
 
         # --- Build and push the TID ---
         tid_text = "\n".join(rows)
