@@ -185,7 +185,11 @@ def get_fight_data(player: Dict[str, Any], fight_num: int, data_store: Dict[int,
 			current_fight["players"][player_id] = {
 				"damage1S": defaultdict(float),
 				"damage": 0,
-				"down_contribution": 0 
+				"down_contribution": 0,
+				"boon_strips": 0,
+				"condi_cleanse": 0,
+				"healing": 0,
+				"barrier": 0
 			}
 		for target in player.get("targetDamage1S", []):
 			damage_series = target[0]
@@ -207,7 +211,48 @@ def get_fight_data(player: Dict[str, Any], fight_num: int, data_store: Dict[int,
 		if player_id in current_fight["players"]:
 			current_fight["players"][player_id]['damage'] += damage
 			current_fight["players"][player_id]['down_contribution'] += down_contribution
+	if player_id not in current_fight["players"]:
+		current_fight["players"][player_id] = {
+			"damage1S": {0:0},
+			"damage": 0,
+			"down_contribution": 0,
+			"boon_strips": 0,
+			"condi_cleanse": 0,
+			"healing": 0,
+			"barrier": 0,
+			"appliedCrowdControl": 0,
+			"interrupts": 0,
+			"evaded_blocked": 0,
+			"receivedCrowdControl": 0
+		}		
+	current_fight["players"][player_id]['boon_strips'] = player["support"][0].get("boonStrips", 0)
+	current_fight["players"][player_id]['condi_cleanse'] = player["support"][0].get("condiCleanse", 0)
+	current_fight["players"][player_id]['appliedCrowdControl'] = player["statsAll"][0].get("appliedCrowdControl", 0)
+	current_fight["players"][player_id]['interrupts'] = player["statsAll"][0].get("interrupts", 0)
+	current_fight["players"][player_id]['evaded_blocked'] = player["statsAll"][0].get("evaded", 0) + player["statsAll"][0].get("blocked", 0)
+	current_fight["players"][player_id]['receivedCrowdControl'] = player["defenses"][0].get("receivedCrowdControl", 0)
+	
+	if "extHealingStats" in player:
 
+		# Healing
+		total_healing = 0
+		total_downed = 0
+		for target in player["extHealingStats"]["alliedHealingDist"]:
+			for skill in target[0]:
+				raw_value = skill.get("totalHealing", 0)
+				downed_value = skill.get("downedHealing", 0)
+
+				total_healing += (raw_value - downed_value)
+				total_downed += downed_value
+		current_fight["players"][player_id]["healing"] = total_healing
+		current_fight["players"][player_id]["downedHealing"] = total_downed
+	if "extBarrierStats" in player:
+		# Barrier
+		total_barrier = 0
+		for target in player["extBarrierStats"]["alliedBarrierDist"]:
+			for skill in target[0]:
+				total_barrier += skill.get("totalBarrier", 0)
+		current_fight["players"][player_id]["barrier"] = total_barrier
 
 
 	taken_series = player.get("damageTaken1S", [[]])[0]

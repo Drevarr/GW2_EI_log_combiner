@@ -396,7 +396,7 @@ def make_player_breakdown_card(title, players, stat, limit=10):
 
         account, profession, name = player_name.split("-", 2)
 
-        display_name = f" ({{{{{profession}}}}}{name})"
+        display_name = f"{{{{{profession}}}}}{name}"
 
         channel_items.append(
             f"""<div class="channel-item"
@@ -745,6 +745,14 @@ def make_fight_reviews(top_stats: dict, fight_data, skill_map, buff_map, tid_dat
         for label, source_key, stat_key in [
             ("Down Contribution by Player", "players", "down_contribution"),
             ("Total Damage by Player", "players", "damage"),
+            ("Total Boon Strips by Player", "players", "boon_strips"),
+            ("Total Condition Cleanses by Player", "players", "condi_cleanse"),
+            ("Total Healing by Player", "players", "healing"),
+            ("Total Barrier by Player", "players", "barrier"),
+            ("Total CC by Player", "players", "appliedCrowdControl"),
+            ("Total Interrupts by Player", "players", "interrupts"),
+            ("Total Evaded/Blocked by Player", "players", "evaded_blocked"),
+            ("Total CC Received by Player", "players", "receivedCrowdControl"),
         ]:
             rows.append(
                 make_player_breakdown_card(
