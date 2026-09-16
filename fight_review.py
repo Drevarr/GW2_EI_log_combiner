@@ -219,7 +219,7 @@ media_card_css = """.page-header{
 .channel-list{
     display:flex;
     flex-direction:column;
-    gap:10px
+    gap:3px
 }
 
 .channel-item{
@@ -576,7 +576,7 @@ def build_fight_cards(data: dict, fight_num: int, tid_date_time: str,
 
     rows.append('<div class="fight-nav">')
     rows.append('    <$button class="fight-nav-btn" selectedClass="fight-nav-btn.active" set="$:/state/FR" setTo="Outcome">Outcome</$button>')
-    rows.append('    <$button class="fight-nav-btn" selectedClass="fight-nav-btn.active" set="$:/state/FR" setTo="Combat">Combat</$button>')
+    rows.append('    <$button class="fight-nav-btn" selectedClass="fight-nav-btn.active" set="$:/state/FR" setTo="Combat">Timeline</$button>')
     rows.append('    <$button class="fight-nav-btn" selectedClass="fight-nav-btn.active"  set="$:/state/FR" setTo="Professions">Professions</$button>')
     rows.append('    <$button class="fight-nav-btn" selectedClass="fight-nav-btn.active"  set="$:/state/FR" setTo="Skills">Skills</$button>')
     rows.append('    <$button class="fight-nav-btn" selectedClass="fight-nav-btn.active"  set="$:/state/FR" setTo="Players">Players</$button>')    
@@ -749,9 +749,9 @@ def make_fight_reviews(top_stats: dict, fight_data, skill_map, buff_map, tid_dat
             ("Total Condition Cleanses by Player", "players", "condi_cleanse"),
             ("Total Healing by Player", "players", "healing"),
             ("Total Barrier by Player", "players", "barrier"),
-            ("Total CC by Player", "players", "appliedCrowdControl"),
             ("Total Interrupts by Player", "players", "interrupts"),
             ("Total Evaded/Blocked by Player", "players", "evaded_blocked"),
+            ("Total CC by Player", "players", "appliedCrowdControl"),
             ("Total CC Received by Player", "players", "receivedCrowdControl"),
         ]:
             rows.append(

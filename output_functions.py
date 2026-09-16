@@ -6379,8 +6379,8 @@ def build_fight_line_chart(fight_data: dict, tid_date_time: str, tid_list: list)
 			#last_value = max(fight_data[fight_num]["players"][player]['damage1S'].values())
 			#num_keys = len(fight_data[fight_num]["players"][player]['damage1S'])
 
-			#if (last_value/num_keys) < 700:
-			#	continue
+			if fight_data[fight_num]["players"][player]['active_dps'] < 700:
+				continue
 
 			player_name = player.split("-")[1][:3]+" - "+player.split("-")[2]
 			player_damage_data = []

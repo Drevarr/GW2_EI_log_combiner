@@ -185,6 +185,7 @@ def get_fight_data(player: Dict[str, Any], fight_num: int, data_store: Dict[int,
 			current_fight["players"][player_id] = {
 				"damage1S": defaultdict(float),
 				"damage": 0,
+				"active_dps": 0,
 				"down_contribution": 0,
 				"boon_strips": 0,
 				"condi_cleanse": 0,
@@ -215,6 +216,7 @@ def get_fight_data(player: Dict[str, Any], fight_num: int, data_store: Dict[int,
 		current_fight["players"][player_id] = {
 			"damage1S": {0:0},
 			"damage": 0,
+			"active_dps": 0,
 			"down_contribution": 0,
 			"boon_strips": 0,
 			"condi_cleanse": 0,
@@ -224,7 +226,8 @@ def get_fight_data(player: Dict[str, Any], fight_num: int, data_store: Dict[int,
 			"interrupts": 0,
 			"evaded_blocked": 0,
 			"receivedCrowdControl": 0
-		}		
+		}
+	current_fight["players"][player_id]['active_dps'] = round(player["dpsAll"][0].get("damage", 0) / (player["activeTimes"][0]/1000),1) if player["activeTimes"][0] else 0
 	current_fight["players"][player_id]['boon_strips'] = player["support"][0].get("boonStrips", 0)
 	current_fight["players"][player_id]['condi_cleanse'] = player["support"][0].get("condiCleanse", 0)
 	current_fight["players"][player_id]['appliedCrowdControl'] = player["statsAll"][0].get("appliedCrowdControl", 0)
