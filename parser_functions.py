@@ -611,12 +611,9 @@ def check_burst1S_high_score(fight_data, player, fight_num):
 	profession = player['profession']
 	account = get_player_account(player)
 	player_id = f"{account}-{profession}-{name}"
-	db_user = check_dragon_banner(player["rotation"])
 
 	max_burst1S_key = max(fight_data[fight_num]["players"][player_id]["damage1S"], key=fight_data[fight_num]["players"][player_id]["damage1S"].get)
 	max_burst1S_value = fight_data[fight_num]["players"][player_id]["damage1S"][max_burst1S_key]
-	if db_user:
-		max_burst1S_value = 0
 	
 	update_high_score(
 		"burst_damage1S",
@@ -2566,7 +2563,6 @@ def _accumulate_heal_or_barrier(
 
 	if stat_category not in player:
 		return 0.0
-	dbuser = check_dragon_banner(player["rotation"])
 	healer_name = player['name']
 	healer_group = player['group']
 	player_stats = top_stats['player'][name_prof][stat_category]
