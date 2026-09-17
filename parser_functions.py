@@ -116,6 +116,28 @@ def get_player_account(player: Dict[str, Any]) -> str:
 	return account.replace("-", ".")
 
 
+def add_damage_series(
+	series,
+	aggregate_series,
+	individual_series=None
+) -> None:
+	"""
+	Convert a cumulative damage series into per-second damage
+	and add it to the supplied aggregate/individual series.
+	"""
+	prior_damage = 0
+
+	for sec_index, cur_total_damage in enumerate(series):
+		delta_damage = cur_total_damage - prior_damage
+
+		aggregate_series[sec_index] += delta_damage
+
+		if individual_series is not None:
+			individual_series[sec_index] += delta_damage
+
+		prior_damage = cur_total_damage
+
+
 def get_fight_data(
 	player: Dict[str, Any],
 	fight_num: int,
@@ -395,29 +417,30 @@ def get_fight_data(
 				sec_index
 			] += delta_taken
 
-def get_enemy_fight_data(enemy: Dict[str, Any], fight_num: int, data_store: Dict[int, Dict[str, Any]], team_colorMap:Dict) -> None:
+def get_enemy_fight_data(
+	enemy: Dict[str, Any],
+	fight_num: int,
+	data_store: Dict[int, Dict[str, Any]],
+	team_colorMap: Dict
+) -> None:
 	"""
 	Process enemy combat data and update the fight_data structure.
-
-	Args:
-		enemy: Enemy combat data dictionary.
-		fight_num: Unique identifier for the current fight.
-		data_store: Master dictionary storing fight information.
-		team_colorMap: Mapping of team IDs to team names.
 	"""
+
 	if fight_num not in data_store:
 		data_store[fight_num] = {
 			"damage1S": defaultdict(float),
 			"damageTaken1S": defaultdict(float),
 			"players": {},
 			"enemies": {},
+			"enemy_players": {},
 			"teams": {},
 			"squad": {},
 			"enemy_skills": {},
 			"enemy_stats_all": {},
 			"squad_stats_all": {},
 			"enemy_damage": {},
-			"squad_damage": {},			
+			"squad_damage": {},
 			"down": {
 				"squad": {},
 				"enemy": {}
@@ -425,11 +448,13 @@ def get_enemy_fight_data(enemy: Dict[str, Any], fight_num: int, data_store: Dict
 			"dead": {
 				"squad": {},
 				"enemy": {}
-			}	
+			}
 		}
 
 	current_fight = data_store[fight_num]
 
+
+	#Enemy identification
 	enemy_id = enemy.get("name", "Unknown")
 	enemy_prof = enemy_id.split(maxsplit=1)[0]
 
@@ -442,20 +467,61 @@ def get_enemy_fight_data(enemy: Dict[str, Any], fight_num: int, data_store: Dict
 	else:
 		enemy_team = f"Unknown {team_id} Team"
 
+
+	enemy_data = current_fight["enemy_players"].setdefault(
+		enemy_id,
+		{
+			"damage1S": defaultdict(float)
+		}
+	)
+
+
+	#Downs/Deaths
+	combat_replay = enemy.get("combatReplayData", {})
+
+	for death in combat_replay.get("dead", []):
+		dead_time = math.ceil(death[0] / 1000)
+
+		current_fight["dead"]["enemy"].setdefault(
+			dead_time,
+			[]
+		).append(enemy_id)
+
+	for down in combat_replay.get("down", []):
+		down_time = math.ceil(down[0] / 1000)
+
+		current_fight["down"]["enemy"].setdefault(
+			down_time,
+			[]
+		).append(enemy_id)
+
+
+	#Enemy stats
+	stats_all = enemy.get("statsAll", [])
+	stats = stats_all[0] if stats_all else {}
+
+	avg_active_conditions = stats.get(
+		"avgActiveConditions",
+		0
+	)
+
+	enemies_stats_all = current_fight[
+		"enemy_stats_all"
+	].setdefault(
+		"totals",
+		{
+			"avgActiveConditions": 0
+		}
+	)
+
+	enemies_stats_all[
+		"avgActiveConditions"
+	] += avg_active_conditions
+
+
+	#Damage/Down Contribution / Skills
 	damage = 0
 	down_contribution = 0
-
-	cr_down = enemy['combatReplayData']['down']
-	cr_dead = enemy['combatReplayData']['dead']
-	for death in cr_dead:
-		dead_time = math.ceil(death[0]/1000)
-		current_fight["dead"]["enemy"].setdefault(dead_time, []).append(enemy_id)
-	for down in cr_down:
-		down_time = math.ceil(down[0]/1000)
-		current_fight["down"]["enemy"].setdefault(down_time, []).append(enemy_id)
-
-
-	avg_active_conditions = enemy['statsAll'][0].get('avgActiveConditions', 0)
 
 	for skill in enemy.get("totalDamageDist", [[]])[0]:
 		skill_id = skill.get("id")
@@ -463,13 +529,22 @@ def get_enemy_fight_data(enemy: Dict[str, Any], fight_num: int, data_store: Dict
 		if skill_id in siege_skills:
 			continue
 
-		skill_damage = skill.get("totalDamage", 0)
-		skill_down_contribution = skill.get("downContribution", 0)
+		skill_damage = skill.get(
+			"totalDamage",
+			0
+		)
+
+		skill_down_contribution = skill.get(
+			"downContribution",
+			0
+		)
 
 		damage += skill_damage
 		down_contribution += skill_down_contribution
 
-		enemy_skill = current_fight["enemy_skills"].setdefault(
+		enemy_skill = current_fight[
+			"enemy_skills"
+		].setdefault(
 			skill_id,
 			{
 				"totalDamage": 0,
@@ -478,8 +553,12 @@ def get_enemy_fight_data(enemy: Dict[str, Any], fight_num: int, data_store: Dict
 		)
 
 		enemy_skill["totalDamage"] += skill_damage
-		enemy_skill["downContribution"] += skill_down_contribution
+		enemy_skill["downContribution"] += (
+			skill_down_contribution
+		)
 
+
+	#Team/profession
 	team_data = current_fight["teams"].setdefault(
 		enemy_team,
 		{}
@@ -494,8 +573,12 @@ def get_enemy_fight_data(enemy: Dict[str, Any], fight_num: int, data_store: Dict
 	)
 
 	prof_data["damage"] += damage
-	prof_data["down_contribution"] += down_contribution
+	prof_data["down_contribution"] += (
+		down_contribution
+	)
 
+
+	#Overall enemy profession aggregation
 	enemies_data = current_fight["enemies"].setdefault(
 		enemy_prof,
 		{
@@ -505,34 +588,37 @@ def get_enemy_fight_data(enemy: Dict[str, Any], fight_num: int, data_store: Dict
 	)
 
 	enemies_data["totalDamage"] += damage
-	enemies_data["downContribution"] += down_contribution
-
-	enemies_stats_all = current_fight["enemy_stats_all"].setdefault(
-		"totals",
-		{
-			"avgActiveConditions": 0
-		}
+	enemies_data["downContribution"] += (
+		down_contribution
 	)
 
-	enemies_stats_all["avgActiveConditions"] += avg_active_conditions
 
-	dps_list = enemy.get("dpsAll", [])
+	#Enemy damage per second
+	damage_series_data = enemy.get(
+		"damage1S",
+		[]
+	)
 
-	if dps_list and dps_list[0].get("dps", 0) >= 700:
-		if enemy_id not in current_fight["enemies"]:
-			current_fight["enemies"][enemy_id] = {
-				"damage1S": defaultdict(float)
-			}
+	damage_series = (
+		damage_series_data[0]
+		if damage_series_data
+		else []
+	)
 
-		damage_series = enemy.get("damage1S", [[]])[0]
-		prior_damage = 0
+	prior_damage = 0
 
-		for sec_index, cur_total_damage in enumerate(damage_series):
-			delta_damage = cur_total_damage - prior_damage
+	for sec_index, cur_total_damage in enumerate(
+		damage_series
+	):
+		delta_damage = (
+			cur_total_damage - prior_damage
+		)
 
-			current_fight["enemies"][enemy_id]["damage1S"][sec_index] += delta_damage
+		enemy_data["damage1S"][
+			sec_index
+		] += delta_damage
 
-			prior_damage = cur_total_damage
+		prior_damage = cur_total_damage
 
 
 def check_burst1S_high_score(fight_data, player, fight_num):
