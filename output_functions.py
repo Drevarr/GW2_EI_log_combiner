@@ -35,7 +35,7 @@ def create_new_tid_from_template(
 	tags: list[str] = None,
 	modified: str = None,
 	created: str = None,
-	creator: str = None,
+	creator: str = "Drevarr@github.com",
 	fields: dict = None,
 ) -> dict:
 	"""
