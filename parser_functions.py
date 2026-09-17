@@ -607,16 +607,22 @@ def get_enemy_fight_data(
 
 
 def check_burst1S_high_score(fight_data, player, fight_num):
-	for player_id in fight_data[fight_num]["players"]:
-		account, profession, name = player_id.split("-")
-		max_burst1S_key = max(fight_data[fight_num]["players"][player_id]["damage1S"], key=fight_data[fight_num]["players"][player_id]["damage1S"].get)
-		max_burst1S_value = fight_data[fight_num]["players"][player_id]["damage1S"][max_burst1S_key]
+	name = player['name']
+	profession = player['profession']
+	account = get_player_account(player)
+	player_id = f"{account}-{profession}-{name}"
+	db_user = check_dragon_banner(player["rotation"])
 
-		update_high_score(
-			"burst_damage1S",
-			"{{"+profession+"}}"+name+"-"+account+"-"+str(fight_num)+"-burst1S",
-			round(max_burst1S_value, 2)	
-		)
+	max_burst1S_key = max(fight_data[fight_num]["players"][player_id]["damage1S"], key=fight_data[fight_num]["players"][player_id]["damage1S"].get)
+	max_burst1S_value = fight_data[fight_num]["players"][player_id]["damage1S"][max_burst1S_key]
+	if db_user:
+		max_burst1S_value = 0
+	
+	update_high_score(
+		"burst_damage1S",
+		"{{"+profession+"}}"+name+"-"+account+"-"+str(fight_num)+"-burst1S",
+		round(max_burst1S_value, 2)	
+	)
 			
 
 def determine_log_type_and_extract_fight_name(fight_name: str) -> tuple:
@@ -854,7 +860,7 @@ def check_target_for_buff_start_end(targets, players, damage_buff_ids):
 
 def check_dragon_banner(rotation):
 	return any(
-		skill.get('id') in db_skill_ids
+		int(skill.get('id')) in db_skill_ids
 		for skill in rotation
 	)
 
@@ -868,7 +874,6 @@ def update_high_score(stat_name: str, key: str, value: float) -> None:
 		key (str): The key to store the value under.
 		value (float): The value to store.
 	"""
-
 	if stat_name not in high_scores:
 		high_scores[stat_name] = {}
 
@@ -1101,7 +1106,7 @@ def get_player_death_on_tag(
 		entry["distToTag"].append(player_dist_to_tag)
 
 
-def get_player_fight_dps(dpsTargets: dict, name: str, profession: str, account: str, fight_num: int, fight_time: int) -> None:
+def get_player_fight_dps(dpsTargets: dict, name: str, profession: str, account: str, fight_num: int, fight_time: int, dbuser) -> None:
 	"""
 	Get the maximum damage hit by skill.
 
@@ -1114,12 +1119,12 @@ def get_player_fight_dps(dpsTargets: dict, name: str, profession: str, account: 
 		target_damage += target[0]["damage"]
 
 	target_damage = round(target_damage / fight_time,2)
-
-	update_high_score(
-		"fight_dps",
-		"{{"+profession+"}}"+name+"-"+str(account)+"-"+str(fight_num)+"-DPS",
-		target_damage
-		)
+	if dbuser is not True:
+		update_high_score(
+			"fight_dps",
+			"{{"+profession+"}}"+name+"-"+str(account)+"-"+str(fight_num)+"-DPS",
+			target_damage
+			)
 
 def get_combat_start_from_player_json(initial_time, player_json):
 	"""
@@ -1632,7 +1637,7 @@ def calculate_dps_stats(fight_json, blacklist):
 					dmg = player_damage[fight_tick] - player_damage[fight_tick - i]
 					DPSStats[player_prof_name]["ch5CaBurstDamage"][i] = max(dmg, DPSStats[player_prof_name]["ch5CaBurstDamage"][i])
 
-def get_player_stats_targets(statsTargets: dict, name: str, profession: str, account: str, fight_num: int, fight_time: int) -> None:
+def get_player_stats_targets(statsTargets: dict, name: str, profession: str, account: str, fight_num: int, fight_time: int, dbuser) -> None:
 	"""
 	Gets the stats for a player in a fight for a given stat
 
@@ -1655,8 +1660,8 @@ def get_player_stats_targets(statsTargets: dict, name: str, profession: str, acc
 				fight_stat_value += target[0][stat]
 
 		fight_stat_value = round(fight_stat_value / fight_time, 3)
-
-		update_high_score(f"statTarget_{stat}", "{{"+profession+"}}"+name+"-"+str(account)+"-"+str(fight_num)+"-"+stat, fight_stat_value)	
+		if dbuser is not True:
+			update_high_score(f"statTarget_{stat}", "{{"+profession+"}}"+name+"-"+str(account)+"-"+str(fight_num)+"-"+stat, fight_stat_value)	
 
 def get_total_shield_damage(fight_data: dict) -> int:
 	"""
@@ -1970,7 +1975,7 @@ def get_parties_by_fight(fight_num: int, players: list, blacklist: list) -> None
 			# Add the player to the group
 			top_stats["parties_by_fight"][fight_num][group].append(prof_name)
 
-def get_stat_by_key(fight_num: int, player: dict, stat_category: str, name_prof: str) -> None:
+def get_stat_by_key(fight_num: int, player: dict, stat_category: str, name_prof: str, dbuser) -> None:
 	"""
 	Add player stats by key to top_stats dictionary
 
@@ -1991,11 +1996,12 @@ def get_stat_by_key(fight_num: int, player: dict, stat_category: str, name_prof:
 			value = 0
 		if stat in config.high_scores:
 			high_score_value = round(value / active_time_seconds, 3) if active_time_seconds > 0 else 0
-			update_high_score(
-				f"{stat_category}_{stat}",
-				f"{{{{{player['profession']}}}}}{player['name']}-{get_player_account(player)}-{str(fight_num)} | {stat}",
-				high_score_value
-			)
+			if dbuser is not True:
+				update_high_score(
+					f"{stat_category}_{stat}",
+					f"{{{{{player['profession']}}}}}{player['name']}-{get_player_account(player)}-{str(fight_num)} | {stat}",
+					high_score_value
+				)
 		top_stats['player'][name_prof][stat_category][stat] = top_stats['player'][name_prof][stat_category].get(stat, 0) + value
 		stats_per_fight[stat_category][stat][name_prof].append(round(value/active_time_seconds,2) if active_time_seconds > 0 else 0)
 		top_stats['fight'][fight_num][stat_category][stat] = top_stats['fight'][fight_num][stat_category].get(stat, 0) + value
@@ -2027,7 +2033,7 @@ def get_defense_hits_and_glances(fight_num: int, player: dict, stat_category: st
 	top_stats['overall'][stat_category]['directHits'] = top_stats['overall'][stat_category].get('directHits', 0) + direct_hits
 	top_stats['overall'][stat_category]['glanceCount'] = top_stats['overall'][stat_category].get('glanceCount', 0) + glancing_hits
 
-def get_stat_by_target_and_skill(fight_num: int, player: dict, stat_category: str, name_prof: str) -> None:
+def get_stat_by_target_and_skill(fight_num: int, player: dict, stat_category: str, name_prof: str, dbuser) -> None:
 	"""
 	Add player stats by target and skill to top_stats dictionary
 
@@ -2041,8 +2047,6 @@ def get_stat_by_target_and_skill(fight_num: int, player: dict, stat_category: st
 		if target[0]:
 			for skill in target[0]:
 				skill_id = skill['id']
-				if skill_id in siege_skills:
-					continue
 
 				if skill_id not in top_stats['player'][name_prof][stat_category]:
 					top_stats['player'][name_prof][stat_category][skill_id] = {}
@@ -2052,7 +2056,7 @@ def get_stat_by_target_and_skill(fight_num: int, player: dict, stat_category: st
 					top_stats['overall'][stat_category][skill_id] = {}
 					
 				for stat, value in skill.items():
-					if stat == 'max':
+					if stat == 'max' and dbuser is not True and skill_id not in siege_skills:
 						update_high_score(f"statTarget_{stat}", "{{"+player["profession"]+"}}"+player["name"]+"-"+get_player_account(player)+"-"+str(fight_num)+"-"+str(index)+" | "+str(skill_id), value)
 						if value > top_stats['player'][name_prof][stat_category][skill_id].get(stat, 0):
 							top_stats['player'][name_prof][stat_category][skill_id][stat] = value
@@ -2113,7 +2117,7 @@ def get_stat_by_target(fight_num: int, player: dict, stat_category: str, name_pr
 		)
 
 
-def get_stat_by_skill(fight_num: int, player: dict, stat_category: str, name_prof: str) -> None:
+def get_stat_by_skill(fight_num: int, player: dict, stat_category: str, name_prof: str, dbuser) -> None:
 	"""
 	Add player stats by skill to top_stats dictionary.
 
@@ -2152,11 +2156,11 @@ def get_stat_by_skill(fight_num: int, player: dict, stat_category: str, name_pro
 				continue
 
 			# Update high score tracking
-			if stat == "max" and skill_id not in siege_skills:
+			if stat == "max" and int(skill_id) not in siege_skills and dbuser is not True:
 				update_high_score(
 					f"{stat_category}_{stat}",
 					f"{{{{{player['profession']}}}}}{player['name']}-{get_player_account(player)}-{fight_num} | {skill_id}",
-					value,
+					value
 				)
 
 			if stat == "max":
@@ -2562,7 +2566,7 @@ def _accumulate_heal_or_barrier(
 
 	if stat_category not in player:
 		return 0.0
-
+	dbuser = check_dragon_banner(player["rotation"])
 	healer_name = player['name']
 	healer_group = player['group']
 	player_stats = top_stats['player'][name_prof][stat_category]
@@ -3756,20 +3760,18 @@ def parse_file(file_path, fight_num, guild_data, fight_data_charts, blacklist):
 
 		# store last party the player was a member
 		top_stats['player'][name_prof]['last_party'] = group
-		if "rotation" in player:
-			db_user = check_dragon_banner(player["rotation"])
-		else:
-			db_user = False
-			
-		if not db_user:
-			get_fight_data(player, fight_num, fight_data)
 
+		db_user = check_dragon_banner(player.get("rotation", []))
+
+		get_fight_data(player, fight_num, fight_data)
+		
+		if db_user is not True:
 			check_burst1S_high_score(fight_data, player, fight_num)
 
 		get_firebrand_pages(player, name_prof, name, account,fight_duration_ms)
-		if not db_user:
-			get_player_fight_dps(player["dpsTargets"], name, profession, account, fight_num, (fight_duration_ms/1000))
-			get_player_stats_targets(player["statsTargets"], name, profession, account, fight_num, (fight_duration_ms/1000))
+
+		get_player_fight_dps(player["dpsTargets"], name, profession, account, fight_num, (fight_duration_ms/1000), db_user)
+		get_player_stats_targets(player["statsTargets"], name, profession, account, fight_num, (fight_duration_ms/1000), db_user)
 
 		get_minions_by_player(player, name, profession)
 
@@ -3809,14 +3811,13 @@ def parse_file(file_path, fight_num, guild_data, fight_data_charts, blacklist):
 			
 			# format: player[stat_category][0][stat]
 			if stat_cat in ['defenses', 'support', 'statsAll']:
-				if not db_user:
-					get_stat_by_key(fight_num, player, stat_cat, name_prof)
+				get_stat_by_key(fight_num, player, stat_cat, name_prof, db_user)
 				if stat_cat in ['defenses']:
 					get_defense_hits_and_glances(fight_num, player, stat_cat, name_prof)
 
 			# format: player[stat_cat][target][0][skill][stat]
 			if stat_cat in ['targetDamageDist']:
-				get_stat_by_target_and_skill(fight_num, player, stat_cat, name_prof)
+				get_stat_by_target_and_skill(fight_num, player, stat_cat, name_prof, db_user)
 
 			# format: player[stat_cat][target[0][stat:value]
 			if stat_cat in ['dpsTargets', 'statsTargets']:
@@ -3824,7 +3825,7 @@ def parse_file(file_path, fight_num, guild_data, fight_data_charts, blacklist):
 
 			# format: player[stat_cat][0][skill][stat:value]
 			if stat_cat in ['totalDamageTaken']:
-				get_stat_by_skill(fight_num, player, stat_cat, name_prof)
+				get_stat_by_skill(fight_num, player, stat_cat, name_prof, db_user)
 
 			# format: player[stat_cat][buff][buffData][0][stat:value]
 			if stat_cat in ['buffUptimes', 'buffUptimesActive']:
