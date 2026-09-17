@@ -62,7 +62,8 @@ team_colors = {
     886: "Red",
     887: "Red",
     2520: "Red",
-    2543: "Red",    
+    2543: "Red",
+    2552: 'Red' ,
     2739: "Green",
     2741: "Green",
     2752: "Green",
@@ -72,6 +73,7 @@ team_colors = {
     433: "Blue",
     1277: "Blue",
     1282: "Blue",
+    1283: 'Blue'
 }
 
 
