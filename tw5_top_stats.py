@@ -475,7 +475,7 @@ if __name__ == '__main__':
 		build_commander_summary_menu(commander_summary_data, tid_date_time, tid_list)
 
 	make_media_card_css(tid_list)
-	make_fight_reviews(top_stats, fight_data, skill_data, buff_data, tid_date_time, tid_list)
+	make_fight_reviews(top_stats, fight_data, skill_data, buff_data, fight_data_charts, tid_date_time, tid_list)
 	build_Fight_Review_menu_tabs(tid_date_time, tid_list)
 
 	if write_all_data_to_json:

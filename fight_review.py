@@ -518,8 +518,7 @@ def summarize_fight_damage(data: dict, stat: str, top_n: int = 10) -> dict:
     }
 
 
-def build_fight_cards(data: dict, fight_num: int, tid_date_time: str,
-                      tid_list: list) -> str:
+def build_fight_cards(data: dict, fight_num: int, fight_data_charts: bool, tid_date_time: str, tid_list: list) -> str:
     rows: list[str] = []
 
     fight_name = data["fight_name"]
@@ -682,8 +681,10 @@ def build_fight_cards(data: dict, fight_num: int, tid_date_time: str,
     rows.append('</$reveal>\n')
 
     rows.append('<$reveal type="match" state="$:/state/FR" text="Combat">\n')
-
-    rows.append(f'{{{{{tid_date_time}_Fight_{fight_num:02}_Damage_Output_Review}}}}')
+    if fight_data_charts:
+        rows.append(f'{{{{{tid_date_time}_Fight_{fight_num:02}_Damage_Output_Review}}}}')
+    else:
+        rows.append("! Set `fight_data_charts = true` in top_stats_config.ini to display combat timeline chart")
 
     rows.append("\n---\n")
     rows.append('\n</$reveal>')
@@ -691,7 +692,7 @@ def build_fight_cards(data: dict, fight_num: int, tid_date_time: str,
     return "\n".join(rows)
 
 
-def make_fight_reviews(top_stats: dict, fight_data, skill_map, buff_map, tid_date_time: str,
+def make_fight_reviews(top_stats: dict, fight_data, skill_map, buff_map, fight_data_charts, tid_date_time: str,
                        tid_list: list) -> None:
     """Build fight-review TIDs and append them to *tid_list*."""
 
@@ -700,7 +701,7 @@ def make_fight_reviews(top_stats: dict, fight_data, skill_map, buff_map, tid_dat
         rows: list[str] = []
 
         # Overview card
-        rows.append(build_fight_cards(data, fight_num, tid_date_time, tid_list))
+        rows.append(build_fight_cards(data, fight_num, fight_data_charts, tid_date_time, tid_list))
 
         # --- Profession breakdowns ---
         rows.append('<$reveal type="match" state="$:/state/FR" text="Professions">\n')        
