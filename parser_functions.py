@@ -283,26 +283,11 @@ def get_fight_data(
 
 	#Outgoing damage per second
 	for target in player.get("targetDamage1S", []):
-		damage_series = target[0]
-
-		prior_damage = 0
-
-		for sec_index, cur_total_damage in enumerate(
-			damage_series
-		):
-			delta_damage = (
-				cur_total_damage - prior_damage
-			)
-
-			current_fight["damage1S"][
-				sec_index
-			] += delta_damage
-
-			player_data["damage1S"][
-				sec_index
-			] += delta_damage
-
-			prior_damage = cur_total_damage
+		add_damage_series(
+			target[0],
+			current_fight["damage1S"],
+			player_data["damage1S"]
+		)
 
 
 	#Support/Utility
