@@ -430,12 +430,160 @@ media_card_css = """.page-header{
     background:#30353c;
 }
 
+/* TAG SUMMARY */
+
+.tag-summary-list{
+    display:grid;
+    grid-template-columns:repeat(4, minmax(0, 1fr));
+    gap:12px;
+}
+
+
+/* Tag card */
+
+.tag-summary-card{
+    background:#2b2f35;
+    border:1.5px solid #454b54;
+    border-radius:12px;
+
+    padding:10px 12px;
+
+    min-width:0;
+
+    transition:box-shadow .2s, transform .2s;
+}
+
+.tag-summary-card:hover{
+    box-shadow:0 6px 20px rgba(0,0,0,.07);
+    transform:translateY(-1px);
+}
+
+
+/* Header */
+
+.tag-summary-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+    gap:5px;
+    margin-bottom:8px;
+
+    min-width:0;
+}
+
+.tag-summary-name{
+    display:flex;
+    align-items:center;
+    gap:6px;
+
+    min-width:0;
+
+    font-size:12px;
+    font-weight:800;
+    color:#f1f5f9;
+}
+
+.tag-summary-name > span{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.tag-summary-account{
+    flex:0 0 auto;
+
+    max-width:45%;
+
+    font-size:9px;
+    font-weight:600;
+    color:#64748b;
+
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+
+/* Metrics */
+
+.tag-summary-metrics{
+    display:grid;
+
+    grid-template-columns:repeat(4, minmax(0, 1fr));
+
+    gap:2px;
+}
+
+.tag-summary-metric{
+    background:#24282e;
+    border:1px solid #3a3f47;
+    border-radius:6px;
+
+    padding:2px 3px;
+
+    min-width:0;
+}
+
+.tag-summary-label{
+    margin-bottom:2px;
+
+    font-size:8px;
+    font-weight:700;
+    color:#64748b;
+
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.tag-summary-value{
+    font-size:13px;
+    font-weight:800;
+    color:#f1f5f9;
+
+    /*line-height:1.1;
+
+    white-space:nowrap;
+}
+
+
+/* Totals */
+
+.tag-summary-total{
+    grid-column:1 / -1;
+}
+
+
+/* Version notice */
+
+.tag-version-notice{
+    margin-bottom:12px;
+
+    padding:3px 5px;
+
+    background:#24282e;
+    border:1px solid #454b54;
+    border-radius:7px;
+
+    color:#aeb6c2;
+    font-size:10px;
+}
+
 
 /* Responsive layout */
 
 @media (max-width:900px){
 
     .composition-columns{
+        grid-template-columns:1fr;
+    }
+
+}
+
+@media (max-width:700px){
+
+    .tag-summary-list{
         grid-template-columns:1fr;
     }
 
@@ -453,12 +601,21 @@ media_card_css = """.page-header{
 
 }
 
+@media (max-width:500px){
+
+    .tag-summary-metrics{
+        grid-template-columns:repeat(2, minmax(0, 1fr));
+    }
+
+}
+
+
 @media (max-width:400px){
 
     .enemy-professions{
         grid-template-columns:1fr;
     }
-
+    
 }"""
 
 

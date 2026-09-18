@@ -327,7 +327,7 @@ def build_tag_summary(top_stats):
 	for fight, fight_data in top_stats["fight"].items():
 		commander = fight_data["commander"]
 		if commander in top_stats["player"]:
-			cmd_account = top_stats["player"][commander]["account"],
+			cmd_account = top_stats["player"][commander]["account"]
 		else:
 			cmd_account = "No Tag"
 		if commander not in tag_summary:
@@ -354,6 +354,235 @@ def build_tag_summary(top_stats):
 		tag_summary[commander]["squad_deaths"] += fight_data.get("defenses", {}).get("deadCount", 0)
 
 	return tag_summary, tag_list
+
+
+def output_tag_summary_two(
+    LATEST_VERSION,
+    tag_summary: dict,
+    tid_date_time: str,
+    tid_list: list
+) -> None:
+    """Output a summary of command-tag statistics using the fight-review card style."""
+
+    rows = []
+
+    #Version notice
+    if LATEST_VERSION:
+        rows.append(
+            f"""
+            <div class="tag-version-notice">
+                New version available:
+                [[{LATEST_VERSION}|https://github.com/Drevarr/GW2_EI_log_combiner/releases/latest]]
+            </div>
+            """
+        )
+
+    #Section heading
+    rows.append(
+        """
+        <div class="composition-section">
+
+            <h2 class="section-title">
+                Summary by Command Tag
+            </h2>
+
+            <div class="tag-summary-list">
+        """
+    )
+
+    #Tag cards
+    for tag, tag_data in tag_summary.items():
+
+        parts = tag.split("|")
+
+        name = parts[0]
+
+        if len(parts) > 1:
+            profession = parts[1]
+            profession_icon = "{{" + profession + "}}"
+        else:
+            profession = ""
+            profession_icon = ""
+
+        account = tag_data.get("account", "No Tag")
+
+        fights = tag_data.get("num_fights", 0)
+        downs = tag_data.get("enemy_downed", 0)
+        kills = tag_data.get("enemy_killed", 0)
+        downed = tag_data.get("squad_downed", 0)
+        deaths = tag_data.get("squad_deaths", 0)
+
+        #KDR
+        kdr = (
+            kills / deaths
+            if deaths
+            else kills
+        )
+
+        #Down conversion
+        down_conversion = (
+            kills / downs * 100
+            if downs
+            else 0
+        )
+
+        #Build tag card
+        rows.append(
+            f"""
+            <div class="tag-summary-card">
+
+                <div class="tag-summary-header">
+
+                    <div class="tag-summary-name">
+                        <span>
+                            {profession_icon}
+                        </span>
+
+                        <span>
+                            {name}
+                        </span>
+                    </div>
+
+                    <div
+                        class="tag-summary-account"
+                        title="{account}"
+                    >
+                        {account}
+                    </div>
+
+                </div>
+
+                <div class="tag-summary-metrics">
+
+                    <div class="tag-summary-metric">
+                        <div class="tag-summary-label">
+                            Fights
+                        </div>
+                        <div class="tag-summary-value">
+                            {fights}
+                        </div>
+                    </div>
+
+                    <div class="tag-summary-metric">
+                        <div class="tag-summary-label">
+                            Enemy Downed
+                        </div>
+                        <div class="tag-summary-value">
+                            {downs}
+                        </div>
+                    </div>
+
+                    <div class="tag-summary-metric">
+                        <div class="tag-summary-label">
+                            Enemy Killed
+                        </div>
+                        <div class="tag-summary-value">
+                            {kills}
+                        </div>
+                    </div>
+
+                    <div class="tag-summary-metric">
+                        <div class="tag-summary-label">
+                            Down Conversion
+                        </div>
+                        <div class="tag-summary-value">
+                            {down_conversion:.1f}%
+                        </div>
+                    </div>
+
+                    <div class="tag-summary-metric">
+                        <div class="tag-summary-label">
+                            Squad Downed
+                        </div>
+                        <div class="tag-summary-value">
+                            {downed}
+                        </div>
+                    </div>
+
+                    <div class="tag-summary-metric">
+                        <div class="tag-summary-label">
+                            Squad Deaths
+                        </div>
+                        <div class="tag-summary-value">
+                            {deaths}
+                        </div>
+                    </div>
+
+                    <div class="tag-summary-metric">
+                        <div class="tag-summary-label">
+                            KDR
+                        </div>
+                        <div class="tag-summary-value">
+                            {kdr:.2f}
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+            """
+        )
+
+    #Totals
+    total_fights = sum(
+        tag_data.get("num_fights", 0)
+        for tag_data in tag_summary.values()
+    )
+
+    total_kills = sum(
+        tag_data.get("enemy_killed", 0)
+        for tag_data in tag_summary.values()
+    )
+
+    total_downs = sum(
+        tag_data.get("enemy_downed", 0)
+        for tag_data in tag_summary.values()
+    )
+
+    total_downed = sum(
+        tag_data.get("squad_downed", 0)
+        for tag_data in tag_summary.values()
+    )
+
+    total_deaths = sum(
+        tag_data.get("squad_deaths", 0)
+        for tag_data in tag_summary.values()
+    )
+
+    total_kdr = (
+        total_kills / total_deaths
+        if total_deaths
+        else total_kills
+    )
+
+    total_down_conversion = (
+        total_kills / total_downs * 100
+        if total_downs
+        else 0
+    )
+
+
+
+    #Close section
+    rows.append(
+        """
+            </div>
+        </div>
+        """
+    )
+
+    text = "\n".join(rows)
+
+    #Create Tiddler
+    append_tid_for_output(
+        create_new_tid_from_template(
+            f"{tid_date_time}-Tag_Stats",
+            "Tag Summary",
+            text
+        ),
+        tid_list
+    )
+
 
 def output_tag_summary(LATEST_VERSION, tag_summary: dict, tid_date_time) -> None:
 	"""Output a summary of the tag data in a human-readable format."""
@@ -1636,31 +1865,52 @@ def build_debuff_uptime_summary(top_stats: dict, boons: dict, buff_data: dict, c
 
 	# Build the table body
 	for player in top_stats["player"].values():
-		debuff_data = {"b70350": [0.10,'targetDamage1S'], "b70806": [0.10,'targetPowerDamage1S']}
+		debuff_data = {"b70350": [0.10, "targetDamage1S"], "b70806": [0.10, "targetPowerDamage1S"] }
+
+		has_uptime = any(
+			player["targetBuffs"].get(boon_id, {}).get("uptime_ms", 0) > 0
+			for boon_id in boons
+			if boon_id in buff_data
+		)
+
+		# Skip players with no uptime for any displayed buff.
+		if not has_uptime:
+			continue
+
 		account = player["account"]
 		name = player["name"]
 		tt_name = f'<span data-tooltip="{account}">{name}</span>'
-		row = f"| {player['last_party']} |{tt_name} |"+" {{"+f"{player['profession']}"+"}}"+f" {player['profession'][:3]} "+f"| {player['active_time'] / 1000:,.1f}|"
+
+		row = (
+			f"| {player['last_party']} "
+			f"|{tt_name} "
+			f"|{{{{{player['profession']}}}}} {player['profession'][:3]} "
+			f"| {player['active_time'] / 1000:,.1f}|"
+		)
+
 		applied_counts = 0
 		for boon_id in boons:
 			entry = ""
 			if boon_id not in buff_data:
 				continue
-
 			if boon_id not in player["targetBuffs"]:
 				uptime_percentage = " - "
 			else:
 				applied_counts += player["targetBuffs"][boon_id]["applied_counts"]
 				uptime_ms = player["targetBuffs"][boon_id]["uptime_ms"]
-				uptime_percentage = round((uptime_ms / 1000), 3)				
+				uptime_percentage = round(uptime_ms / 1000, 3)
 				uptime_percentage = f"{uptime_percentage:,.0f}"
 				if boon_id in debuff_data:
-					damage_gained = player['targetBuffs'][boon_id]['damage_gained']
-					entry = f'<span data-tooltip="Damage Gained: {damage_gained:,.0f}">{uptime_percentage}</span>'
+					damage_gained = player["targetBuffs"][boon_id]["damage_gained"]
+					entry = (
+						f'<span data-tooltip="Damage Gained: '
+						f'{damage_gained:,.0f}">{uptime_percentage}</span>'
+					)
 				else:
 					entry = uptime_percentage
 
 			row += f" {entry}|"
+
 		row += f" {applied_counts:,.0f}|"
 
 		rows.append(row)

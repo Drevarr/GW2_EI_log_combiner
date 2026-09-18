@@ -55,6 +55,28 @@ def check_for_update():
 		print(f"Latest version available: {latest}")
 		return latest
 
+def get_buff_list_by_classification(top_stats, buff_data, classification):
+    """Return buffs of a classification that have non-zero overall uptime."""
+
+    overall_uptimes = top_stats.get("overall", {}).get("buffUptimes", {})
+
+    buff_list = {
+        buff_id: data.get("name", buff_id)
+        for buff_id, data in buff_data.items()
+        if (
+            data.get("classification") == classification
+            and overall_uptimes.get(buff_id, {}).get("uptime_ms", 0) > 0
+        )
+    }
+    if classification == "Boon":
+        for buff_id, data in {'b5974': "Superspeed", 'b13017': "Stealth", 'b10269': "Hide in Shadows"}.items():
+            buff_list[buff_id]=data
+
+    return dict(
+        sorted(buff_list.items(), key=lambda item: item[1])
+    )
+
+
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(
 		description='This reads a set of arcdps reports in xml format and generates top stats.'
@@ -230,7 +252,8 @@ if __name__ == '__main__':
 	#create the main tiddler and append to tid_list
 	build_main_tid(tid_date_time, tag_list, guild_name, args.description_append)
 
-	output_tag_summary(LATEST_VERSION, tag_data, tid_date_time)
+	#output_tag_summary(LATEST_VERSION, tag_data, tid_date_time)
+	output_tag_summary_two(LATEST_VERSION, tag_data, tid_date_time, tid_list)
 
 	#create the menu tiddler and append to tid_list
 	build_menu_tid(tid_date_time, db_update)
@@ -271,116 +294,54 @@ if __name__ == '__main__':
 	if offensive_detailed:
 		build_category_summary_report(top_stats, stats_per_fight, profession_color, offensive_stats, enable_hide_columns, "Offensive", tid_date_time, tid_list, layout="detailed", sort_mode=sort_mode, chart_mode=chart_mode)
 
-	boons = config_output.boons
+
+	#get Boon uptimes on Squad Players
+	boons = get_buff_list_by_classification(top_stats, buff_data, "Boon")
 	build_uptime_summary(top_stats, boons, buff_data, "Uptimes", tid_date_time)
 	if boons_detailed:
 		build_boon_report(top_stats, boons, buff_data, tid_date_time, tid_list)
-
-	boon_categories = {"selfBuffs", "groupBuffs", "squadBuffs"}
-	for boon_category in boon_categories:
-		#build_boon_summary(top_stats, boons, boon_category, buff_data, tid_date_time)
+	for boon_category in ("selfBuffs", "groupBuffs", "squadBuffs"):
 		build_boon_report(top_stats, boons, buff_data, tid_date_time, tid_list, layout="summary", category=boon_category)
 
 	#get incoming condition uptimes on Squad Players
-	conditions = config_output.buffs_conditions
-	condition_list = {}
-	for condition in conditions:
-		if condition in top_stats["overall"]["buffUptimes"]:
-			if top_stats["overall"]["buffUptimes"][condition]["uptime_ms"] > 0:
-				condition_list[condition] = conditions[condition]
+	condition_list = get_buff_list_by_classification(top_stats, buff_data, "Condition")
 	build_uptime_summary(top_stats, condition_list, buff_data, "Conditions-In", tid_date_time)
 
 	#get outgoing debuff uptimes on Enemy Players
-	debuffs = config_output.buffs_debuff
-	debuff_list = {}
-	for debuff in debuffs:
-		if debuff in top_stats["overall"]["targetBuffs"]:
-			if top_stats["overall"]["targetBuffs"][debuff]["uptime_ms"] > 0:
-				debuff_list[debuff] = debuffs[debuff]
+	debuff_list = get_buff_list_by_classification(top_stats, buff_data, "Debuff")
 	build_debuff_uptime_summary(top_stats, debuff_list, buff_data, "Debuffs-Out", tid_date_time)
 
 	#get outgoing condition uptimes on Enemy Players
-	conditions = config_output.buffs_conditions
-	condition_list = {}
-	for condition in conditions:
-		if condition in top_stats["overall"]["targetBuffs"]:
-			if top_stats["overall"]["targetBuffs"][condition]["uptime_ms"] > 0:
-				condition_list[condition] = conditions[condition]
+	condition_list = get_buff_list_by_classification(top_stats, buff_data, "Condition")
 	build_debuff_uptime_summary(top_stats, condition_list, buff_data, "Conditions-Out", tid_date_time)
 
 	#get support buffs found and output table
-	#support_buffs = config_output.buffs_support
-	support_buffs = {}
-	for buff, data in buff_data.items():
-		if data['classification'] == 'Support':
-			support_buffs[buff] = data['name']	
-	support_buff_list = {}
-	for buff in support_buffs:
-		if buff in top_stats["overall"]["buffUptimes"]:
-			if top_stats["overall"]["buffUptimes"][buff]["uptime_ms"] > 0:
-				support_buff_list[buff] = support_buffs[buff]
-	support_buff_list = dict(sorted(support_buff_list.items(), key=lambda item: item[1]))
+	support_buff_list = get_buff_list_by_classification(top_stats, buff_data, "Support")
 	build_uptime_summary(top_stats, support_buff_list, buff_data, "Support Uptimes", tid_date_time)
-	boon_categories = {"selfBuffs", "groupBuffs", "squadBuffs"}
-	for boon_category in boon_categories:
+	for boon_category in ("selfBuffs", "groupBuffs", "squadBuffs"):
 		build_boon_summary(top_stats, support_buff_list, boon_category, buff_data, tid_date_time, boon_type="Support")
 
-
 	#get defensive buffs found and output table
-	#defensive_buffs = config_output.buffs_defensive
-	defensive_buffs = {}
-	for buff, data in buff_data.items():
-		if data['classification'] == 'Defensive':
-			defensive_buffs[buff] = data['name']
-
-	defensive_buff_list = {}
-	for buff in defensive_buffs:
-		if buff in top_stats["overall"]["buffUptimes"]:
-			if top_stats["overall"]["buffUptimes"][buff]["uptime_ms"] > 0:
-				defensive_buff_list[buff] = defensive_buffs[buff]
-	defensive_buff_list = dict(sorted(defensive_buff_list.items(), key=lambda item: item[1]))
+	defensive_buff_list = get_buff_list_by_classification(top_stats, buff_data, "Defensive")
 	build_uptime_summary(top_stats, defensive_buff_list, buff_data, "Defensive Uptimes", tid_date_time)
-	boon_categories = {"selfBuffs", "groupBuffs", "squadBuffs"}
-	for boon_category in boon_categories:
+	for boon_category in ("selfBuffs", "groupBuffs", "squadBuffs"):
 		build_boon_summary(top_stats, defensive_buff_list, boon_category, buff_data, tid_date_time, boon_type="Defensive")
 
 	#get offensive buffs found and output table
-	#offensive_buffs = config_output.buffs_offensive
-	offensive_buffs = {}
-	for buff, data in buff_data.items():
-		if data['classification'] == 'Offensive':
-			offensive_buffs[buff] = data['name']	
-	
-	offensive_buff_list = {}
-	for buff in offensive_buffs:
-		if buff in top_stats["overall"]["buffUptimes"]:
-			if top_stats["overall"]["buffUptimes"][buff]["uptime_ms"] > 0:
-				offensive_buff_list[buff] = offensive_buffs[buff]
-	offensive_buff_list = dict(sorted(offensive_buff_list.items(), key=lambda item: item[1]))
+	offensive_buff_list = get_buff_list_by_classification(top_stats, buff_data, "Offensive")
 	build_uptime_summary(top_stats, offensive_buff_list, buff_data, "Offensive Uptimes", tid_date_time)
-	boon_categories = {"selfBuffs", "groupBuffs", "squadBuffs"}
-	for boon_category in boon_categories:
+	for boon_category in ("selfBuffs", "groupBuffs", "squadBuffs"):
 		build_boon_summary(top_stats, offensive_buff_list, boon_category, buff_data, tid_date_time, boon_type="Offensive")
 
-
-	#get offensive debuffs found and output table
-	debuffs_buffs = config_output.buffs_debuff
-	debuff_list = {}
-	for buff in debuffs_buffs:
-		if buff in top_stats["overall"]["buffUptimes"]:
-			if top_stats["overall"]["buffUptimes"][buff]["uptime_ms"] > 0:
-				debuff_list[buff] = debuffs_buffs[buff]
+	#get debuffs found and output table
+	debuff_list = get_buff_list_by_classification(top_stats, buff_data, "Debuff")
 	build_uptime_summary(top_stats, debuff_list, buff_data, "Debuffs-In", tid_date_time)
 
-	#get squad comp and output table
-	#build_squad_composition(top_stats, tid_date_time, tid_list)
-	#build_squad_compositions_by_fight(top_stats, tid_date_time, tid_list)
-	
 	#get heal stats found and output table
 	build_healing_summary(top_stats, "Heal Stats", tid_date_time)
-	#tid_title = f"{tid_date_time}-{stat_category}-{stat_name}-boxplot"
 	render_boxplot_echart(stats_per_fight, "extBarrierStats", "squad_barrier", profession_color, tid_date_time, tid_list)
 	render_boxplot_echart(stats_per_fight, "extHealingStats", "squad_healing", profession_color, tid_date_time, tid_list)
+
 	#get personal buffs found and output table
 	build_personal_buff_summary(top_stats, buff_data, personal_buff_data, "Personal Buffs", tid_date_time)
 
@@ -393,7 +354,6 @@ if __name__ == '__main__':
 	build_skill_usage_stats_tid(top_stats["skill_casts_by_role"], "Skill Usage", tid_date_time)
 
 	#get overview stats found and output table
-	#overview_stats = config_output.overview_stats
 	build_fight_summary(top_stats, fight_data_charts, "Overview", tid_date_time)
 
 	#get combat resurrection stats found and output table
