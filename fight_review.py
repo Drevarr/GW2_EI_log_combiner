@@ -254,7 +254,443 @@ media_card_css = """.page-header{
     color:#64748b;
     text-align:right
 }
+
+/* FIGHT REVIEW - COMPOSITION LAYOUT */
+.composition-section{
+    margin-top:24px;
+}
+.composition-columns{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:14px;
+    align-items:stretch;
+}
+
+/* Composition cards */
+.composition-card{
+    background:#2b2f35;
+    border:1.5px solid #454b54;
+    border-radius:12px;
+    padding:14px;
+    min-width:0;
+}
+
+.composition-title{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+
+    margin:0 0 12px;
+
+    font-size:13px;
+    font-weight:700;
+    color:#f1f5f9;
+}
+
+.composition-subtitle{
+    font-size:11px;
+    font-weight:600;
+    color:#64748b;
+}
+
+
+/* Squad composition */
+.squad-composition{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));
+    gap:6px 10px;
+}
+.squad-group{
+    min-width:0;
+    padding:7px 8px;
+    background:#24282e;
+    border:1px solid #3a3f47;
+    border-radius:7px;
+}
+
+.squad-group-title{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    margin-bottom:5px;
+    font-size:11px;
+    font-weight:700;
+    color:#aeb6c2;
+}
+
+.squad-group-count{
+    color:#f1f5f9;
+    font-weight:800;
+}
+
+.squad-players{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+}
+
+.squad-player{
+    display:flex;
+    align-items:center;
+    gap:5px;
+    min-width:0;
+    font-size:10px;
+    color:#94a3b8;
+}
+
+
+/* Enemy composition */
+.enemy-compositions{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+.enemy-team{
+    background:#24282e;
+    border:1px solid #3a3f47;
+    border-radius:8px;
+    padding:10px;
+}
+
+.enemy-team-title{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+
+    margin-bottom:8px;
+
+    font-size:11px;
+    font-weight:700;
+    color:#f1f5f9;
+}
+
+.enemy-team-count{
+    color:#94a3b8;
+    font-size:10px;
+    font-weight:600;
+}
+
+
+/* CSS controls the number of profession columns */
+.enemy-professions{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(120px, 1fr));
+    gap:5px 10px;
+}
+
+.enemy-profession{
+    display:flex;
+    align-items:center;
+    gap:5px;
+
+    min-width:0;
+    padding:4px 2px;
+
+    font-size:10px;
+    color:#aeb6c2;
+}
+
+.enemy-profession-icon{
+    flex:0 0 auto;
+    display:inline-flex;
+    align-items:center;
+}
+
+.enemy-profession-name{
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.enemy-profession-count{
+    margin-left:auto;
+    color:#f1f5f9;
+    font-weight:700;
+    white-space:nowrap;
+}
+
+
+/* Hover states  */
+.composition-card{
+    transition:box-shadow .2s, transform .2s;
+}
+
+.composition-card:hover{
+    box-shadow:0 6px 20px rgba(0,0,0,.07);
+    transform:translateY(-2px);
+}
+
+.squad-group:hover,
+.enemy-team:hover{
+    background:#30353c;
+}
+
+
+/* Responsive layout */
+
+@media (max-width:900px){
+
+    .composition-columns{
+        grid-template-columns:1fr;
+    }
+
+}
+
+@media (max-width:600px){
+
+    .enemy-professions{
+        grid-template-columns:repeat(2, minmax(0, 1fr));
+    }
+
+    .squad-composition{
+        grid-template-columns:1fr;
+    }
+
+}
+
+@media (max-width:400px){
+
+    .enemy-professions{
+        grid-template-columns:1fr;
+    }
+
 }"""
+
+
+def make_squad_composition_card(composition, squad_count):
+    """
+    Build the squad composition card.
+
+    composition format:
+
+        {
+            group: [
+                "Profession|Character Name",
+                "Profession|Character Name",
+                ...
+            ]
+        }
+    """
+
+    groups = []
+
+    for group, players in composition.items():
+
+        player_items = []
+
+        for player in players:
+
+            profession, name = player.split("|", 1)
+
+            profession_icon = "{{" + profession + "}}"
+
+            player_items.append(
+                f"""
+                <div class="squad-player">
+                    <span>{profession_icon}</span>
+                    <span>{name}</span>
+                </div>
+                """
+            )
+
+        groups.append(
+            f"""
+            <div class="squad-group">
+
+                <div class="squad-group-title">
+                    <span>Group {group}</span>
+                    <span class="squad-group-count">
+                        {len(players)}
+                    </span>
+                </div>
+
+                <div class="squad-players">
+                    {''.join(player_items)}
+                </div>
+
+            </div>
+            """
+        )
+
+    return f"""
+    <div class="composition-card">
+
+        <h3 class="composition-title">
+
+            <span>Squad Composition</span>
+
+            <span class="composition-subtitle">
+                {squad_count} players
+            </span>
+
+        </h3>
+
+        <div class="squad-composition">
+            {''.join(groups)}
+        </div>
+
+    </div>
+    """
+
+
+def make_enemy_composition_card(team, composition):
+    """
+    Build an enemy team composition card.
+
+    composition format:
+
+        {
+            "Warrior": 4,
+            "Guardian": 3,
+            "Mesmer": 5,
+            ...
+        }
+    """
+
+    sorted_profs = sorted(
+        composition.items(),
+        key=lambda item: item[1],
+        reverse=True
+    )
+
+    total_players = sum(
+        count for _, count in sorted_profs
+    )
+
+    profession_items = []
+
+    for profession, count in sorted_profs:
+
+        profession_icon = "{{" + profession + "}}"
+
+        profession_items.append(
+            f"""
+            <div class="enemy-profession"
+                 title="{profession}: {count}">
+
+                <span class="enemy-profession-icon">
+                    {profession_icon}
+                </span>
+
+                <span class="enemy-profession-name">
+                    {profession}
+                </span>
+
+                <span class="enemy-profession-count">
+                    {count}
+                </span>
+
+            </div>
+            """
+        )
+
+    return f"""
+    <div class="enemy-team">
+
+        <div class="enemy-team-title">
+
+            <span>
+                {team}
+            </span>
+
+            <span class="enemy-team-count">
+                {total_players} players
+            </span>
+
+        </div>
+
+        <div class="enemy-professions">
+            {''.join(profession_items)}
+        </div>
+
+    </div>
+    """
+
+
+def build_squad_composition_for_fight(
+    top_stats: dict,
+    fight_num: int
+) -> str:
+    """
+    Build the squad/enemy composition section for a single fight.
+    Returns the generated TiddlyWiki/HTML text.
+    """
+    squad_count = top_stats["fight"][fight_num].get("squad_count", 0)
+    squad_composition = top_stats["parties_by_fight"].get(fight_num, {})
+    enemy_compositions = top_stats["enemies_by_fight"].get(fight_num, {})
+
+    rows = []
+    rows.append('\n<$reveal type="match" state="$:/state/FR" text="Composition">\n')
+    rows.append(
+        f"""
+        <div class="composition-section">
+
+            <h2 class="section-title">
+                Fight {fight_num} - Composition
+            </h2>
+
+            <div class="composition-columns">
+        """
+    )
+
+    # Squad
+    rows.append(
+        make_squad_composition_card(
+            squad_composition, squad_count
+        )
+    )
+
+    # Enemy container
+    rows.append(
+        """
+        <div class="composition-card">
+
+            <h3 class="composition-title">
+                Enemy Composition
+            </h3>
+
+            <div class="enemy-compositions">
+        """
+    )
+
+    # Each enemy team gets its own inner container
+    for team, composition in enemy_compositions.items():
+
+        rows.append(
+            make_enemy_composition_card(
+                team,
+                composition
+            )
+        )
+
+    rows.append(
+        """
+            </div>
+        </div>
+        """
+    )
+
+    rows.append(
+        """
+            </div>
+        </div>
+        """
+    )
+    rows.append(
+        """
+
+        </$reveal>
+
+        """
+    )
+
+    return "\n".join(rows)
+
 
 def make_media_card_css(tid_list):
     tid_text = media_card_css
@@ -578,7 +1014,8 @@ def build_fight_cards(data: dict, fight_num: int, fight_data_charts: bool, tid_d
     rows.append('    <$button class="fight-nav-btn" selectedClass="fight-nav-btn.active" set="$:/state/FR" setTo="Combat">Timeline</$button>')
     rows.append('    <$button class="fight-nav-btn" selectedClass="fight-nav-btn.active"  set="$:/state/FR" setTo="Professions">Professions</$button>')
     rows.append('    <$button class="fight-nav-btn" selectedClass="fight-nav-btn.active"  set="$:/state/FR" setTo="Skills">Skills</$button>')
-    rows.append('    <$button class="fight-nav-btn" selectedClass="fight-nav-btn.active"  set="$:/state/FR" setTo="Players">Players</$button>')    
+    rows.append('    <$button class="fight-nav-btn" selectedClass="fight-nav-btn.active"  set="$:/state/FR" setTo="Players">Players</$button>')
+    rows.append('    <$button class="fight-nav-btn" selectedClass="fight-nav-btn.active"  set="$:/state/FR" setTo="Composition">Squad/Enemy Comp</$button>')    
     rows.append('</div>')
 
     rows.append('<$reveal type="match" state="$:/state/FR" text="Outcome" default="Outcome">\n')
@@ -700,10 +1137,13 @@ def make_fight_reviews(top_stats: dict, fight_data, skill_map, buff_map, fight_d
         f_data = fight_data[fight_num]
         rows: list[str] = []
 
-        # Overview card
+        #Overview card
         rows.append(build_fight_cards(data, fight_num, fight_data_charts, tid_date_time, tid_list))
 
-        # --- Profession breakdowns ---
+        #Squad/Team Composition
+        rows.append(build_squad_composition_for_fight(top_stats, fight_num))
+
+        #Profession breakdowns
         rows.append('<$reveal type="match" state="$:/state/FR" text="Professions">\n')        
         rows.append('<div class="breakdown-row">')
 
@@ -724,7 +1164,7 @@ def make_fight_reviews(top_stats: dict, fight_data, skill_map, buff_map, fight_d
         rows.append('<$reveal type="match" state="$:/state/FR" text="Skills">\n')        
         rows.append('<div class="breakdown-row">')
 
-        # --- Skill breakdowns ---
+        #Skill breakdowns
         for label, source_key, stat_key in [
             ("Squad Down Contribution by Skill - Top 10", "targetDamageDist", "downContribution"),
             ("Enemy Down Contribution by Skill - Top 10", "enemy_skills", "downContribution"),
@@ -739,7 +1179,7 @@ def make_fight_reviews(top_stats: dict, fight_data, skill_map, buff_map, fight_d
         rows.append("</div>")
         rows.append("</$reveal>\n")
 
-        rows.append("")
+        rows.append("---")
         rows.append('<$reveal type="match" state="$:/state/FR" text="Players">\n')        
         rows.append('<div class="breakdown-row">')        
         # --- Player breakdowns ---
