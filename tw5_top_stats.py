@@ -373,7 +373,7 @@ if __name__ == '__main__':
 	build_uptime_summary(top_stats, debuff_list, buff_data, "Debuffs-In", tid_date_time)
 
 	#get squad comp and output table
-	build_squad_composition(top_stats, tid_date_time, tid_list)
+	#build_squad_composition(top_stats, tid_date_time, tid_list)
 	#build_squad_compositions_by_fight(top_stats, tid_date_time, tid_list)
 	
 	#get heal stats found and output table

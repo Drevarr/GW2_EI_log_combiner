@@ -2053,7 +2053,7 @@ def get_stat_by_target_and_skill(fight_num: int, player: dict, stat_category: st
 					top_stats['overall'][stat_category][skill_id] = {}
 					
 				for stat, value in skill.items():
-					if stat == 'max' and dbuser is not True and skill_id not in siege_skills:
+					if stat == 'max' and dbuser is not True and int(skill_id) not in siege_skills:
 						update_high_score(f"statTarget_{stat}", "{{"+player["profession"]+"}}"+player["name"]+"-"+get_player_account(player)+"-"+str(fight_num)+"-"+str(index)+" | "+str(skill_id), value)
 						if value > top_stats['player'][name_prof][stat_category][skill_id].get(stat, 0):
 							top_stats['player'][name_prof][stat_category][skill_id][stat] = value

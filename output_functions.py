@@ -2241,7 +2241,7 @@ def build_menu_tid(datetime: str, db_update: bool) -> None:
 		f'<<tabs "[[{datetime}-Overview]] [[{datetime}-Fight-Reviews]] [[{datetime}-General-Stats]] [[{datetime}-Buffs]] '
 		f'[[{datetime}-Damage-Modifiers]] [[{datetime}-Mechanics]] [[{datetime}-Skill-Usage]] '
 		f'[[{datetime}-Minions]] [[{datetime}-High-Scores]] [[{datetime}-Top-Damage-By-Skill]] '
-		f'[[{datetime}-Player-Damage-By-Skill]] [[{datetime}-Player-Damage-Taken-By-Skill]] [[{datetime}-Squad-Composition]] [[{datetime}-On-Tag-Review]] '
+		f'[[{datetime}-Player-Damage-By-Skill]] [[{datetime}-Player-Damage-Taken-By-Skill]] [[{datetime}-On-Tag-Review]] '
 		f'[[{datetime}-DPS-Stats]] [[{datetime}-Defense-Damage-Mitigation]] [[{datetime}-Attendance]] '
 		f'[[{datetime}-commander-summary-menu]] [[{datetime}-Dashboard]] [[{datetime}-Leaderboard]] [[{datetime}-high_scores_Leaderboard]]" '
 		f'"{datetime}-Overview" "$:/temp/menutab1">>'			
@@ -2251,7 +2251,7 @@ def build_menu_tid(datetime: str, db_update: bool) -> None:
 			f'<<tabs "[[{datetime}-Overview]] [[{datetime}-Fight-Reviews]] [[{datetime}-General-Stats]] [[{datetime}-Buffs]] '
 			f'[[{datetime}-Damage-Modifiers]] [[{datetime}-Mechanics]] [[{datetime}-Skill-Usage]] '
 			f'[[{datetime}-Minions]] [[{datetime}-High-Scores]] [[{datetime}-Top-Damage-By-Skill]] '
-			f'[[{datetime}-Player-Damage-By-Skill]] [[{datetime}-Player-Damage-Taken-By-Skill]] [[{datetime}-Squad-Composition]] [[{datetime}-On-Tag-Review]] '
+			f'[[{datetime}-Player-Damage-By-Skill]] [[{datetime}-Player-Damage-Taken-By-Skill]] [[{datetime}-On-Tag-Review]] '
 			f'[[{datetime}-DPS-Stats]] [[{datetime}-Defense-Damage-Mitigation]] [[{datetime}-Attendance]] '
 			f'[[{datetime}-commander-summary-menu]] [[{datetime}-Dashboard]]" '
 			f'"{datetime}-Overview" "$:/temp/menutab1">>'
@@ -3425,168 +3425,6 @@ def build_player_skill_tids(
             tid_list,
         )
 
-def build_squad_composition(top_stats: dict, tid_date_time: str, tid_list: list) -> None:
-	"""
-	Build a table of the squad composition for each fight.
-
-	This function will build a table of the squad composition for each fight. It
-	will also add the table to the tid_list for output.
-
-	Args:
-		top_stats (dict): The top_stats dictionary containing the overall stats.
-		tid_date_time (str): A string representing the timestamp or unique identifier
-			for the TID.
-		tid_list (list): A list of TIDs to which the generated TID should be appended.
-	"""
-	rows = []
-
-	# Add the select component to the table
-	rows.append('<div class="flex-row">')
-	rows.append('<div class="flex-col">')
-	rows.append("\n\n|thead-dark table-caption-top table-hover table-center|k")
-	rows.append("| Squad Composition |h")
-	rows.append('</div>')
-	rows.append('<div class="flex-col">')
-	rows.append("\n\n|thead-dark table-caption-top table-hover table-center|k")
-	rows.append("| Enemy Composition |h")
-	rows.append('</div>\n\n</div>\n')
-
-	for fight in top_stats['parties_by_fight']:
-		# Add the table header for the fight
-		rows.append('<div class="flex-row">\n\n')
-		rows.append('<div class="flex-col">\n\n')
-		header = "\n\n|thead-dark table-caption-top table-hover sortable table-center|k\n"
-		header += f"|Fight - {fight} |c"
-		rows.append(header)			
-		for group in top_stats['parties_by_fight'][fight]:
-			# Add the table rows for the group
-			row = f"|{group:02} |"
-			for player in top_stats['parties_by_fight'][fight][group]:
-				profession, name = player.split("|")
-				profession = "{{"+profession+"}}"
-				tooltip = f" {name} "
-				detailEntry = f'<div class="xtooltip"> {profession} <span class="xtooltiptext" style="padding_left: 5px;">'+name+'</span></div>'
-				row += f" {detailEntry} |"
-			rows.append(row)			
-		rows.append("</div>\n\n")
-
-		rows.append('<div class="flex-col">\n\n')
-		for team in top_stats["enemies_by_fight"][fight]:
-			header = "\n\n|thead-dark table-caption-top table-hover sortable table-center|k\n"
-			header += f"|Fight - {fight} : {team} Composition |c"
-			rows.append(header)
-			sorted_profs = dict(sorted(top_stats['enemies_by_fight'][fight][team].items(), key=lambda x: x[1], reverse=True))
-			row_length = 4
-
-			cells = []
-
-			for key, value in sorted_profs.items():
-				cells.append(f"{{{{{key}}}}} : {value}")
-            
-			for i in range(0, len(cells), row_length):
-				row = "|" + "|".join(cells[i:i + row_length]) + "|"
-				rows.append(row)
-
-		rows.append("</div>\n\n")
-
-		rows.append("</div>\n\n\n")
-		rows.append("---\n\n\n")
-	text = "\n".join(rows)
-
-	tid_title = f"{tid_date_time}-Squad-Composition"
-	tid_caption = "Squad Composition"
-	tid_tags = tid_date_time
-
-	append_tid_for_output(
-		create_new_tid_from_template(tid_title, tid_caption, text, tid_tags),
-		tid_list
-	)
-
-def build_squad_compositions_by_fight(top_stats: dict, tid_date_time: str, tid_list: list) -> None:
-	"""
-	Build a tid of the squad composition for each fight.
-
-	This function will build a table of the squad composition for each fight. It
-	will also add the table to the tid_list for output.
-
-	Args:
-		top_stats (dict): The top_stats dictionary containing the overall stats.
-		tid_date_time (str): A string representing the timestamp or unique identifier
-			for the TID.
-		tid_list (list): A list of TIDs to which the generated TID should be appended.
-	"""
-			
-	
-	rows = []
-
-	# Add the select component to the table
-	rows.append('<div class="flex-row">')
-	rows.append('<div class="flex-col">')
-	rows.append("\n\n|thead-dark table-caption-top table-hover table-center|k")
-	rows.append("| Squad Composition |h")
-	rows.append('</div>')
-	rows.append('<div class="flex-col">')
-	rows.append("\n\n|thead-dark table-caption-top table-hover table-center|k")
-	rows.append("| Enemy Composition |h")
-	rows.append('</div>\n\n</div>\n')
-
-	for fight in top_stats['parties_by_fight']:
-		# Add the table header for the fight
-		rows.append('<div class="flex-row">\n\n')
-		rows.append('<div class="flex-col">\n\n')
-		header = "\n\n|thead-dark table-caption-top table-hover sortable table-center|k\n"
-		header += f"|Fight - {fight} |c"
-		rows.append(header)			
-		for group in top_stats['parties_by_fight'][fight]:
-			# Add the table rows for the group
-			row = f"|{group:02} |"
-			for player in top_stats['parties_by_fight'][fight][group]:
-				profession, name = player.split("|")
-				profession = "{{"+profession+"}}"
-				tooltip = f" {name} "
-				detailEntry = f'<div class="xtooltip"> {profession} <span class="xtooltiptext" style="padding_left: 5px;">'+name+'</span></div>'
-				row += f" {detailEntry} |"
-			rows.append(row)			
-		rows.append("</div>\n\n")
-
-		rows.append('<div class="flex-col">\n\n')
-		for team in top_stats["enemies_by_fight"][fight]:
-			#rows.append('<div class="flex-col">\n\n')
-			header = "\n\n|thead-dark table-caption-top table-hover sortable table-center|k\n"
-			header += f"|Fight - {fight} : {team} Composition |c"
-			rows.append(header)
-			sorted_profs = dict(sorted(top_stats['enemies_by_fight'][fight][team].items(), key=lambda x: x[1], reverse=True))
-			#len_profs = len(top_stats['enemies_by_fight'][fight])
-			#table_size = len(top_stats['parties_by_fight'][fight])
-			row_length = 5
-
-			count = 0
-			row = ""
-
-			#for key, value in top_stats['enemies_by_fight'][fight].items():
-			for key, value in sorted_profs.items():
-				row += "|{{"+key+"}} : "+str(value)
-				count += 1
-				if count % row_length == 0:
-					row +="|\n"
-				else:
-					row += " |"
-			row +="\n"
-			rows.append(row)
-		rows.append("</div>\n\n")
-
-		rows.append("</div>\n\n\n")
-		rows.append("---\n\n\n")
-		text = "\n".join(rows)
-
-		tid_title = f"{tid_date_time}-Squad-Composition-Fight-{fight}"
-		tid_caption = "Squad Composition Fight - {fight}"
-		tid_tags = tid_date_time
-
-		append_tid_for_output(
-			create_new_tid_from_template(tid_title, tid_caption, text, tid_tags),
-			tid_list
-		)
 		
 def build_on_tag_review(death_on_tag, players, tid_date_time):
 	"""
