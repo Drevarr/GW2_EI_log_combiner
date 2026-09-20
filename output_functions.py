@@ -6383,7 +6383,9 @@ def build_fight_timeline_chart(fight_data: dict, tid_date_time: str, tid_list: l
 		time_series = list(fight_data[fight_num]["damage1S"].keys())
 		zf_fight_num = str(fight_num).zfill(2)
 		chart_title = f"Fight-{zf_fight_num}: Damage Output Review"
-		line_chart_config = '```py\nPlayer_Line = players with DPS >= 1000 for the fight\n```\n\n\n\n<$echarts $text="""\n'
+		line_chart_config = '```py\nGetUp events exclude player respawning based on matching dead events\n'
+		line_chart_config += 'Player_Line = players with DPS >= 1000 for the fight\n```\n\n\n\n<$echarts $text="""\n'
+		
 		line_chart_config += f"""option = {{
 		title: {{
 			text: '{chart_title}',
@@ -6578,8 +6580,10 @@ def build_fight_timeline_chart(fight_data: dict, tid_date_time: str, tid_list: l
 				data: [
 					'Enemy Death',
 					'Enemy Down',
+					'Enemy GetUp',
 					'Squad Death',
-					'Squad Down'
+					'Squad Down',
+					'Squad Getup'
 				],
 				axisLabel: {{
 					show: false,
@@ -6634,8 +6638,16 @@ def build_fight_timeline_chart(fight_data: dict, tid_date_time: str, tid_list: l
 			emphasis: {{ focus: 'series' }}
 			}},"""
 				line_chart_config += player_line_chart_config
-		scatter_rows = ['Enemy Deaths', 'Enemy Downs', 'Squad Deaths', 'Squad Downs', 'SquadGetups']
-		for event, data in {'squad dead':["Squad Deaths", 'roundRect'], 'squad down': ["Squad Downs", 'pin'], 'enemy dead':["Enemy Deaths", 'triangle'], 'enemy down': ["Enemy Downs", 'diamond']}.items():
+		scatter_rows = ['Enemy Deaths', 'Enemy Downs', 'Enemy GetUps', 'Squad Deaths', 'Squad Downs', 'Squad GetUps']
+		event_data = {
+			'squad dead':["Squad Deaths", 'roundRect'],
+			'squad down': ["Squad Downs", 'pin'], 
+			'squad getup': ["Squad GetUps", 'arrow'],
+			'enemy dead':["Enemy Deaths", 'triangle'], 
+			'enemy down': ["Enemy Downs", 'diamond'],
+			'enemy getup': ["Enemy GetUps", 'circle']
+			}
+		for event, data in event_data.items():
 			squad_enemy, event_type = event.split()
 			event_name = data[0]
 			event_shape = data[1]

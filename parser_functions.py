@@ -158,6 +158,10 @@ def get_fight_data(
 			"enemy_skills": {},
 			"enemy_statsAll": {},
 			"squad_stats_all": {},
+			"getup": {
+				"squad": {},
+				"enemy": {}				
+			},
 			"down": {
 				"squad": {},
 				"enemy": {}
@@ -198,23 +202,31 @@ def get_fight_data(
 
 	#Downs/Deaths
 	combat_replay = player.get("combatReplayData", {})
-
+	death_list = []
 	for death in combat_replay.get("dead", []):
 		dead_time = math.ceil(death[0] / 1000)
+		death_list.append(death[0])
 
 		current_fight["dead"]["squad"].setdefault(
 			dead_time,
 			[]
 		).append(name)
-
+	down_end_list = []
 	for down in combat_replay.get("down", []):
 		down_time = math.ceil(down[0] / 1000)
+		down_end_list.append(down[1])
 
 		current_fight["down"]["squad"].setdefault(
 			down_time,
 			[]
 		).append(name)
-
+	for down_end in down_end_list:
+		if down_end not in death_list:
+			getup_time = math.ceil(down_end / 1000)
+			current_fight["getup"]["squad"].setdefault(
+				getup_time,
+				[]
+			).append(name)
 
 	#Squad Stats
 	stats_all = player.get("statsAll", [])
@@ -426,6 +438,10 @@ def get_enemy_fight_data(
 			"squad_stats_all": {},
 			"enemy_damage": {},
 			"squad_damage": {},
+			"getup": {
+				"squad": {},
+				"enemy": {}				
+			},			
 			"down": {
 				"squad": {},
 				"enemy": {}
@@ -464,21 +480,31 @@ def get_enemy_fight_data(
 	#Downs/Deaths
 	combat_replay = enemy.get("combatReplayData", {})
 
+	death_list = []
 	for death in combat_replay.get("dead", []):
 		dead_time = math.ceil(death[0] / 1000)
+		death_list.append(death[0])
 
 		current_fight["dead"]["enemy"].setdefault(
 			dead_time,
 			[]
 		).append(enemy_id)
-
+	down_end_list = []
 	for down in combat_replay.get("down", []):
 		down_time = math.ceil(down[0] / 1000)
+		down_end_list.append(down[1])
 
 		current_fight["down"]["enemy"].setdefault(
 			down_time,
 			[]
 		).append(enemy_id)
+	for down_end in down_end_list:
+		if down_end not in death_list:
+			getup_time = math.ceil(down_end / 1000)
+			current_fight["getup"]["enemy"].setdefault(
+				getup_time,
+				[]
+			).append(enemy_id)
 
 
 	#Enemy stats
