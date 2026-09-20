@@ -26,6 +26,59 @@ media_card_css = """.page-header{
 	margin-top:2px
 }
 
+/* TW5 tab container */
+.tc-tab-set {
+    margin: 16px 0 22px;
+    padding: 6px;
+    background: #24282e;
+    border: 1px solid #454b54;
+    border-radius: 10px;
+}
+
+/* Tab buttons row */
+.tc-tab-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+/* Individual tab button */
+.tc-tab-buttons button {
+    padding: 7px 12px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: #aeb6c2;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* Hover */
+.tc-tab-buttons button:hover {
+    background: #353a42;
+    outline: 2px solid #1a73e8;
+    color: #f1f5f9;
+}
+
+/* Selected/active tab */
+.tc-tab-buttons button.tc-tab-selected {
+    background: #353a42;
+    color: #f1f5f9;
+}
+
+/* Divider between buttons and content */
+.tc-tab-divider {
+    height: 1px;
+    margin: 6px 0 8px;
+    background: #454b54;
+}
+
+/* Tab content */
+.tc-tab-content {
+    padding: 8px 4px 4px;
+}
+
 .fight-nav{
     display:flex;
     flex-wrap:wrap;
@@ -294,7 +347,6 @@ media_card_css = """.page-header{
     color:#64748b;
 }
 
-
 /* Squad composition */
 .squad-composition{
     display:grid;
@@ -340,7 +392,6 @@ media_card_css = """.page-header{
     color:#94a3b8;
 }
 
-
 /* Enemy composition */
 .enemy-compositions{
     display:flex;
@@ -373,7 +424,6 @@ media_card_css = """.page-header{
     font-size:10px;
     font-weight:600;
 }
-
 
 /* CSS controls the number of profession columns */
 .enemy-professions{
@@ -414,7 +464,6 @@ media_card_css = """.page-header{
     white-space:nowrap;
 }
 
-
 /* Hover states  */
 .composition-card{
     transition:box-shadow .2s, transform .2s;
@@ -435,22 +484,18 @@ media_card_css = """.page-header{
 .tag-summary-list{
     display:grid;
     grid-template-columns:repeat(4, minmax(0, 1fr));
-    gap:12px;
+    gap:6px 12px;
 }
-
 
 /* Tag card */
 
-.tag-summary-card{
-    background:#2b2f35;
-    border:1.5px solid #454b54;
-    border-radius:12px;
-
-    padding:10px 12px;
-
-    min-width:0;
-
-    transition:box-shadow .2s, transform .2s;
+.tag-summary-card {
+    background: #2b2f35;
+    border: 1.5px solid #454b54;
+    border-radius: 12px;
+    padding: 5px 7px;
+    min-width: 0;
+    transition: box-shadow .2s, transform .2s;
 }
 
 .tag-summary-card:hover{
@@ -458,27 +503,22 @@ media_card_css = """.page-header{
     transform:translateY(-1px);
 }
 
-
 /* Header */
 
-.tag-summary-header{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-
-    gap:5px;
-    margin-bottom:8px;
-
-    min-width:0;
+.tag-summary-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2px 5px;
+    margin-bottom: 0px;
+    min-width: 0;
 }
 
 .tag-summary-name{
     display:flex;
     align-items:center;
-    gap:6px;
-
-    min-width:0;
-
+    gap:3px 6px;
+   min-width:0;
     font-size:12px;
     font-weight:800;
     color:#f1f5f9;
@@ -492,61 +532,51 @@ media_card_css = """.page-header{
 
 .tag-summary-account{
     flex:0 0 auto;
-
     max-width:45%;
-
     font-size:9px;
     font-weight:600;
     color:#64748b;
-
     overflow:hidden;
     text-overflow:ellipsis;
     white-space:nowrap;
 }
-
 
 /* Metrics */
 
-.tag-summary-metrics{
-    display:grid;
-
-    grid-template-columns:repeat(4, minmax(0, 1fr));
-
-    gap:2px;
+.tag-summary-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1px 2px;
 }
 
-.tag-summary-metric{
-    background:#24282e;
-    border:1px solid #3a3f47;
-    border-radius:6px;
+.tag-summary-metric:last-child {
+    grid-column: span 1;
+}
 
-    padding:2px 3px;
-
-    min-width:0;
+.tag-summary-metric {
+    background: #24282e;
+    border: 1px solid #3a3f47;
+    border-radius: 6px;
+    padding: 1px 3px;
+    min-width: 0;
 }
 
 .tag-summary-label{
-    margin-bottom:2px;
-
+    margin-bottom:0px;
     font-size:8px;
     font-weight:700;
     color:#64748b;
-
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
 }
 
-.tag-summary-value{
-    font-size:13px;
-    font-weight:800;
-    color:#f1f5f9;
-
-    /*line-height:1.1;
-
-    white-space:nowrap;
+.tag-summary-value {
+    font-size: 13px;
+    font-weight: 800;
+    color: #f1f5f9;
+    line-height: 1;
 }
-
 
 /* Totals */
 
@@ -554,22 +584,17 @@ media_card_css = """.page-header{
     grid-column:1 / -1;
 }
 
-
 /* Version notice */
 
 .tag-version-notice{
     margin-bottom:12px;
-
     padding:3px 5px;
-
     background:#24282e;
     border:1px solid #454b54;
     border-radius:7px;
-
     color:#aeb6c2;
     font-size:10px;
 }
-
 
 /* Responsive layout */
 
@@ -608,7 +633,6 @@ media_card_css = """.page-header{
     }
 
 }
-
 
 @media (max-width:400px){
 
