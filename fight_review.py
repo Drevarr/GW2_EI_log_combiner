@@ -1304,7 +1304,6 @@ def build_fight_cards(data: dict, fight_num: int, fight_data_charts: bool, tid_d
     else:
         rows.append("! Set `fight_data_charts = true` in top_stats_config.ini to display combat timeline chart")
 
-    rows.append("\n---\n")
     rows.append('\n</$reveal>')
 
     return "\n".join(rows)
@@ -1338,7 +1337,6 @@ def make_fight_reviews(top_stats: dict, fight_data, skill_map, buff_map, fight_d
             rows.append(make_profession_card(label, top_list))
 
         rows.append("</div>")
-        rows.append("\n---\n")
         rows.append('</$reveal>\n')
 
         rows.append("")
@@ -1360,7 +1358,7 @@ def make_fight_reviews(top_stats: dict, fight_data, skill_map, buff_map, fight_d
         rows.append("</div>")
         rows.append("</$reveal>\n")
 
-        rows.append("---")
+        #rows.append("---")
         rows.append('<$reveal type="match" state="$:/state/FR" text="Players">\n')        
         rows.append('<div class="breakdown-row">')        
         # --- Player breakdowns ---
@@ -1384,7 +1382,6 @@ def make_fight_reviews(top_stats: dict, fight_data, skill_map, buff_map, fight_d
                 )
             )
         rows.append("</div>")
-        rows.append("\n---\n")
         rows.append('</$reveal>\n')
 
         # --- Build and push the TID ---
