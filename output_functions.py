@@ -6365,7 +6365,7 @@ def build_defense_damage_mitigation(player_damage_mitigation: dict, player_minio
 		tid_list	
 	)
 
-def build_fight_line_chart(fight_data: dict, tid_date_time: str, tid_list: list) -> str:
+def build_fight_timeline_chart(fight_data: dict, tid_date_time: str, tid_list: list) -> str:
 	"""
 	Build a line chart for a single fight in the log. The chart shows both outgoing and incoming damage over time.
 
@@ -6383,28 +6383,139 @@ def build_fight_line_chart(fight_data: dict, tid_date_time: str, tid_list: list)
 		time_series = list(fight_data[fight_num]["damage1S"].keys())
 		zf_fight_num = str(fight_num).zfill(2)
 		chart_title = f"Fight-{zf_fight_num}: Damage Output Review"
-		line_chart_config = '```py\nPlayer_Line = players with DPS > 700 for the fight\n```\n\n\n\n<$echarts $text="""\n'
-		line_chart_config += f"""
-		option = {{
+		line_chart_config = '```py\nPlayer_Line = players with DPS >= 1000 for the fight\n```\n\n\n\n<$echarts $text="""\n'
+		line_chart_config += f"""option = {{
 		title: {{
 			text: '{chart_title}',
 			left: 'center'
 		}},
-		grid: {{
-		left: '5%',
-		right: '15%'
-		}},
+		grid: [
+			{{
+				left: '5%',
+				right: '15%',
+				top: 50,
+				height: '48%'
+			}},
+			{{
+				left: '5%',
+				right: '15%',
+				top: '68%',
+				height: '22%'
+			}}
+		],
 		legend: {{
 			type: 'scroll',
 			orient: 'vertical',
 			selector: ['all', 'inverse'],
+			textStyle: {{fontSize: 10}},
 			right: 10,
 			top: 20,
 			bottom: 20,
 		}},
 		tooltip: {{
 			trigger: 'axis',
-			showContent: true
+			axisPointer: {{
+				type: 'line',
+
+				link: [
+					{{
+						xAxisIndex: [0, 1]
+					}}
+				]
+			}},
+			showContent: true,
+			formatter: function(params) {{
+
+				if (!params || !params.length) {{
+					return '';
+				}}
+				let second = params[0].axisValue;
+				second = Number(second);
+				let html =
+					'<div style="font-size:12px;">' +
+					'<b>' + second + 's</b>';
+				let damageFound = false;
+				params.forEach(function(param) {{
+					if (param.data &&
+						param.data.players) {{
+						return;
+					}}
+					if (param.seriesIndex === undefined) {{
+						return;
+					}}
+					let series = option.series[param.seriesIndex];
+					if (!series ||
+						series.xAxisIndex !== 0) {{
+						return;
+					}}
+					if (!damageFound) {{
+						html +=
+							'<div style="margin-top:3px;">' +
+							'<b>Damage</b></div>';
+						damageFound = true;
+					}}
+					let value = param.value;
+					if (Number(value) === 0) {{
+						return;
+					}}
+					if (Array.isArray(value)) {{
+						value = value[value.length - 1];
+					}}
+					html +=
+						'<div>' +
+						'<span style="' +
+						'display:inline-block;' +
+						'width:8px;' +
+						'height:8px;' +
+						'border-radius:50%;' +
+						'background:' + param.color + ';' +
+						'margin-right:6px;"></span>' +
+						param.seriesName + ': ' +
+						Number(value).toLocaleString() +
+						'</div>';
+				}});
+
+				let events = [];
+				option.series.forEach(function(series) {{
+					if (series.xAxisIndex !== 1 ||
+						!series.data) {{
+						return;
+					}}
+					series.data.forEach(function(event) {{
+						if (!event ||
+							!event.value ||
+							!event.players ||
+							!event.players.length) {{
+							return;
+						}}
+						let eventSecond = Number(event.value[0]);
+						if (eventSecond === second) {{
+							events.push({{
+								name: series.name,
+								players: event.players,
+								color: series.itemStyle &&
+									series.itemStyle.color
+									? series.itemStyle.color
+									: '#999'
+							}});
+						}}
+					}});
+				}});
+				if (events.length) {{
+					html +=
+						'<div style="margin-top:3px;">' +
+						'<b>Events</b></div>';
+					events.forEach(function(event) {{
+						html +=
+							'<div style="margin-top:2px;">' +
+							'<b>' + event.name + '</b><br>' +
+							event.players.join('<br>') +
+							'</div>';
+					}});
+				}}
+				html += '</div>';
+				return html;
+			}}
 		}},
 		dataZoom: [
 			{{
@@ -6422,28 +6533,67 @@ def build_fight_line_chart(fight_data: dict, tid_date_time: str, tid_list: list)
 			xAxisIndex: [0, 1]
 			}}
 		],
-		xAxis: {{
-			type: 'category',
-			nameLocation: 'middle',
-			nameGap: 40,
-			name: 'Fight Time',
-			axisLabel: {{
-			formatter: '{{value}}s',
-			align: 'center'
+		xAxis: [
+			{{
+				type: 'category',
+				gridIndex: 0,
+				nameLocation: 'middle',
+				nameGap: 40,
+				name: 'Fight Time',
+				axisLabel: {{
+					formatter: '{{value}}s',
+					align: 'center'
+				}},
+				data: {time_series}
 			}},
-			data: {time_series}
-		}},
-		yAxis: {{
-			type: 'value',
-			nameLocation: 'middle',
-			nameGap: 55,
-			name: 'Damage'
-		}},
+
+			{{
+				type: 'category',
+				gridIndex: 1,
+				nameLocation: 'middle',
+				nameGap: 25,
+				name: 'Fight Time',
+				axisLabel: {{
+					formatter: '{{value}}s',
+					align: 'center'
+				}},
+				data: {time_series}
+			}}
+		],
+		yAxis: [
+			{{
+				type: 'value',
+				gridIndex: 0,
+				nameLocation: 'middle',
+				nameGap: 55,
+				name: 'Damage'
+			}},
+
+			{{
+				type: 'category',
+				gridIndex: 1,
+				nameLocation: 'middle',
+				nameGap: 35,
+				name: 'Events',
+				data: [
+					'Enemy Death',
+					'Enemy Down',
+					'Squad Death',
+					'Squad Down'
+				],
+				axisLabel: {{
+					show: false,
+					interval: 0
+				}}
+			}}
+		],
 		series: [
 			{{
 			name: 'Outgoing Damage',
 			data: {outgoing_damage_data},
 			type: 'line',
+			xAxisIndex: 0,
+			yAxisIndex: 0,
 			smooth: true,
 			itemStyle: {{
 				// Color of the point.
@@ -6455,39 +6605,68 @@ def build_fight_line_chart(fight_data: dict, tid_date_time: str, tid_list: list)
 			name: 'Incoming Damage',
 			data: {incoming_damage_data},
 			type: 'line',
+			xAxisIndex: 0,
+			yAxisIndex: 0,
 			smooth: true,
 			itemStyle: {{
 			// Color of the point.
 			color: 'khaki'
 			}},
 			emphasis: {{ focus: 'series' }}
-			}}
+			}},
 		"""
 		for player in fight_data[fight_num]["players"].keys():
-			#last_value = max(fight_data[fight_num]["players"][player]['damage1S'].values())
-			#num_keys = len(fight_data[fight_num]["players"][player]['damage1S'])
+			active_dps = fight_data[fight_num]["players"][player].get('active_dps',0)
+			if  active_dps >= 1000:
 
-			if fight_data[fight_num]["players"][player]['active_dps'] < 700:
-				continue
+				player_name = player.split("-")[1][:3]+" - "+player.split("-")[2]
+				player_damage_data = list(fight_data[fight_num]["players"][player]['damage1S'].values())
 
-			player_name = player.split("-")[1][:3]+" - "+player.split("-")[2]
-			player_damage_data = []
-			last_index = 0
-			for index in range(len(fight_data[fight_num]["players"][player]['damage1S'])):
-				cur_damage = fight_data[fight_num]["players"][player]['damage1S'][index] # - fight_data[fight_num]["players"][player]['damage1S'][last_index]
+				player_line_chart_config = f"""
 				
-				player_damage_data.append(cur_damage)
-				last_index = index
-
-			player_line_chart_config = f""",
-		{{
-		name: '{player_name}',
-		data: {player_damage_data},
-		type: 'line',
-		smooth: true,
-		emphasis: {{ focus: 'series' }}
-		}}"""
-			line_chart_config += player_line_chart_config
+			{{
+			name: '{player_name}',
+			data: {player_damage_data},
+			type: 'line',
+			xAxisIndex: 0,
+			yAxisIndex: 0, 			
+			smooth: true,
+			emphasis: {{ focus: 'series' }}
+			}},"""
+				line_chart_config += player_line_chart_config
+		scatter_rows = ['Enemy Deaths', 'Enemy Downs', 'Squad Deaths', 'Squad Downs', 'SquadGetups']
+		for event, data in {'squad dead':["Squad Deaths", 'roundRect'], 'squad down': ["Squad Downs", 'pin'], 'enemy dead':["Enemy Deaths", 'triangle'], 'enemy down': ["Enemy Downs", 'diamond']}.items():
+			squad_enemy, event_type = event.split()
+			event_name = data[0]
+			event_shape = data[1]
+			event_data = fight_data[fight_num][event_type].get(squad_enemy, {})
+			format_event_data = []
+			scatter_row = scatter_rows.index(event_name)
+			for second, players in event_data.items():
+				
+				format_event_data.append({
+					"value": [int(second), scatter_row],
+					"players": players
+				})
+			
+			event_scatter_chart_config = f"""
+			
+			{{
+			name: '{event_name}',
+			type: 'scatter',
+			xAxisIndex: 1,
+			yAxisIndex: 1,
+			data: {json.dumps(format_event_data)},
+			symbol: '{event_shape}',
+			symbolSize: function(value, params) {{
+				const count = params.data.players.length;
+				return Math.min(28, 8 + (count * 3));
+			}},
+			emphasis: {{
+				scale: true
+			}}
+		}},"""
+			line_chart_config += event_scatter_chart_config
 		line_chart_config += '\n    ]\n    };\n\n"""$height="500px" $width="100%" $theme="dark"/>'
 
 		line_chart_title = f"{tid_date_time}_Fight_{zf_fight_num}_Damage_Output_Review"

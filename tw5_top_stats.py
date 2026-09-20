@@ -427,7 +427,7 @@ if __name__ == '__main__':
 	
 	#Fight Data line charts
 	if fight_data_charts:
-		build_fight_line_chart(fight_data, tid_date_time, tid_list)
+		build_fight_timeline_chart(fight_data, tid_date_time, tid_list)
 
 	#commander Tag summary
 	if build_commander_summary_menu:
