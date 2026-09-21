@@ -689,13 +689,17 @@ def build_fight_summary(top_stats: dict, fight_data_charts, caption: str, tid_da
 	# Calculate average squad count
 	avg_squad_count, avg_ally_count, avg_enemy_count = calculate_average_squad_count(top_stats["fight"].values())
 	# Get the total downs, deaths, and damage out/in/barrier/shield
-	enemy_downed = top_stats['overall']['enemy_downed']
-	enemy_killed = top_stats['overall']['enemy_killed']
-	squad_down = top_stats['overall']['defenses']['downCount']
-	squad_dead = top_stats['overall']['defenses']['deadCount']
-	total_damage_out = top_stats['overall']['dpsTargets']['damage']
-	total_damage_in = top_stats['overall']['defenses']['damageTaken']
-	total_barrier_damage = top_stats['overall']['defenses']['damageBarrier']
+	overall = top_stats.get('overall', {})
+	defenses = overall.get('defenses', {})
+	dps_targets = overall.get('dpsTargets', {})
+
+	enemy_downed = overall.get('enemy_downed', 0)
+	enemy_killed = overall.get('enemy_killed', 0)
+	squad_down = defenses.get('downCount', 0)
+	squad_dead = defenses.get('deadCount', 0)
+	total_damage_out = dps_targets.get('damage', 0)
+	total_damage_in = defenses.get('damageTaken', 0)
+	total_barrier_damage = defenses.get('damageBarrier', 0)	
 	total_shield_damage = get_total_shield_damage(top_stats['overall'])
 	total_shield_damage_percent = (total_shield_damage / total_damage_out) * 100 if total_damage_out != 0 else 0
 	total_barrier_damage_percent = (total_barrier_damage / total_damage_in) * 100 if total_damage_in != 0 else 0
@@ -1740,7 +1744,8 @@ def build_uptime_summary(top_stats: dict, boons: dict, buff_data: dict, caption:
 	#build party table rows
 	
 	#footer, moved to header 
-	for group in top_stats["overall"]["buffUptimes"]['group']:
+	#for group in top_stats["overall"]["buffUptimes"]['group']:
+	for group in top_stats["overall"]["buffUptimes"].get('group', {}):
 		footer = f"|Party-{group} Average Uptime |<|<|<|"
 		for boon_id in boons:
 			if boon_id not in buff_data:
@@ -6132,13 +6137,13 @@ def build_stacking_buffs(stacking_uptime_Table: dict, top_stats: dict, tid_date_
 
 		rows.append(output_string)
 	squad_string = f'|Squad Average: |<|<'
-	squad_string += '|'+"{:.2f}".format(round((squad_str_avg /(squad_fight_time)), 4))
-	squad_string += "| "+"{:.2f}".format(round((squad_str_1 /(squad_fight_time) * 100), 4))+"%"
-	squad_string += "| "+"{:.2f}".format(round((squad_str_5 /(squad_fight_time) * 100), 4))+"%"
-	squad_string += "| "+"{:.2f}".format(round((squad_str_10 /(squad_fight_time) * 100), 4))+"%"
-	squad_string += "| "+"{:.2f}".format(round((squad_str_15 /(squad_fight_time) * 100), 4))+"%"
-	squad_string += "| "+"{:.2f}".format(round((squad_str_20 /(squad_fight_time) * 100), 4))+"%"
-	squad_string += "| "+"{:.2f}".format(round((squad_str_25 /(squad_fight_time) * 100), 4))+"%"
+	squad_string += '|'+"{:.2f}".format(round((squad_str_avg /(squad_fight_time)) if squad_fight_time else 0, 4))
+	squad_string += "| "+"{:.2f}".format(round((squad_str_1 /(squad_fight_time) * 100) if squad_fight_time else 0, 4))+"%"
+	squad_string += "| "+"{:.2f}".format(round((squad_str_5 /(squad_fight_time) * 100) if squad_fight_time else 0, 4))+"%"
+	squad_string += "| "+"{:.2f}".format(round((squad_str_10 /(squad_fight_time) * 100) if squad_fight_time else 0, 4))+"%"
+	squad_string += "| "+"{:.2f}".format(round((squad_str_15 /(squad_fight_time) * 100) if squad_fight_time else 0, 4))+"%"
+	squad_string += "| "+"{:.2f}".format(round((squad_str_20 /(squad_fight_time) * 100) if squad_fight_time else 0, 4))+"%"
+	squad_string += "| "+"{:.2f}".format(round((squad_str_25 /(squad_fight_time) * 100) if squad_fight_time else 0, 4))+"%"
 	squad_string += '|h'
 	rows.append(squad_string)
 	rows.append("</$reveal>\n")
@@ -6191,10 +6196,10 @@ def build_stacking_buffs(stacking_uptime_Table: dict, top_stats: dict, tid_date_
 
 		rows.append(output_string)
 	squad_string = f'|Squad Average: |<|<'
-	squad_string += '|'+"{:.2f}".format(round((squad_stab_avg) /(squad_fight_time), 4))
-	squad_string += "| "+"{:.2f}".format(round((squad_stab_1 /(squad_fight_time) * 100), 4))+"%"
-	squad_string += "| "+"{:.2f}".format(round((squad_stab_2 /(squad_fight_time) * 100), 4))+"%"
-	squad_string += "| "+"{:.2f}".format(round((squad_stab_5 /(squad_fight_time) * 100), 4))+"%"
+	squad_string += '|'+"{:.2f}".format(round((squad_stab_avg) /(squad_fight_time) if squad_fight_time else 0, 4))
+	squad_string += "| "+"{:.2f}".format(round((squad_stab_1 /(squad_fight_time) * 100) if squad_fight_time else 0, 4))+"%"
+	squad_string += "| "+"{:.2f}".format(round((squad_stab_2 /(squad_fight_time) * 100) if squad_fight_time else 0, 4))+"%"
+	squad_string += "| "+"{:.2f}".format(round((squad_stab_5 /(squad_fight_time) * 100) if squad_fight_time else 0, 4))+"%"
 	squad_string += '|h'
 	rows.append(squad_string)
 	rows.append("</$reveal>\n")

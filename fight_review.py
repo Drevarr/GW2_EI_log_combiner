@@ -1159,24 +1159,24 @@ def build_fight_cards(data: dict, fight_num: int, fight_data_charts: bool, tid_d
     squad_kills = data["enemy_killed"]
     squad_downs = data["enemy_downed"]
 
-    enemy_kills = data["defenses"]["deadCount"]
-    enemy_downs = data["defenses"]["downCount"]
+    enemy_kills = data["defenses"].get("deadCount", 0)
+    enemy_downs = data["defenses"].get("downCount", 0)
 
-    squad_strips = data["support"]["boonStrips"]
-    enemy_strips = data["defenses"]["boonStrips"]
+    squad_strips = data["support"].get("boonStrips", 0)
+    enemy_strips = data["defenses"].get("boonStrips", 0)
 
-    squad_cc = data["statsTargets"]["appliedCrowdControl"]
-    enemy_cc = data["defenses"]["receivedCrowdControl"]
+    squad_cc = data["statsTargets"].get("appliedCrowdControl", 0)
+    enemy_cc = data["defenses"].get("receivedCrowdControl", 0)
 
-    squad_interrupt = data["statsTargets"]["interrupts"]
-    enemy_interrupt = data["defenses"]["interruptedCount"]
+    squad_interrupt = data["statsTargets"].get("interrupts", 0)
+    enemy_interrupt = data["defenses"].get("interruptedCount", 0)
 
-    squad_blocked = data["defenses"]["blockedCount"]
-    squad_evaded = data["defenses"]["evadedCount"]
-    enemy_blocked = data["statsTargets"]["blocked"]
-    enemy_evaded = data["statsTargets"]["evaded"]
+    squad_blocked = data["defenses"].get("blockedCount", 0)
+    squad_evaded = data["defenses"].get("evadedCount", 0)
+    enemy_blocked = data["statsTargets"].get("blocked", 0)
+    enemy_evaded = data["statsTargets"].get("evaded", 0)
 
-    squad_barrier_damage = data["defenses"]["damageBarrier"]
+    squad_barrier_damage = data["defenses"].get("damageBarrier", 0)
     enemy_barrier_damage = sum(
         info.get("shieldDamage", 0)
         for info in data["targetDamageDist"].values()
@@ -1387,7 +1387,7 @@ def make_fight_reviews(top_stats: dict, fight_data, skill_map, buff_map, fight_d
         # --- Build and push the TID ---
         tid_text = "\n".join(rows)
         tid_title = tid_date_time + "-Fight-Review-" + str(fight_num)
-        tid_caption = "Fight Reviews - " + str(fight_num)
+        tid_caption = "Fight - " + str(fight_num)
         tid_creator = "Drevarr@github.com"
 
         append_tid_for_output(
