@@ -39,12 +39,8 @@ team_colors = config.team_colors
 team_code_missing = []
 mesmer_shatter_skills = config.mesmer_shatter_skills
 mesmer_clone_usage = {}
-enemy_avg_damage_per_skill = {
-	'Total': {},
-	'Red Team': {},
-	'Blue Team': {},
-	'Green Team': {}
-}
+enemy_avg_damage_per_skill = defaultdict(dict)
+enemy_avg_damage_per_skill['Total'] = {}
 player_damage_mitigation = {}
 player_minion_damage_mitigation = {}
 
@@ -115,7 +111,6 @@ def get_player_account(player: Dict[str, Any]) -> str:
 	# The original 'split' check was redundant as split() always returns a list of at least length 1.
 	return account.replace("-", ".")
 
-
 def add_damage_series(
 	series,
 	aggregate_series,
@@ -136,7 +131,6 @@ def add_damage_series(
 			individual_series[sec_index] += delta_damage
 
 		prior_damage = cur_total_damage
-
 
 def get_fight_data(
 	player: Dict[str, Any],
@@ -631,7 +625,6 @@ def get_enemy_fight_data(
 
 		prior_damage = cur_total_damage
 
-
 def check_burst1S_high_score(fight_data, player, fight_num):
 	name = player['name']
 	profession = player['profession']
@@ -647,7 +640,6 @@ def check_burst1S_high_score(fight_data, player, fight_num):
 		round(max_burst1S_value, 2)	
 	)
 			
-
 def determine_log_type_and_extract_fight_name(fight_name: str) -> tuple:
 	"""
 	Determine if the log is a PVE or WVW log and extract the fight name.
@@ -677,7 +669,6 @@ def determine_log_type_and_extract_fight_name(fight_name: str) -> tuple:
 		log_type = "PVE"
 	return log_type, fight_name
 
-
 def calculate_resist_offset(resist_data: dict, state_data: dict) -> int:
 	"""
 	Calculate the total time a player has resist during a set of states.
@@ -701,7 +692,6 @@ def calculate_resist_offset(resist_data: dict, state_data: dict) -> int:
 			elif state_end < resist_end and state_end >= resist_start and state_start < resist_start:
 				total_offset += state_end - resist_start
 	return total_offset
-
 
 def determine_clone_usage(player, skill_map, mesmer_shatter_skills):
 	"""
@@ -762,7 +752,6 @@ def get_buff_states(buff_states: list) -> dict:
 
 	return dict(zip(start_times, end_times))
 
-
 def calculate_moving_average(data: list, window_size: int) -> list:
 	"""
 	Calculate the moving average of a list of numbers with a specified window size.
@@ -781,7 +770,6 @@ def calculate_moving_average(data: list, window_size: int) -> list:
 		sub_data = data[start_index:end_index + 1]
 		ma.append(sum(sub_data) / len(sub_data))
 	return ma
-
 
 def find_lowest(dict):
 	"""
@@ -802,7 +790,6 @@ def find_lowest(dict):
 			res.append(value)
 	return res
 
-
 def find_smallest_value(my_dict):
 	"""
 	Find the key with the smallest value in a dictionary.
@@ -818,7 +805,6 @@ def find_smallest_value(my_dict):
 	
 	min_key = min(my_dict, key=my_dict.get)
 	return min_key
-
 
 def calculate_damage_during_buff(player, target_idx, buff_start, buff_end, damage_type):
 
@@ -841,7 +827,6 @@ def calculate_damage_during_buff(player, target_idx, buff_start, buff_end, damag
 	current_damage = player[damage_type][target_idx][0][end_idx] - player[damage_type][target_idx][0][start_idx]
 			
 	return current_damage
-
 
 def check_target_for_buff_start_end(targets, players, damage_buff_ids):
 	"""
@@ -880,13 +865,11 @@ def check_target_for_buff_start_end(targets, players, damage_buff_ids):
 								debuff_damage[name_prof] = {}
 							debuff_damage[name_prof][buff['id']] = debuff_damage[name_prof].get(buff['id'], 0) + total_damage
 
-
 def check_dragon_banner(rotation):
 	return any(
 		int(skill.get('id')) in db_skill_ids
 		for skill in rotation
 	)
-
 
 def update_high_score(stat_name: str, key: str, value: float) -> None:
 	"""
@@ -911,7 +894,6 @@ def update_high_score(stat_name: str, key: str, value: float) -> None:
 		if value > lowest_value:
 			del high_scores[stat_name][lowest_key]
 			high_scores[stat_name][key] = value
-
 
 def determine_player_role(player_data: dict) -> str:
 	"""
@@ -947,7 +929,6 @@ def determine_player_role(player_data: dict) -> str:
 	else:
 		return "DPS"
 
-
 def calculate_defensive_hits_and_glances(player_data):
 	"""
 	Calculate the number of direct and glancing hits taken by a player based on the total damage taken.
@@ -966,7 +947,6 @@ def calculate_defensive_hits_and_glances(player_data):
 			direct_hits += skill['hits']
 
 	return direct_hits, glancing_hits
-
 
 def get_commander_tag_data(fight_json):
 	"""Extract commander tag data from the fight JSON."""
@@ -1002,7 +982,6 @@ def get_commander_tag_data(fight_json):
 					break
 
 	return commander_tag_positions, earliest_death_time, has_died
-
 
 def get_player_death_on_tag(
 	player,
@@ -1128,7 +1107,6 @@ def get_player_death_on_tag(
 	if player_dist_to_tag <= Run_Back:
 		entry["distToTag"].append(player_dist_to_tag)
 
-
 def get_player_fight_dps(dpsTargets: dict, name: str, profession: str, account: str, fight_num: int, fight_time: int, dbuser) -> None:
 	"""
 	Get the maximum damage hit by skill.
@@ -1191,7 +1169,6 @@ def get_combat_start_from_player_json(initial_time, player_json):
 				start_combat = min(start_combat, i*1000)
 			break
 	return start_combat
-
 
 def get_combat_time_breakpoints(player_json):
 	"""
@@ -1725,7 +1702,6 @@ def get_buffs_data(buff_map: dict) -> None:
 			if icon not in ("https://render.guildwars2.com/file/1D55D34FB4EE20B1962E315245E40CA5E1042D0E/62248.png", "unknown.png"):
 				buff_data[buff_id]['icon'] = icon
 
-				
 def get_skills_data(skill_map: dict) -> None:
 	"""
 	Collect skill data across all fights.
@@ -1829,7 +1805,6 @@ def get_personal_buff_data(personal_buffs: dict) -> None:
 			if normalized not in personal_buff_data["total"]:
 				personal_buff_data["total"].append(normalized)
 
-
 def get_skill_cast_by_enemy_prof(targets: dict) -> None:
 	"""
 	Add enemy skill casts by profession to top_stats dictionary
@@ -1885,8 +1860,6 @@ def get_skill_cast_by_enemy_prof(targets: dict) -> None:
 
 				top_stats['skill_casts_by_enemy'][profession]['total'][skill_id] += cast_count
 				top_stats['skill_casts_by_enemy'][profession][name_prof]['Skills'][skill_id] = top_stats['skill_casts_by_enemy'][profession][name_prof]['Skills'].get(skill_id, 0) + cast_count
-
-
 
 def get_enemies_by_fight(fight_num: int, targets: dict) -> None:
 	"""
@@ -3117,6 +3090,8 @@ def get_damage_mitigation_data(fight_num: int, players: dict, targets: dict, ski
 		buff_data (dict): The buff data.
 	"""
 	for target in targets:
+		if target["isFake"]:
+			continue		
 		if 'totalDamageDist' not in target:
 			continue
 		if target['teamID'] in team_colorMap:
