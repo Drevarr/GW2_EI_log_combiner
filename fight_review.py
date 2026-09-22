@@ -11,7 +11,7 @@ media_card_css = """.page-header{
 	display:flex;
 	align-items:flex-start;
 	justify-content:space-between;
-	gap:12px
+	gap:3px
 }
 	
 .page-title{
@@ -28,8 +28,8 @@ media_card_css = """.page-header{
 
 /* TW5 tab container */
 .tc-tab-set {
-    margin: 16px 0 22px;
-    padding: 6px;
+    margin: 8px 0 11px;
+    padding: 3px;
     background: #24282e;
     border: 1px solid #454b54;
     border-radius: 10px;
@@ -39,18 +39,20 @@ media_card_css = """.page-header{
 .tc-tab-buttons {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    column-gap: 4px;
+    row-gap: 2px;
 }
 
 /* Individual tab button */
 .tc-tab-buttons button {
-    padding: 7px 12px;
+    padding: 2px 6px;
     border: 0;
     border-radius: 7px;
     background: transparent;
     color: #aeb6c2;
     font-size: 11px;
     font-weight: 700;
+    line-height: 1.2;
     cursor: pointer;
 }
 
@@ -70,13 +72,14 @@ media_card_css = """.page-header{
 /* Divider between buttons and content */
 .tc-tab-divider {
     height: 1px;
-    margin: 6px 0 8px;
+    margin: 3px 0 2px;
     background: #454b54;
 }
 
 /* Tab content */
 .tc-tab-content {
-    padding: 8px 4px 4px;
+    margin: 4px 0 3px;
+    padding: 3px 2px 2px;
 }
 
 .fight-nav{
@@ -559,6 +562,13 @@ media_card_css = """.page-header{
     border-radius: 6px;
     padding: 1px 3px;
     min-width: 0;
+}
+
+/* TW5 injects <p> around block elements */
+.tag-summary-metrics > p {
+    display: contents;
+    margin: 0;
+    padding: 0;
 }
 
 .tag-summary-label{
