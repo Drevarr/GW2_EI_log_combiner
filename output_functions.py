@@ -584,7 +584,7 @@ def output_tag_summary_two(
     )
 
 
-def output_tag_summary(LATEST_VERSION, tag_summary: dict, tid_date_time) -> None:
+def output_tag_summary(LATEST_VERSION, tag_summary: dict, tid_date_time: str, tid_list: list) -> None:
 	"""Output a summary of the tag data in a human-readable format."""
 	rows = []
 	

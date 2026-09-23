@@ -205,6 +205,8 @@ if __name__ == '__main__':
 	apm_mode = config_ini.get('TopStatsCfg', 'APM_Mode', fallback='total_no_auto_no_proc')
 	profession_color = config_output.profession_color
 
+	new_tag = config_ini.getboolean('TopStatsCfg', 'NEW_TAG', fallback=True)
+
 	LATEST_VERSION = check_for_update()
 
 	# Ensure output directories exist
@@ -253,7 +255,10 @@ if __name__ == '__main__':
 	build_main_tid(tid_date_time, tag_list, guild_name, args.description_append)
 
 	#output_tag_summary(LATEST_VERSION, tag_data, tid_date_time)
-	output_tag_summary_two(LATEST_VERSION, tag_data, tid_date_time, tid_list)
+	if new_tag:
+		output_tag_summary_two(LATEST_VERSION, tag_data, tid_date_time, tid_list)
+	else:
+		output_tag_summary(LATEST_VERSION, tag_data, tid_date_time, tid_list)
 
 	#create the menu tiddler and append to tid_list
 	build_menu_tid(tid_date_time, db_update)
