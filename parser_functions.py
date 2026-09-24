@@ -3473,6 +3473,7 @@ def get_illusion_of_life_data(players: dict, durationMS: int) -> None:
 								'wasted': 0,
 								'gen_plus_wasted':0
 							}
+
 						generated = ((caster_generated/100)*durationMS)/1000
 						wasted = ((caster_wasted/100)*durationMS)/1000
 						total_gen_wasted = round((generated+wasted), 0)
@@ -3482,7 +3483,7 @@ def get_illusion_of_life_data(players: dict, durationMS: int) -> None:
 						IOL_revive[caster_name]['wasted'] = IOL_revive[caster_name].get('wasted',0) + round(wasted,0)
 						IOL_revive[caster_name]['gen_plus_wasted'] = IOL_revive[caster_name].get('gen_plus_wasted',0) + round(total_gen_wasted,0)
 			
-		if 'rotation' in player and playerProf in ['Mesmer', 'Mirage', 'Chronomancer','Virtuoso']:
+		if 'rotation' in player and playerProf in ['Mesmer', 'Mirage', 'Chronomancer','Virtuoso', 'Troubadour']:
 			
 			for item in player['rotation']:
 				if item['id'] in [10244, 10346]:
