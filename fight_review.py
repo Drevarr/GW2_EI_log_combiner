@@ -205,7 +205,7 @@ media_card_css = """.page-header{
 .metric-val-small-g{
     font-size:50%;
     font-weight:500;
-    color: 47ab4f;
+    color: #47ab4f;
 }
 
 .metric-sub{
