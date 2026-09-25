@@ -1815,54 +1815,51 @@ def build_uptime_summary(top_stats: dict, boons: dict, buff_data: dict, caption:
 	)
 
 def build_debuff_uptime_summary(top_stats: dict, boons: dict, buff_data: dict, caption: str, tid_date_time: str) -> None:
-	"""Print a table of boon uptime stats for all players in the log.
+	"""Print a table of debuff uptime stats for all players in the log."""
 
-	The table will contain the following columns:
-
-	- Name
-	- Profession
-	- Account
-	- Fight Time
-	- Average uptime for each boon
-	- Count of applied debuffs
-
-	Args:
-		top_stats (dict): Dictionary containing top statistics for players.
-		boons (dict): Dictionary containing boons and their names.
-		buff_data (dict): Dictionary containing information about each buff.
-		caption (str): The caption for the table.
-		tid_date_time (str): A string to use as the date and time for the table id.
-	"""
 	rows = []
-	
+
+	# Only include boons that have uptime from at least one player.
+	display_boons = [
+		boon_id
+		for boon_id in boons
+		if boon_id in buff_data
+		and any(
+			player.get("targetBuffs", {}).get(boon_id, {}).get("uptime_ms", 0) > 0
+			for player in top_stats["player"].values()
+		)
+	]
+
 	rows.append('<div style="overflow-y: auto; width: 100%; overflow-x:auto;">\n\n')
+
 	# Build the player table header
 	header = "|thead-dark table-caption-top table-hover sortable|k\n"
 	header += "|!Party |!Name | !Prof | !{{FightTime}} |"
-	for boon_id, boon_name in boons.items():
-		if boon_id not in buff_data:
-			continue
+
+	for boon_id in display_boons:
+		boon_name = boons[boon_id]
 		skillIcon = buff_data[boon_id]["icon"]
 
 		header += f"! [img width=24 [{boon_name}|{skillIcon}]] |"
-	header += " !Count|"
+
+	header += " !Applied Count|"
 	header += "h"
 
 	# Build the Squad table rows
-	header2 = f"|Total Generated |<|<|<|"
+	header2 = f"|Total Generated Secs|<|<|<|"
 	applied_counts = 0
-	for boon_id in boons:
-		if boon_id not in buff_data:
-			continue
+
+	for boon_id in display_boons:
 		if boon_id not in top_stats["overall"]["targetBuffs"]:
 			uptime_percentage = " - "
 		else:
 			applied_counts += top_stats["overall"]["targetBuffs"][boon_id]["applied_counts"]
 			uptime_ms = top_stats["overall"]["targetBuffs"][boon_id]["uptime_ms"]
-			uptime_percentage = round((uptime_ms / 1000), 3)			
-			uptime_percentage = f"{uptime_percentage:,.0f}"
-		header2 += f" {uptime_percentage}|" 
-	header2 += f" {applied_counts}|" 
+			uptime_percentage = f"{uptime_ms / 1000:,.0f}"
+
+		header2 += f" {uptime_percentage}|"
+
+	header2 += f" {applied_counts}|"
 	header2 += "h"
 
 	rows.append(header)
@@ -1870,15 +1867,17 @@ def build_debuff_uptime_summary(top_stats: dict, boons: dict, buff_data: dict, c
 
 	# Build the table body
 	for player in top_stats["player"].values():
-		debuff_data = {"b70350": [0.10, "targetDamage1S"], "b70806": [0.10, "targetPowerDamage1S"] }
-
-		has_uptime = any(
-			player["targetBuffs"].get(boon_id, {}).get("uptime_ms", 0) > 0
-			for boon_id in boons
-			if boon_id in buff_data
-		)
+		debuff_data = {
+			"b70350": [0.10, "targetDamage1S"],
+			"b70806": [0.10, "targetPowerDamage1S"]
+		}
 
 		# Skip players with no uptime for any displayed buff.
+		has_uptime = any(
+			player.get("targetBuffs", {}).get(boon_id, {}).get("uptime_ms", 0) > 0
+			for boon_id in display_boons
+		)
+
 		if not has_uptime:
 			continue
 
@@ -1894,39 +1893,49 @@ def build_debuff_uptime_summary(top_stats: dict, boons: dict, buff_data: dict, c
 		)
 
 		applied_counts = 0
-		for boon_id in boons:
+
+		for boon_id in display_boons:
 			entry = ""
-			if boon_id not in buff_data:
-				continue
+
 			if boon_id not in player["targetBuffs"]:
 				uptime_percentage = " - "
 			else:
-				applied_counts += player["targetBuffs"][boon_id]["applied_counts"]
-				uptime_ms = player["targetBuffs"][boon_id]["uptime_ms"]
-				uptime_percentage = round(uptime_ms / 1000, 3)
-				uptime_percentage = f"{uptime_percentage:,.0f}"
+				buff_entry = player["targetBuffs"][boon_id]
+
+				applied_counts += buff_entry["applied_counts"]
+				uptime_ms = buff_entry["uptime_ms"]
+				uptime_percentage = f"{uptime_ms / 1000:,.1f}"
+
 				if boon_id in debuff_data:
-					damage_gained = player["targetBuffs"][boon_id]["damage_gained"]
+					damage_gained = buff_entry["damage_gained"]
 					entry = (
 						f'<span data-tooltip="Damage Gained: '
 						f'{damage_gained:,.0f}">{uptime_percentage}</span>'
 					)
 				else:
-					entry = uptime_percentage
+					entry = (
+						f'<span data-tooltip="Hits Applied: '
+						f'{buff_entry["applied_counts"]:,.0f}">{uptime_percentage}</span>'
+					)					
+					#entry = uptime_percentage
 
 			row += f" {entry}|"
 
 		row += f" {applied_counts:,.0f}|"
 
 		rows.append(row)
-	rows.append(f"|{caption} Table|c")
 
+	rows.append(f"|{caption} Table|c")
 	rows.append("\n\n</div>")
-	#push table to tid_list for output
+
 	tid_text = "\n".join(rows)
 
 	append_tid_for_output(
-		create_new_tid_from_template(f"{tid_date_time}-{caption.replace(' ','-')}", caption, tid_text),
+		create_new_tid_from_template(
+			f"{tid_date_time}-{caption.replace(' ','-')}",
+			caption,
+			tid_text
+		),
 		tid_list
 	)
 

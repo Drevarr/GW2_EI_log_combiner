@@ -71,6 +71,9 @@ def get_buff_list_by_classification(top_stats, buff_data, classification):
     if classification == "Boon":
         for buff_id, data in {'b5974': "Superspeed", 'b13017': "Stealth", 'b10269': "Hide in Shadows"}.items():
             buff_list[buff_id]=data
+    if classification == "Debuff":
+        for buff_id, data in {'b44633':'Disenchantment', 'b833': 'Daze', 'b872': 'Stun'}.items():
+            buff_list[buff_id]=data
 
     return dict(
         sorted(buff_list.items(), key=lambda item: item[1])
@@ -312,7 +315,7 @@ if __name__ == '__main__':
 	condition_list = get_buff_list_by_classification(top_stats, buff_data, "Condition")
 	build_uptime_summary(top_stats, condition_list, buff_data, "Conditions-In", tid_date_time)
 
-	#get outgoing debuff uptimes on Enemy Players
+	#get outgoing debuffs on Enemy Players
 	debuff_list = get_buff_list_by_classification(top_stats, buff_data, "Debuff")
 	build_debuff_uptime_summary(top_stats, debuff_list, buff_data, "Debuffs-Out", tid_date_time)
 
