@@ -175,58 +175,101 @@ def extract_gear_buffs_and_skills(buff_data: dict, skill_data: dict) -> tuple:
 
 def build_gear_buff_summary(top_stats: dict, gear_buff_ids: list, buff_data: dict, tid_date_time: str) -> str:
 	rows = []
-	
+
+	# Only include buffs that have uptime from at least one player.
+	display_buff_ids = [
+		buff_id
+		for buff_id in gear_buff_ids
+		if buff_id in buff_data
+		and any(
+			player.get("buffUptimes", {}).get(buff_id, {}).get("uptime_ms", 0) > 0
+			for player in top_stats["player"].values()
+		)
+	]
+
 	rows.append('<div style="overflow-y: auto; width: 100%; overflow-x:auto;">\n\n')
+
 	header = "|thead-dark table-caption-top table-hover sortable|k\n"
 	header += "|!Name | !Prof | !{{FightTime}} |"
-	for buff_id in gear_buff_ids:
+
+	for buff_id in display_buff_ids:
 		buff_icon = buff_data[buff_id]["icon"]
 		buff_name = buff_data[buff_id]["name"]
 		header += f" ![img width=24 [{buff_name}|{buff_icon}]] |"
+
 	header += "h"
 	rows.append(header)
 
 	for player in top_stats["player"].values():
 		fight_time = player["active_time"]
+
 		if fight_time == 0:
 			continue
+
 		account = player["account"]
 		name = player["name"]
-		tt_name = f'<div class="xtooltip"> {name} <span class="xtooltiptext" style="padding-left: 5px"> {account} </span></div>'
-		profession = "{{"+player["profession"]+"}}"
+
+		tt_name = (
+			f'<div class="xtooltip"> {name} '
+			f'<span class="xtooltiptext" style="padding-left: 5px"> '
+			f'{account} </span></div>'
+		)
+
+		profession = "{{" + player["profession"] + "}}"
+
 		row = f"|{tt_name} | {profession} | {fight_time/1000:,.1f}|"
 
-		for buff_id in gear_buff_ids:
-			if buff_id in player["buffUptimes"]:
-				buff_uptime_ms = player["buffUptimes"][buff_id]['uptime_ms']
+		for buff_id in display_buff_ids:
+			if buff_id in player.get("buffUptimes", {}):
+				buff_uptime_ms = player["buffUptimes"][buff_id].get("uptime_ms", 0)
 				uptime_pct = f"{((buff_uptime_ms / fight_time) * 100):.1f}%"
 			else:
 				uptime_pct = " - "
 
 			row += f" {uptime_pct} |"
+
 		rows.append(row)
-	rows.append(f"| Gear Buff Uptime Table|c")
+
+	rows.append("| Gear Buff Uptime Table|c")
 	rows.append('\n\n</div>\n\n')
-		#push table to tid_list for output
+
 	tid_text = "\n".join(rows)
 	temp_title = f"{tid_date_time}-Gear-Buff-Uptimes"
 
 	append_tid_for_output(
-		create_new_tid_from_template(temp_title, "Gear Buff Uptimes", tid_text),
+		create_new_tid_from_template(
+			temp_title,
+			"Gear Buff Uptimes",
+			tid_text
+		),
 		tid_list
-		)    
+	)   
 
 def build_gear_skill_summary(top_stats: dict, gear_skill_ids: list, skill_data: dict, tid_date_time: str) -> str:
 	rows = []
-	
+
+	# Only include gear skills that have damage recorded for at least one player.
+	display_skill_ids = [
+		skill_id
+		for skill_id in gear_skill_ids
+		if skill_id in skill_data
+		and any(
+			int(skill_id[1:]) in player.get("targetDamageDist", {})
+			and player["targetDamageDist"][int(skill_id[1:])].get("totalDamage", 0) > 0
+			for player in top_stats["player"].values()
+		)
+	]
+
 	rows.append('<div style="overflow-y: auto; width: 100%; overflow-x:auto;">\n\n')
+
 	header = "|thead-dark table-caption-top table-hover sortable|k\n"
 	header += "|!Name | !Prof | !{{FightTime}} |"
-	
-	for skill_id in gear_skill_ids:
+
+	for skill_id in display_skill_ids:
 		skill_icon = skill_data[skill_id]["icon"]
 		skill_name = skill_data[skill_id]["name"]
 		header += f" ![img width=24 [{skill_name}|{skill_icon}]] |"
+
 	header += "h"
 	rows.append(header)
 
@@ -234,33 +277,63 @@ def build_gear_skill_summary(top_stats: dict, gear_skill_ids: list, skill_data: 
 		fight_time = player["active_time"]
 		account = player["account"]
 		name = player["name"]
-		tt_name = f'<div class="xtooltip"> {name} <span class="xtooltiptext" style="padding-left: 5px"> {account} </span></div>'
-		profession = "{{"+player["profession"]+"}}"
+
+		tt_name = (
+			f'<div class="xtooltip"> {name} '
+			f'<span class="xtooltiptext" style="padding-left: 5px"> '
+			f'{account} </span></div>'
+		)
+
+		profession = "{{" + player["profession"] + "}}"
 		row = f"|{tt_name} | {profession} | {fight_time/1000:,.1f}|"
 
-		for skill in gear_skill_ids:
-			_skill = int(skill[1:])
-			if _skill in player["targetDamageDist"]:
-				totalDamage = player["targetDamageDist"][_skill]["totalDamage"]
-				connectedHits = player["targetDamageDist"][_skill]["connectedHits"]
-				crit = player["targetDamageDist"][_skill]["crit"]
-				crit_pct = f"{crit/connectedHits*100:.2f}" if crit > 0 else "0"
-				critDamage = player["targetDamageDist"][_skill]["critDamage"]
-				tooltip = f"Connected Hits: {connectedHits} <br>Crit: {crit} - ({crit_pct}%) <br>Crit Damage: {critDamage:,.0f}"
-				detailEntry = f'<div class="xtooltip"> {totalDamage:,.0f} <span class="xtooltiptext" style="padding-left: 5px">'+tooltip+'</span></div>'
+		for skill_id in display_skill_ids:
+			skill_num = int(skill_id[1:])
+
+			if skill_num in player.get("targetDamageDist", {}):
+				skill_stats = player["targetDamageDist"][skill_num]
+
+				total_damage = skill_stats.get("totalDamage", 0)
+				connected_hits = skill_stats.get("connectedHits", 0)
+				crit = skill_stats.get("crit", 0)
+				crit_damage = skill_stats.get("critDamage", 0)
+
+				crit_pct = (
+					f"{crit / connected_hits * 100:.2f}"
+					if connected_hits > 0
+					else "0"
+				)
+
+				tooltip = (
+					f"Connected Hits: {connected_hits} "
+					f"<br>Crit: {crit} - ({crit_pct}%) "
+					f"<br>Crit Damage: {crit_damage:,.0f}"
+				)
+
+				detail_entry = (
+					f'<div class="xtooltip"> {total_damage:,.0f} '
+					f'<span class="xtooltiptext" style="padding-left: 5px">'
+					f'{tooltip}</span></div>'
+				)
 			else:
-				detailEntry = " - "
-			row += f" {detailEntry} |"
+				detail_entry = " - "
+
+			row += f" {detail_entry} |"
+
 		rows.append(row)
-	rows.append(f"| Gear Skill Damage Table|c")
+
+	rows.append("| Gear Skill Damage Table|c")
 	rows.append('\n\n</div>\n\n')
 
-	#push table to tid_list for output
 	tid_text = "\n".join(rows)
 	temp_title = f"{tid_date_time}-Gear-Skill-Damage"
 
 	append_tid_for_output(
-		create_new_tid_from_template(temp_title, "Gear Skill Damage", tid_text),
+		create_new_tid_from_template(
+			temp_title,
+			"Gear Skill Damage",
+			tid_text
+		),
 		tid_list
 	)
 
