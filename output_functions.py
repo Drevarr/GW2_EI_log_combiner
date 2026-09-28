@@ -6473,7 +6473,10 @@ def build_fight_timeline_chart(fight_data: dict, tid_date_time: str, tid_list: l
 		line_chart_config = '```py\nGetUp events exclude player respawning based on matching dead events\n'
 		line_chart_config += 'Player_Line = players with DPS >= 1000 for the fight\n```\n\n\n\n<$echarts $text="""\n'
 		
-		line_chart_config += f"""option = {{
+		line_chart_config += f"""const death_symbol = 'path://M2.39 1.73L1.11 3L3.19 5.08C2.45 6 2 7.19 2 8.5C2 12.27 5.4 15.36 10.55 20.03L12 21.35L13.45 20.03C14.32 19.24 15.14 18.5 15.9 17.79L20 22L21.27 20.73M12.1 18.55L12 18.65L11.89 18.55C7.14 14.24 4 11.39 4 8.5C4 7.74 4.22 7.06 4.61 6.5L14.5 16.37C13.74 17.06 12.95 17.78 12.1 18.55M8.3 5.1L6.33 3.13C6.7 3.05 7.1 3 7.5 3C9.24 3 10.91 3.81 12 5.08C13.09 3.81 14.76 3 16.5 3C19.58 3 22 5.41 22 8.5C22 10.84 20.69 12.92 18.47 15.27L17.06 13.86C18.91 11.88 20 10.2 20 8.5C20 6.5 18.5 5 16.5 5C15.1 5 13.74 5.83 13.11 7H10.89C10.38 6.06 9.39 5.34 8.3 5.1Z'
+const down_symbol = 'path://M12.67 20.74L12 21.35L10.55 20.03C5.4 15.36 2 12.27 2 8.5C2 5.41 4.42 3 7.5 3C9.24 3 10.91 3.81 12 5.08C13.09 3.81 14.76 3 16.5 3C19.58 3 22 5.41 22 8.5C22 9.93 21.5 11.26 20.62 12.61C20 12.31 19.31 12.11 18.59 12.04C19.5 10.8 20 9.65 20 8.5C20 6.5 18.5 5 16.5 5C14.96 5 13.46 6 12.93 7.36H11.07C10.54 6 9.04 5 7.5 5C5.5 5 4 6.5 4 8.5C4 11.39 7.14 14.24 11.89 18.55L12 18.65L12.04 18.61C12.12 19.37 12.34 20.09 12.67 20.74M14 17V19H22V17H14Z'
+const getup_symbol = 'path://M19 14v3h3v2h-3v3h-2v-3h-3v-2h3v-3h2zm1.243-9.243c2.16 2.166 2.329 5.557.507 7.91C19.926 12.24 18.99 12 18 12c-3.314 0-6 2.686-6 6 0 1.009.249 1.96.689 2.794l-.69.691-8.478-8.492c-2.104-2.356-2.025-5.974.236-8.236 2.265-2.264 5.888-2.34 8.244-.228 2.349-2.109 5.979-2.039 8.242.228z'
+		option = {{
 		title: {{
 			text: '{chart_title}',
 			left: 'center'
@@ -6727,12 +6730,12 @@ def build_fight_timeline_chart(fight_data: dict, tid_date_time: str, tid_list: l
 				line_chart_config += player_line_chart_config
 		scatter_rows = ['Enemy Deaths', 'Enemy Downs', 'Enemy GetUps', 'Squad Deaths', 'Squad Downs', 'Squad GetUps']
 		event_data = {
-			'squad dead':["Squad Deaths", 'roundRect'],
-			'squad down': ["Squad Downs", 'pin'], 
-			'squad getup': ["Squad GetUps", 'arrow'],
-			'enemy dead':["Enemy Deaths", 'triangle'], 
-			'enemy down': ["Enemy Downs", 'diamond'],
-			'enemy getup': ["Enemy GetUps", 'circle']
+			'squad dead':["Squad Deaths", 'death_symbol'],
+			'squad down': ["Squad Downs", 'down_symbol'], 
+			'squad getup': ["Squad GetUps", 'getup_symbol'],
+			'enemy dead':["Enemy Deaths", 'death_symbol'], 
+			'enemy down': ["Enemy Downs", 'down_symbol'],
+			'enemy getup': ["Enemy GetUps", 'getup_symbol']
 			}
 		for event, data in event_data.items():
 			squad_enemy, event_type = event.split()
@@ -6756,7 +6759,7 @@ def build_fight_timeline_chart(fight_data: dict, tid_date_time: str, tid_list: l
 			xAxisIndex: 1,
 			yAxisIndex: 1,
 			data: {json.dumps(format_event_data)},
-			symbol: '{event_shape}',
+			symbol: {event_shape},
 			symbolSize: function(value, params) {{
 				const count = params.data.players.length;
 				return Math.min(28, 8 + (count * 3));
