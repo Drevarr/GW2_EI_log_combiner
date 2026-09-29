@@ -6730,17 +6730,19 @@ const getup_symbol = 'path://M19 14v3h3v2h-3v3h-2v-3h-3v-2h3v-3h2zm1.243-9.243c2
 				line_chart_config += player_line_chart_config
 		scatter_rows = ['Enemy Deaths', 'Enemy Downs', 'Enemy GetUps', 'Squad Deaths', 'Squad Downs', 'Squad GetUps']
 		event_data = {
-			'squad dead':["Squad Deaths", 'death_symbol'],
-			'squad down': ["Squad Downs", 'down_symbol'], 
-			'squad getup': ["Squad GetUps", 'getup_symbol'],
-			'enemy dead':["Enemy Deaths", 'death_symbol'], 
-			'enemy down': ["Enemy Downs", 'down_symbol'],
-			'enemy getup': ["Enemy GetUps", 'getup_symbol']
+			'squad dead':["Squad Deaths", 'death_symbol', '#1565C0', 1.0],
+			'squad down': ["Squad Downs", 'down_symbol', '#4FC3F7', 1.0], 
+			'squad getup': ["Squad GetUps", 'getup_symbol', '#90CAF9', 0.85],
+			'enemy dead':["Enemy Deaths", 'death_symbol', '#FF5252', 1.0], 
+			'enemy down': ["Enemy Downs", 'down_symbol', '#FF8A80', 1.0],
+			'enemy getup': ["Enemy GetUps", 'getup_symbol', '#FFAB91', 0.85]
 			}
 		for event, data in event_data.items():
 			squad_enemy, event_type = event.split()
 			event_name = data[0]
 			event_shape = data[1]
+			event_color = data[2]
+			event_opacity = data[3]
 			event_data = fight_data[fight_num][event_type].get(squad_enemy, {})
 			format_event_data = []
 			scatter_row = scatter_rows.index(event_name)
@@ -6766,7 +6768,11 @@ const getup_symbol = 'path://M19 14v3h3v2h-3v3h-2v-3h-3v-2h3v-3h2zm1.243-9.243c2
 			}},
 			emphasis: {{
 				scale: true
-			}}
+			}},
+			itemStyle: {{
+				color: '{event_color}',
+				opacity: {event_opacity}
+			}}			
 		}},"""
 			line_chart_config += event_scatter_chart_config
 		line_chart_config += '\n    ]\n    };\n\n"""$height="500px" $width="100%" $theme="dark"/>'
