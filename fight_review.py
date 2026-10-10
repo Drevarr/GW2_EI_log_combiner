@@ -395,6 +395,51 @@ media_card_css = """.page-header{
     color:#94a3b8;
 }
 
+/* Party survival */
+.party-survival {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid #3a3f47;
+}
+
+.party-survival-title {
+    margin-bottom: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #aeb6c2;
+}
+
+.party-survival-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 3px 6px;
+}
+
+.party-survival-metric {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 5px;
+    min-width: 0;
+    padding: 3px 5px;
+    background: transparent;
+    border: 1px solid #3a3f47;
+    border-radius: 4px;
+}
+
+.party-survival-label {
+    min-width: 0;
+    font-size: 9px;
+    color: #94a3b8;
+}
+
+.party-survival-value {
+    flex-shrink: 0;
+    font-size: 10px;
+    font-weight: 800;
+    color: #f1f5f9;
+}
+
 /* Enemy composition */
 .enemy-compositions{
     display:flex;
@@ -653,31 +698,37 @@ media_card_css = """.page-header{
 }"""
 
 
-def make_squad_composition_card(composition, squad_count):
+def make_squad_composition_card(composition, squad_count, party_survival=None):
     """
-    Build the squad composition card.
+    Build the squad composition card with optional party survival metrics.
 
     composition format:
-
         {
             group: [
-                "Profession|Character Name",
                 "Profession|Character Name",
                 ...
             ]
         }
+
+    party_survival format:
+        {
+            group: {
+                "downCount": int,
+                "deadCount": int,
+                "groupCount": int,
+            }
+        }
     """
 
     groups = []
+    party_survival = party_survival or {}
 
     for group, players in composition.items():
 
         player_items = []
 
         for player in players:
-
             profession, name = player.split("|", 1)
-
             profession_icon = "{{" + profession + "}}"
 
             player_items.append(
@@ -688,6 +739,50 @@ def make_squad_composition_card(composition, squad_count):
                 </div>
                 """
             )
+
+        # Look up survival data using the group identifier.
+        survival = party_survival.get(
+            group,
+            party_survival.get(str(group), {})
+        )
+
+        survival_html = ""
+
+        if survival:
+            downs = survival.get("downCount", 0)
+            deaths = survival.get("deadCount", 0)
+            player_count = survival.get("groupCount", 0)
+
+            never_killed = player_count-deaths
+
+            survival_metrics = [
+                f"""
+                <div class="party-survival-metric">
+                    <span class="party-survival-label">Downs</span>
+                    <span class="party-survival-value">{downs}</span>
+                </div>
+                """,
+                f"""
+                <div class="party-survival-metric">
+                    <span class="party-survival-label">Deaths</span>
+                    <span class="party-survival-value">{deaths}</span>
+                </div>
+                """,
+            ]
+
+            if player_count > 0 and never_killed is not None:
+                pct = never_killed / player_count * 100
+
+            survival_html = f"""
+            <div class="party-survival">
+                <div class="party-survival-title">
+                    Survival: {pct:.0f}%
+                </div>
+                <div class="party-survival-metrics">
+                    {''.join(survival_metrics)}
+                </div>
+            </div>
+            """
 
         groups.append(
             f"""
@@ -704,6 +799,8 @@ def make_squad_composition_card(composition, squad_count):
                     {''.join(player_items)}
                 </div>
 
+                {survival_html}
+
             </div>
             """
         )
@@ -712,13 +809,10 @@ def make_squad_composition_card(composition, squad_count):
     <div class="composition-card">
 
         <h3 class="composition-title">
-
             <span>Squad Composition</span>
-
             <span class="composition-subtitle">
                 {squad_count} players
             </span>
-
         </h3>
 
         <div class="squad-composition">
@@ -814,7 +908,7 @@ def build_squad_composition_for_fight(
     squad_count = top_stats["fight"][fight_num].get("squad_count", 0)
     squad_composition = top_stats["parties_by_fight"].get(fight_num, {})
     enemy_compositions = top_stats["enemies_by_fight"].get(fight_num, {})
-    #squad_survival = top_stats["parties_survival"].get(fight_num, {})
+    squad_survival = top_stats["parties_survival"].get(fight_num, {})
 
     rows = []
     rows.append('\n<$reveal type="match" state="$:/state/FR" text="Composition">\n')
@@ -833,7 +927,7 @@ def build_squad_composition_for_fight(
     # Squad
     rows.append(
         make_squad_composition_card(
-            squad_composition, squad_count
+            squad_composition, squad_count, squad_survival
         )
     )
 
