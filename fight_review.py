@@ -814,6 +814,7 @@ def build_squad_composition_for_fight(
     squad_count = top_stats["fight"][fight_num].get("squad_count", 0)
     squad_composition = top_stats["parties_by_fight"].get(fight_num, {})
     enemy_compositions = top_stats["enemies_by_fight"].get(fight_num, {})
+    #squad_survival = top_stats["parties_survival"].get(fight_num, {})
 
     rows = []
     rows.append('\n<$reveal type="match" state="$:/state/FR" text="Composition">\n')
@@ -1380,7 +1381,7 @@ def make_fight_reviews(top_stats: dict, fight_data, skill_map, buff_map, fight_d
             ("Total Healing by Player", "players", "healing"),
             ("Total Barrier by Player", "players", "barrier"),
             ("Total Interrupts by Player", "players", "interrupts"),
-            ("Total Evaded/Blocked by Player", "players", "evaded_blocked"),
+            ("Total Evade/Block/Invuln by Player", "players", "evaded_blocked"),
             ("Total CC by Player", "players", "appliedCrowdControl"),
             ("Total CC Received by Player", "players", "receivedCrowdControl"),
         ]:

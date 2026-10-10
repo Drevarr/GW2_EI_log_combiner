@@ -7818,6 +7818,7 @@ def output_top_stats_json(top_stats: dict, buff_data: dict, skill_data: dict, da
 	json_dict["overall_raid_stats"] = {key: value for key, value in top_stats['overall'].items()}
 	json_dict["fights"] = {key: value for key, value in top_stats['fight'].items()}
 	json_dict["parties_by_fight"] = {key: value for key, value in top_stats["parties_by_fight"].items()}
+	json_dict["parties_survival"] = {key: value for key, value in top_stats["parties_survival"].items()}	
 	json_dict["enemies_by_fight"] = {key: value for key, value in top_stats["enemies_by_fight"].items()}
 	json_dict["players"] = {key: value for key, value in top_stats['player'].items()}
 	json_dict["buff_data"] = {key: value for key, value in buff_data.items()}

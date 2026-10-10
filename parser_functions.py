@@ -323,6 +323,7 @@ def get_fight_data(
 	player_data["evaded_blocked"] = (
 		stats.get("evaded", 0)
 		+ stats.get("blocked", 0)
+		+ stats.get("invulned", 0)
 	)
 
 	defenses_all = player.get("defenses", [])
@@ -1951,7 +1952,8 @@ def get_parties_by_fight(fight_num: int, players: list, blacklist: list) -> None
 	"""
 	if fight_num not in top_stats["parties_by_fight"]:
 		top_stats["parties_by_fight"][fight_num] = {}
-
+	if fight_num not in top_stats["parties_survival"]:
+		top_stats["parties_survival"][fight_num] = {}
 	for player in players:
 		if player["account"] in blacklist:
 			continue
@@ -1964,12 +1966,24 @@ def get_parties_by_fight(fight_num: int, players: list, blacklist: list) -> None
 		name = player["name"]
 		profession = player["profession"]
 		prof_name = profession+"|"+name
+		player_downCount = player["defenses"][0].get("downCount", 0)
+		player_deadCount = player["defenses"][0].get("deadCount", 0)		
 		if group not in top_stats["parties_by_fight"][fight_num]:
 			# Create a new group if it doesn't exist
 			top_stats["parties_by_fight"][fight_num][group] = []
+		if group not in top_stats["parties_survival"][fight_num]:
+			top_stats["parties_survival"][fight_num][group] = {
+			"downCount": 0,
+			"deadCount": 0,
+			"groupCount": 0
+		}				
 		if prof_name not in top_stats["parties_by_fight"][fight_num][group]:
 			# Add the player to the group
 			top_stats["parties_by_fight"][fight_num][group].append(prof_name)
+
+		top_stats["parties_survival"][fight_num][group]["downCount"] += player_downCount
+		top_stats["parties_survival"][fight_num][group]["deadCount"] += player_deadCount
+		top_stats["parties_survival"][fight_num][group]["groupCount"] += 1
 
 def get_stat_by_key(fight_num: int, player: dict, stat_category: str, name_prof: str, dbuser) -> None:
 	"""
