@@ -397,13 +397,13 @@ media_card_css = """.page-header{
 
 /* Party survival */
 .party-survival {
-    margin-top: 6px;
-    padding-top: 6px;
+    margin-top: 1px;
+    padding-top: 1px;
     border-top: 1px solid #3a3f47;
 }
 
 .party-survival-title {
-    margin-bottom: 4px;
+    margin-bottom: 1px;
     font-size: 10px;
     font-weight: 700;
     color: #aeb6c2;
@@ -412,19 +412,17 @@ media_card_css = """.page-header{
 .party-survival-metrics {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 3px 6px;
+    gap: 1px 1px;
 }
 
 .party-survival-metric {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 5px;
+    gap: 1px;
     min-width: 0;
-    padding: 3px 5px;
+    padding: 1px 1px;
     background: transparent;
-    border: 1px solid #3a3f47;
-    border-radius: 4px;
 }
 
 .party-survival-label {
@@ -751,7 +749,7 @@ def make_squad_composition_card(composition, squad_count, party_survival=None):
         if survival:
             downs = survival.get("downCount", 0)
             deaths = survival.get("deadCount", 0)
-            player_count = survival.get("groupCount", 0)
+            player_count = len(players) #survival.get("groupCount", 0)
 
             never_killed = player_count-deaths
 
