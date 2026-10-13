@@ -712,11 +712,18 @@ def determine_clone_usage(player, skill_map, mesmer_shatter_skills):
 	"""
 	active_clones = {}
 	name_prof = f"{player['name']}_{player['profession']}_{get_player_account(player)}"
+
 	if name_prof not in mesmer_clone_usage:
 		mesmer_clone_usage[name_prof] = {}
 	if "activeClones" in player:
 		for timestamp in player['activeClones']:
 			active_clones[timestamp[0]] = timestamp[1]
+	#elif b-25 in activerbuffs handle as virtuoso
+	if player['profession'] == "Virtuoso":
+		for buff in player["buffUptimesActive"]:
+			if buff['id'] == -25:
+				for timestamp in buff['states']:
+					active_clones[timestamp[0]] = timestamp[1]
 	if "rotation" in player:
 		for skill in player["rotation"]:
 			skill_id = f"s{skill['id']}"
@@ -3787,7 +3794,7 @@ def parse_file(file_path, fight_num, guild_data, fight_data_charts, blacklist):
 
 		get_minions_by_player(player, name, profession)
 
-		if player["profession"] in ["Mesmer", "Chronomancer", "Mirage"]:
+		if player["profession"] in ["Mesmer", "Chronomancer", "Mirage", "Virtuoso"]:
 			determine_clone_usage(player, skill_map, mesmer_shatter_skills)
 
 		if "combatReplayData" in player:

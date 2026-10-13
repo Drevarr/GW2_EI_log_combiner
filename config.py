@@ -125,6 +125,12 @@ mesmer_shatter_skills = [
     "s10191",#: "Mind Wrack"
     "s10190",#: "Cry of Frustration"
     "s10287",#: "Diversion"
+    "s62586",#: "Bladesong Harmony"
+    "s62617",#: "Bladesong Harmony"
+    "s62616",#: "Bladesong Sorrow" 
+    "s62602",#: "Bladesong Dissonance"
+    "s68273",#: "Bladesong Distortion"
+    "s62597",#: "Bladeturn Requiem"
 ]
 
 pull_skills = [
