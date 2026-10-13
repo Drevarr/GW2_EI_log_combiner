@@ -29,7 +29,7 @@ from parser_functions import *
 from output_functions import *
 from fight_review import *
 
-CURRENT_VERSION = "1.9.11"  
+CURRENT_VERSION = "1.9.12"  
 REPO = "Drevarr/GW2_EI_log_combiner"
 LATEST_VERSION = None
 
