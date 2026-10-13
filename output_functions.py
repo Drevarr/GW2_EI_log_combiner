@@ -5756,11 +5756,11 @@ def build_mesmer_clone_usage(mesmer_clone_usage: dict, tid_date_time: str, tid_l
 		prof="{{"+player.split("_")[1]+"}}"
 		rows.append('\n<div class="flex-col-1 py-3 px-5">\n')
 		if prof == "{{Virtuoso}}":
-			rows.append(f'\n|{prof} {name} | <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span> | <span class="dot1"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span> | <span class="dot1"></span><span class="dot1"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span> | <span class="dot1"></span><span class="dot1"></span><span class="dot1"></span><span class="dot"></span><span class="dot"></span> | <span class="dot1"></span><span class="dot1"></span><span class="dot1"></span><span class="dot1"></span><span class="dot"></span> | <span class="dot1"></span><span class="dot1"></span><span class="dot1"></span><span class="dot1"></span><span class="dot1"></span> | Total |h')
+			rows.append(f'\n|{prof} {name} | @@color:magenta;⬤⬤⬤⬤⬤@@ | @@color:magenta;○⬤⬤⬤⬤@@ | @@color:magenta;○○⬤⬤⬤@@ | @@color:magenta;○○○⬤⬤@@ | @@color:magenta;○○○○⬤@@ | @@color:magenta;○○○○○@@ | Total |h')
 			for spell in data:
 				rows.append(f"| {spell}| {data[spell].get(5,0)} | {data[spell].get(4,0)} | {data[spell].get(3,0)} | {data[spell].get(2,0)} | {data[spell].get(1,0)} | {data[spell].get(0,0)} | {sum(data[spell].values())} |")			
 		else:	
-			rows.append(f'\n|{prof} {name} | <span class="dot"></span><span class="dot"></span><span class="dot"></span> | <span class="dot1"></span><span class="dot"></span><span class="dot"></span> | <span class="dot1"></span><span class="dot1"></span><span class="dot"></span> | <span class="dot1"></span><span class="dot1"></span><span class="dot1"></span> | Total |h')
+			rows.append(f'\n|{prof} {name} | @@color:magenta;⬤⬤⬤@@ | @@color:magenta;○⬤⬤@@ | @@color:magenta;○○⬤@@ | @@color:magenta;○○○@@ | Total |h')
 			for spell in data:
 				rows.append(f"| {spell}| {data[spell].get(3,0)} | {data[spell].get(2,0)} | {data[spell].get(1,0)} | {data[spell].get(0,0)} | {sum(data[spell].values())} |")
 

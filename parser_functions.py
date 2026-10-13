@@ -320,12 +320,6 @@ def get_fight_data(
 		0
 	)
 
-	player_data["evaded_blocked"] = (
-		stats.get("evaded", 0)
-		+ stats.get("blocked", 0)
-		+ stats.get("invulned", 0)
-	)
-
 	defenses_all = player.get("defenses", [])
 	defenses = defenses_all[0] if defenses_all else {}
 
@@ -334,6 +328,11 @@ def get_fight_data(
 		0
 	)
 
+	player_data["evaded_blocked"] = (
+		defenses.get("evadedCount", 0)
+		+ defenses.get("blockedCount", 0)
+		+ defenses.get("invulnedCount", 0)
+	)
 
 	#Healing
 	ext_healing = player.get("extHealingStats")
