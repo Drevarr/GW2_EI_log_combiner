@@ -2651,7 +2651,8 @@ def build_dashboard_menu_tid(datetime: str) -> None:
 	caption = "Dashboard"
 	creator = "Drevarr@github.com"
 
-	text = (f"<<tabs '[[{datetime}-Support-Bubble-Chart]] [[{datetime}-DPS-Bubble-Chart]] [[{datetime}-Utility-Bubble-Chart]] [[{datetime}-Total-Squad-Boon-Generation]] [[{datetime}-Total-Condition-Output-Generation]] [[{datetime}-APM-Analysis-Bubble-Chart]]' "
+	text = "''Minimum Requirements:'' ` >= 33% of raid total fight time`\n\n\n"
+	text += (f"<<tabs '[[{datetime}-Support-Bubble-Chart]] [[{datetime}-DPS-Bubble-Chart]] [[{datetime}-Utility-Bubble-Chart]] [[{datetime}-Total-Squad-Boon-Generation]] [[{datetime}-Total-Condition-Output-Generation]] [[{datetime}-APM-Analysis-Bubble-Chart]]' "
 			f"'{datetime}-Support-Bubble-Chart' '$:/temp/tab1'>>")
 
 	append_tid_for_output(
@@ -4613,7 +4614,7 @@ def build_APM_analysis_bubble_chart(top_stats: dict, boons: dict, weights: dict,
 
 	total_fight_time = 0
 	for fight, fight_data in top_stats['fight'].items():
-		total_fight_time += fight_data['fight_durationMS']
+		total_fight_time += fight_data['fight_durationMS']/1000
 	for player, player_data in top_stats['player'].items():
 		player_apm_data = {}
 		player_active_time = round(int(player_data['active_time'])/1000,2)
