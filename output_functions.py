@@ -3926,12 +3926,14 @@ def build_utility_bubble_chart(top_stats: dict, boons: dict, weights: dict, tid_
 
 	data_header = ["Name", "Profession", "Strips/Sec", "Condition Score", "Crowd Control", "color"]
 	chart_data.append(data_header)
-
+	total_fight_time = 0
+	for fight, fight_data in top_stats['fight'].items():
+		total_fight_time += fight_data['fight_durationMS']/1000
 	for player, player_data in top_stats['player'].items():
 		name = player_data["name"]
 		profession = player_data["profession"]
 		fight_time = round(player_data["active_time"]/1000)
-		if fight_time == 0:
+		if fight_time < total_fight_time/3:
 			continue
 		xdata = round(player_data["support"].get("boonStrips", 0)/fight_time,2)
 
@@ -4005,12 +4007,14 @@ def build_support_bubble_chart(top_stats: dict, boons: dict, weights: dict, tid_
 
 	data_header = ["Name", "Profession", "Hps + Bps", "Cleanse/Sec", "Boon Score", "color"]
 	chart_data.append(data_header)
-
+	total_fight_time = 0
+	for fight, fight_data in top_stats['fight'].items():
+		total_fight_time += fight_data['fight_durationMS']/1000
 	for player, player_data in top_stats['player'].items():
 		name = player_data["name"]
 		profession = player_data["profession"]
 		fight_time = round(player_data["active_time"]/1000)
-		if fight_time == 0:
+		if fight_time < total_fight_time/3:
 			continue
 		hpt = player_data["extHealingStats"].get("outgoing_healing", 0)
 		bpt = player_data["extBarrierStats"].get("outgoing_barrier", 0)
@@ -4077,12 +4081,14 @@ def build_DPS_bubble_chart(top_stats: dict, tid_date_time: str, tid_list: list, 
 
 	data_header = ["Name", "Profession", "Damage/Sec", "Down Contr/Sec", "Dmg to Down/Sec", "color"]
 	chart_data.append(data_header)
-
+	total_fight_time = 0
+	for fight, fight_data in top_stats['fight'].items():
+		total_fight_time += fight_data['fight_durationMS']/1000
 	for player, player_data in top_stats['player'].items():
 		name = player_data["name"]
 		profession = player_data["profession"]
 		fight_time = round(player_data["active_time"]/1000)
-		if fight_time == 0:
+		if fight_time < total_fight_time/3:
 			continue
 		Dps = round(player_data["statsTargets"].get("totalDmg", 0)/fight_time)
 		DCps = 0.00
@@ -4114,10 +4120,12 @@ def build_DPS_bubble_chart(top_stats: dict, tid_date_time: str, tid_list: list, 
 def build_boon_generation_bar_chart(top_stats: dict, boons: dict, weights: dict, tid_date_time: str, tid_list: list) -> None:
 	total_boon_generation = []
 	playerCount = 0
-
+	total_fight_time = 0
+	for fight, fight_data in top_stats['fight'].items():
+		total_fight_time += fight_data['fight_durationMS']
 	for player, player_data in top_stats['player'].items():
 		player_active_time = int(player_data['active_time'])
-		if player_active_time == 0:
+		if player_active_time < total_fight_time/3:
 			continue
 		playerCount += 1
 		player_boon_generation = []
@@ -4224,10 +4232,12 @@ option = {{
 def build_condition_generation_bar_chart(top_stats: dict, conditions: dict, weights: dict, tid_date_time: str, tid_list: list) -> None:
 	total_condition_generation = []
 	playerCount = 0
-
+	total_fight_time = 0
+	for fight, fight_data in top_stats['fight'].items():
+		total_fight_time += fight_data['fight_durationMS']
 	for player, player_data in top_stats['player'].items():
 		player_active_time = int(player_data['active_time'])
-		if player_active_time == 0:
+		if player_active_time < total_fight_time/3:
 			continue
 		playerCount += 1
 		player_condition_generation = []
@@ -4600,11 +4610,14 @@ def build_APM_analysis_bubble_chart(top_stats: dict, boons: dict, weights: dict,
 	tid_caption = "Actions Per Minute Analysis"
 	tid_tags = tid_date_time
 	creator = "Drevarr@github.com"
-	
+
+	total_fight_time = 0
+	for fight, fight_data in top_stats['fight'].items():
+		total_fight_time += fight_data['fight_durationMS']
 	for player, player_data in top_stats['player'].items():
 		player_apm_data = {}
 		player_active_time = round(int(player_data['active_time'])/1000,2)
-		if player_active_time == 0:
+		if player_active_time < total_fight_time/3:
 			continue
 
 		name = player_data['name']
