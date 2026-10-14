@@ -5747,14 +5747,11 @@ def build_mesmer_clone_usage(mesmer_clone_usage: dict, tid_date_time: str, tid_l
 	tid_caption = "Mesmer Clone Usage"
 	tid_tags = tid_date_time
 
-	rows.append("<style>.dot {height: 10px; width: 10px; background-color: magenta; border-radius: 50%; border: 1px solid darkmagenta; display: inline-block;}")
-	rows.append(".cols_3 {column-count: 3;}")
-	rows.append(".dot1 {height: 10px; width: 10px; background-color: white; border-radius: 50%; border: 1px solid darkmagenta; display: inline-block;} </style>")
 	rows.append('<div class="flex-row">')
 	for player, data in mesmer_clone_usage.items():
 		name=player.split("_")[0]
 		prof="{{"+player.split("_")[1]+"}}"
-		rows.append('\n<div class="flex-col-1 py-3 px-5">\n')
+		rows.append('\n<div class="flex-col">\n')
 		if prof == "{{Virtuoso}}":
 			rows.append(f'\n|{prof} {name} | @@color:magenta;⬤⬤⬤⬤⬤@@ | @@color:magenta;○⬤⬤⬤⬤@@ | @@color:magenta;○○⬤⬤⬤@@ | @@color:magenta;○○○⬤⬤@@ | @@color:magenta;○○○○⬤@@ | @@color:magenta;○○○○○@@ | Total |h')
 			for spell in data:
