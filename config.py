@@ -131,6 +131,17 @@ mesmer_shatter_skills = [
     "s62602",#: "Bladesong Dissonance"
     "s68273",#: "Bladesong Distortion"
     "s62597",#: "Bladeturn Requiem"
+    "s76552",#: "Lively Lute"
+    "s76823",#: "Lively Lute"
+    "s77306",#: "Lively Lute"
+    "s76746",#: "Flustering Flute"
+    "s77176",#: "Flustering Flute"
+    "s76892",#: "Deafening Drum"
+    "s77079",#: "Deafening Drum"
+    "s76960",#: "Harmonious Harp"
+    "s76765",#: "Harmonious Harp"
+    "s77077",#: "Harmonious Harp"
+    "s76931",#: "Crescendo"
 ]
 
 pull_skills = [

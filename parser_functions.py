@@ -717,12 +717,16 @@ def determine_clone_usage(player, skill_map, mesmer_shatter_skills):
 	if "activeClones" in player:
 		for timestamp in player['activeClones']:
 			active_clones[timestamp[0]] = timestamp[1]
-	#elif b-25 in activerbuffs handle as virtuoso
 	if player['profession'] == "Virtuoso":
 		for buff in player["buffUptimesActive"]:
 			if buff['id'] == -25:
 				for timestamp in buff['states']:
 					active_clones[timestamp[0]] = timestamp[1]
+	if player['profession'] == "Troubadour":
+		for buff in player["buffUptimesActive"]:
+			if buff['id'] == -70:
+				for timestamp in buff['states']:
+					active_clones[timestamp[0]] = timestamp[1]					
 	if "rotation" in player:
 		for skill in player["rotation"]:
 			skill_id = f"s{skill['id']}"
