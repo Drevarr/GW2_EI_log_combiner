@@ -5052,6 +5052,29 @@ const profession_icons = {{
 
 }};
 
+const failedProfessionIcons = {{}};
+
+Object.keys(profession_icons).forEach((profession) => {{
+    const url = profession_icons[profession];
+
+    if (!url) {{
+        failedProfessionIcons[profession] = true;
+        return;
+    }}
+
+    const image = new Image();
+
+    image.onerror = function () {{
+        failedProfessionIcons[profession] = true;
+        updateChart();
+    }};
+
+    image.onload = function () {{
+        failedProfessionIcons[profession] = false;
+    }};
+
+    image.src = url;
+}});
 
 const metricNames = {{
 
@@ -5214,10 +5237,10 @@ function buildSeriesData(metric, sizeMetric, profession) {{
                 player[sizeMetric]
             ],
 
-            symbol:
-                profession_icons[player.Profession]
-                    ? `image://${{profession_icons[player.Profession]}}`
-                    : 'circle',
+			symbol: profession_icons[player.Profession] &&
+				!failedProfessionIcons[player.Profession]
+					? `image://${{profession_icons[player.Profession]}}`
+					: 'circle',
 
             symbolSize:
                 getBubbleSize(
