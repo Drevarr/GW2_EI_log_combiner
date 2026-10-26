@@ -5787,12 +5787,22 @@ def build_mesmer_clone_usage(mesmer_clone_usage: dict, tid_date_time: str, tid_l
 		rows.append('\n<div class="flex-col">\n')
 		if prof == "{{Virtuoso}}":
 			rows.append(f'\n|{prof} {name} | @@color:magenta;⬤⬤⬤⬤⬤@@ | ⬤@@color:magenta;⬤⬤⬤⬤@@ | ⬤⬤@@color:magenta;⬤⬤⬤@@ | ⬤⬤⬤@@color:magenta;⬤⬤@@ | ⬤⬤⬤⬤@@color:magenta;⬤@@ | ⬤⬤⬤⬤⬤ | Total |h')
-			for spell in data:
-				rows.append(f"|{spell} | {data[spell].get(5,0)} | {data[spell].get(4,0)} | {data[spell].get(3,0)} | {data[spell].get(2,0)} | {data[spell].get(1,0)} | {data[spell].get(0,0)} | {sum(data[spell].values())} |")			
-		else:	
+			for spell, spell_data in sorted(data.items(), key=lambda item: item[0].casefold()):
+				rows.append(
+					f"|{spell} | {spell_data.get(5,0)} | {spell_data.get(4,0)} | "
+					f"{spell_data.get(3,0)} | {spell_data.get(2,0)} | "
+					f"{spell_data.get(1,0)} | {spell_data.get(0,0)} | "
+					f"{sum(spell_data.values())} |"
+				)
+				#rows.append(f"|{spell} | {spell_data[spell].get(5,0)} | {spell_data[spell].get(4,0)} | {spell_data[spell].get(3,0)} | {spell_data[spell].get(2,0)} | {spell_data[spell].get(1,0)} | {spell_data[spell].get(0,0)} | {sum(spell_data[spell].values())} |")			
+		else:
 			rows.append(f'\n|{prof} {name} | @@color:magenta;⬤⬤⬤@@ | ⬤@@color:magenta;⬤⬤@@ | ⬤⬤@@color:magenta;⬤@@ | ⬤⬤⬤ | Total |h')
-			for spell in data:
-				rows.append(f"|{spell} | {data[spell].get(3,0)} | {data[spell].get(2,0)} | {data[spell].get(1,0)} | {data[spell].get(0,0)} | {sum(data[spell].values())} |")
+			for spell, spell_data in sorted(data.items(), key=lambda item: item[0].casefold()):
+				rows.append(
+					f"|{spell} | {spell_data.get(3,0)} | {spell_data.get(2,0)} | "
+					f"{spell_data.get(1,0)} | {spell_data.get(0,0)} | "
+					f"{sum(spell_data.values())} |"
+				)
 
 		rows.append('\n\n</div>\n\n')
 
