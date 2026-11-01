@@ -1980,7 +1980,7 @@ def get_parties_by_fight(fight_num: int, players: list, blacklist: list) -> None
 		profession = player["profession"]
 		prof_name = profession+"|"+name
 		player_downCount = player["defenses"][0].get("downCount", 0)
-		player_deadCount = player["defenses"][0].get("deadCount", 0)		
+		player_deadCount = player["defenses"][0].get("deadCount", 0)
 		if group not in top_stats["parties_by_fight"][fight_num]:
 			# Create a new group if it doesn't exist
 			top_stats["parties_by_fight"][fight_num][group] = []
@@ -1990,9 +1990,14 @@ def get_parties_by_fight(fight_num: int, players: list, blacklist: list) -> None
 			"deadCount": 0,
 			"groupCount": 0
 		}				
-		if prof_name not in top_stats["parties_by_fight"][fight_num][group]:
-			# Add the player to the group
-			top_stats["parties_by_fight"][fight_num][group].append(prof_name)
+		# Remove any previously recorded profession for this player.
+		party = top_stats["parties_by_fight"][fight_num][group]
+		party[:] = [
+			existing for existing in party
+			if existing.split("|", 1)[1] != name
+		]
+		# Add the player's current profession.
+		party.append(prof_name)
 
 		top_stats["parties_survival"][fight_num][group]["downCount"] += player_downCount
 		top_stats["parties_survival"][fight_num][group]["deadCount"] += player_deadCount
