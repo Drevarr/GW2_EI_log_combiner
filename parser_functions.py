@@ -1960,6 +1960,7 @@ def get_parties_by_fight(fight_num: int, players: list, blacklist: list) -> None
 		fight_num (int): The number of the fight.
 		players (list): The list of players in the fight.
 	"""
+	found_players = []
 	if fight_num not in top_stats["parties_by_fight"]:
 		top_stats["parties_by_fight"][fight_num] = {}
 	if fight_num not in top_stats["parties_survival"]:
@@ -1971,7 +1972,9 @@ def get_parties_by_fight(fight_num: int, players: list, blacklist: list) -> None
 			# Count players not in a squad
 			top_stats["fight"][fight_num]["non_squad_count"] += 1
 			continue
-		top_stats["fight"][fight_num]["squad_count"] += 1
+		if player["name"] not in found_players:
+			top_stats["fight"][fight_num]["squad_count"] += 1
+			found_players.append(player["name"])
 		group = player["group"]
 		name = player["name"]
 		profession = player["profession"]
