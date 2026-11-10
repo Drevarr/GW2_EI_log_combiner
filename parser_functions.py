@@ -656,11 +656,14 @@ def determine_log_type_and_extract_fight_name(fight_name: str) -> tuple:
 	if "Detailed WvW" in fight_name:
 		# WVW log
 		log_type = "WVW"
-		fight_name = fight_name.split(" - ")[1]
+		if " - " in fight_name:
+			fight_name = fight_name.split(" - ")[1]
+
 	elif "World vs World" in fight_name:
 		# WVW log
 		log_type = "WVW-Not-Detailed"
-		fight_name = fight_name.split(" - ")[1]
+		if " - " in fight_name:
+			fight_name = fight_name.split(" - ")[1]
 	elif "Detailed" in fight_name:
 		log_type = "WVW"
 		fight_name = fight_name.replace("Detailed ", "")
@@ -1087,6 +1090,8 @@ def get_player_death_on_tag(
 
 				# Distance at death
 				death_distance = math.hypot(x1 - x2, y1 - y2)
+				if inch_to_pixel == 0:
+					inch_to_pixel = 0.01
 				death_range = round(death_distance / inch_to_pixel)
 				entry["Total"] += 1
 
