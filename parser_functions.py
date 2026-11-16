@@ -970,7 +970,7 @@ def get_commander_tag_data(fight_json):
 	has_died = False
 
 	for player in fight_json["players"]:
-		if player["hasCommanderTag"] and not player["notInSquad"]:
+		if player.get("hasCommanderTag") and not player["notInSquad"]:
 			commander_name = f"{player['name']}|{player['profession']}|{get_player_account(player)}"
 			if commander_name not in commander_summary_data:
 				commander_summary_data[commander_name] = {
@@ -2609,7 +2609,7 @@ def _accumulate_heal_or_barrier(
 		target_data = players[index]
 		target_name = target_data['name']
 		target_group = target_data['group']
-		has_commander_tag = target_data['hasCommanderTag']
+		has_commander_tag = target_data.get('hasCommanderTag')
 		not_in_squad = target_data['notInSquad']
 
 		raw_value = target[0][field_name]
@@ -2856,7 +2856,7 @@ def get_damage_mod_by_player(fight_num: int, player: dict, name_prof: str) -> No
 		name_prof (str): The player's name and profession identifier.
 	"""
 	mod_list = ["damageModifiers", "damageModifiersTarget", "incomingDamageModifiers", "incomingDamageModifiersTarget"]
-	commander_tag = player['hasCommanderTag']
+	commander_tag = player.get('hasCommanderTag')
 
 	for mod_cat in mod_list:
 		if mod_cat in player:
@@ -3747,7 +3747,7 @@ def parse_file(file_path, fight_num, guild_data, fight_data_charts, blacklist):
 		squad_count = top_stats['fight'][fight_num]['squad_count']
 
 		name_prof = name + "|" + profession + "|" + account
-		tag = player['hasCommanderTag']
+		tag = player.get('hasCommanderTag')
 		if tag:	#Commander Tracking
 			top_stats['fight'][fight_num]['commander'] = name_prof
 
