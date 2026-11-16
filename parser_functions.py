@@ -3393,26 +3393,30 @@ def get_minions_by_player(player_data: dict, player_name: str, profession: str) 
 				minions[profession]["player"][player_name][minion_name+"IncomingHealing"] = minions[profession]["player"][player_name].get(minion_name+"IncomingHealing", 0) + minion['extHealingStats']['totalIncomingHealing'][0]
 			else:
 				minions[profession]["player"][player_name][minion_name+"IncomingHealing"] = 0
+			pet_skills = minions[profession]["pet_skills_list"]
+			player_skills = minions[profession]["player"][player_name][minion_name + "Skills"]
+
+			rotations = []
+
 			if "rotation" in minion:
-				for skill in minion["rotation"]:
-					if skill["id"] not in minions[profession]["pet_skills_list"]:
-						minions[profession]["pet_skills_list"].append(skill["id"])
-					skill_count = len(skill["skills"])
-					if skill["id"] not in minions[profession]["player"][player_name][minion_name+"Skills"]:
-						minions[profession]["player"][player_name][minion_name+"Skills"][skill["id"]] = skill_count
-					else:
-						minions[profession]["player"][player_name][minion_name+"Skills"][skill["id"]] += skill_count
+				rotations.append(minion["rotation"])
 			elif "instances" in minion:
-				for instance in minion["instances"]:
-					if "rotation" in instance:
-						for skill in instance["rotation"]:
-							if skill["id"] not in minions[profession]["pet_skills_list"]:
-								minions[profession]["pet_skills_list"].append(skill["id"])
-							skill_count = len(skill["skills"])
-							if skill["id"] not in minions[profession]["player"][player_name][minion_name+"Skills"]:
-								minions[profession]["player"][player_name][minion_name+"Skills"][skill["id"]] = skill_count
-							else:
-								minions[profession]["player"][player_name][minion_name+"Skills"][skill["id"]] += skill_count
+				rotations.extend(
+					instance["rotation"]
+					for instance in minion["instances"]
+					if "rotation" in instance
+				)
+
+			for rotation in rotations:
+				for skill in rotation:
+					skill_id = skill["id"]
+					skill_count = len(skill["skills"])
+
+					if skill_id not in pet_skills:
+						pet_skills.append(skill_id)
+
+					player_skills[skill_id] = player_skills.get(skill_id, 0) + skill_count			
+
 
 
 def fetch_guild_data(guild_id: str, api_key: str, max_retries: int = 3, backoff_factor: float = 0.5) -> Optional[Dict]:
