@@ -3393,7 +3393,16 @@ def get_minions_by_player(player_data: dict, player_name: str, profession: str) 
 				minions[profession]["player"][player_name][minion_name+"IncomingHealing"] = minions[profession]["player"][player_name].get(minion_name+"IncomingHealing", 0) + minion['extHealingStats']['totalIncomingHealing'][0]
 			else:
 				minions[profession]["player"][player_name][minion_name+"IncomingHealing"] = 0
-			if "instances" in minion:
+			if "rotation" in minion:
+				for skill in minion["rotation"]:
+					if skill["id"] not in minions[profession]["pet_skills_list"]:
+						minions[profession]["pet_skills_list"].append(skill["id"])
+					skill_count = len(skill["skills"])
+					if skill["id"] not in minions[profession]["player"][player_name][minion_name+"Skills"]:
+						minions[profession]["player"][player_name][minion_name+"Skills"][skill["id"]] = skill_count
+					else:
+						minions[profession]["player"][player_name][minion_name+"Skills"][skill["id"]] += skill_count
+			elif "instances" in minion:
 				for instance in minion["instances"]:
 					if "rotation" in instance:
 						for skill in instance["rotation"]:
