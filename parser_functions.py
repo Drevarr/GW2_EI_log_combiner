@@ -1877,19 +1877,13 @@ def get_skill_cast_by_enemy_prof(targets: dict) -> None:
 				top_stats['skill_casts_by_enemy'][profession]['total'][skill_id] += cast_count
 				top_stats['skill_casts_by_enemy'][profession][name_prof]['Skills'][skill_id] = top_stats['skill_casts_by_enemy'][profession][name_prof]['Skills'].get(skill_id, 0) + cast_count
 
-def get_teamcolor_count_by_fight(
-	fight_num: int,
-	targets: list,
-	count_by: str = "activeTimes"
-) -> None:
+def get_enemies_by_fight(fight_num: int, targets: dict) -> None:
 	"""
-	Organize targets by enemy team and profession for a fight.
+	Organize targets by enemy for a fight.
 
 	Args:
 		fight_num (int): The number of the fight.
-		targets (list): The list of targets or players in the fight.
-		count_by (str): Field used to determine which entries contribute
-		                to team/profession counts ("activeTimes" or "enemyPlayer").
+		targets (list): The list of targets in the fight.
 	"""
 	if fight_num not in top_stats["fight"]:
 		top_stats["fight"][fight_num] = {}
@@ -1897,46 +1891,86 @@ def get_teamcolor_count_by_fight(
 	if fight_num not in top_stats["enemies_by_fight"]:
 		top_stats["enemies_by_fight"][fight_num] = {}
 
-	fight_stats = top_stats["fight"][fight_num]
-	enemies = top_stats["enemies_by_fight"][fight_num]
+	for target in targets:
+		if target["isFake"]:
+			continue
+
+		if target['enemyPlayer']:
+			team = target["teamID"]
+			enemy_prof = target['name'].split(" ")[0]
+
+			if team in team_colors:
+				colorTeam = team_colors[team]
+				team = "enemy_" + team_colors[team]
+			else:
+				colorTeam = "Unk"
+				if team not in team_code_missing:
+					team_code_missing.append(team)
+				team = "enemy_Unk"
+			
+			if team not in top_stats["fight"][fight_num]:
+				# Create a new team if it doesn't exist
+				top_stats["fight"][fight_num][team] = 0
+			if colorTeam not in top_stats["enemies_by_fight"][fight_num]:
+				top_stats["enemies_by_fight"][fight_num][colorTeam] = {}
+
+			if enemy_prof not in top_stats["enemies_by_fight"][fight_num][colorTeam]:
+				top_stats["enemies_by_fight"][fight_num][colorTeam][enemy_prof] = 0
+
+			top_stats["enemies_by_fight"][fight_num][colorTeam][enemy_prof] += 1
+
+			top_stats["fight"][fight_num][team] += 1
+
+		top_stats["fight"][fight_num]["enemy_count"] += 1
+		top_stats['overall']['enemy_count'] = top_stats['overall'].get('enemy_count', 0) + 1
+
+def get_teamcolor_count_by_fight(
+	fight_num: int,
+	targets: list,
+	count_by: str = "activeTimes"
+) -> None:
+	"""
+	Count targets by team color for a fight.
+
+	Args:
+		fight_num (int): The number of the fight.
+		targets (list): The list of targets or players in the fight.
+		count_by (str): Field used to determine which entries contribute
+		                to counts ("activeTimes" or "enemyPlayer").
+	"""
+	if fight_num not in top_stats["team_color_counts"]:
+		top_stats["team_color_counts"][fight_num] = {}
+
+	team_counts = top_stats["team_color_counts"][fight_num]
+
+	# Ensure all team colors exist, even if their count is zero.
+	for color in ("Red", "Green", "Blue"):
+		team_counts.setdefault(color, 0)
 
 	for target in targets:
 		if target["isFake"]:
 			continue
 
-		# Determine whether this entry contributes to team/profession counts.
-		if count_by == "activeTimes":
-			count_target = target["activeTimes"][0]
+		count_target = (
+			target["activeTimes"][0]
+			if count_by == "activeTimes"
+			else target["enemyPlayer"]
+		)
+
+		if not count_target:
+			continue
+
+		team_id = target["teamID"]
+
+		if team_id in team_colors:
+			color_team = team_colors[team_id]
 		else:
-			count_target = target["enemyPlayer"]
+			color_team = "Unk"
 
-		if count_target:
-			team_id = target["teamID"]
-			enemy_prof = target["name"].split(" ")[0]
+			if team_id not in team_code_missing:
+				team_code_missing.append(team_id)
 
-			if team_id in team_colors:
-				color_team = team_colors[team_id]
-				team = f"enemy_{color_team}"
-			else:
-				color_team = "Unk"
-				team = "enemy_Unk"
-
-				if team_id not in team_code_missing:
-					team_code_missing.append(team_id)
-
-			fight_stats[team] = fight_stats.get(team, 0) + 1
-
-			enemies.setdefault(color_team, {})
-			enemies[color_team][enemy_prof] = (
-				enemies[color_team].get(enemy_prof, 0) + 1
-			)
-
-		# Count every non-fake entry, regardless of the condition above.
-		if count_by == "enemyPlayer":
-			fight_stats["enemy_count"] = fight_stats.get("enemy_count", 0) + 1
-			top_stats["overall"]["enemy_count"] = (
-				top_stats["overall"].get("enemy_count", 0) + 1
-			)
+		team_counts[color_team] = team_counts.get(color_team, 0) + 1
 
 def get_enemy_downed_and_killed_by_fight(fight_num: int, targets: dict, players: dict, log_type: str) -> None:
 	"""
@@ -3722,6 +3756,7 @@ def parse_file(file_path, fight_num, guild_data, fight_data_charts, blacklist):
 	get_enemy_downed_and_killed_by_fight(fight_num, targets, players, log_type)
 
 	#collect enemy counts and team colors
+	get_enemies_by_fight(fight_num, targets)
 	get_teamcolor_count_by_fight(fight_num, targets, "enemyPlayer")
 	
 	get_teamcolor_count_by_fight(fight_num, players, "activeTimes")

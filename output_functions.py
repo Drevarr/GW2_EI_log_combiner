@@ -804,9 +804,13 @@ def build_fight_summary(top_stats: dict, fight_data_charts, caption: str, tid_da
 		def_barrier_pct = (def_barrier / damage_taken) * 100 if damage_taken > 0 else 0
 		recordedAccountBy = fight_data['recordedAccountBy']
 		recorded_by = fight_data['recorded_by'][:20]
+		red_count = top_stats["team_color_counts"][fight_num]['Red']
+		green_count = top_stats["team_color_counts"][fight_num]['Green']
+		blue_count = top_stats["team_color_counts"][fight_num]['Blue']
 		log_POV = f'<span data-tooltip="{recordedAccountBy}">{recorded_by}</span>'
 		row += f"|{fight_num} |{fight_link} | {fight_data['fight_duration']}| {fight_data['squad_count']} | {fight_data['non_squad_count']} | {fight_data['enemy_count']} "
-		row += f"| {fight_data['enemy_Red']}/{fight_data['enemy_Green']}/{fight_data['enemy_Blue']} | {downed} | {killed} "
+		#row += f"| {fight_data['enemy_Red']}/{fight_data['enemy_Green']}/{fight_data['enemy_Blue']} | {downed} | {killed} "
+		row += f"| {red_count}/{green_count}/{blue_count} | {downed} | {killed} "
 		row += f"| {def_down} | {def_dead} | {dmg_out:,}| {damage_taken:,}"
 		row += f"| {def_barrier:,}| {def_barrier_pct:.2f}%| {fight_shield_damage:,}"
 		# Calculate the shield damage percentage

@@ -3,7 +3,7 @@ import html
 from output_functions import append_tid_for_output, create_new_tid_from_template
 
 siege_skill_ids = set(int(sid) for sid in config.siege_skill_ids)
-
+team_colors = config.team_colors
 
 OTHER_PROFS_KEY = "Other Professions"
 
