@@ -1932,10 +1932,11 @@ def get_teamcolor_count_by_fight(
 			)
 
 		# Count every non-fake entry, regardless of the condition above.
-		fight_stats["enemy_count"] = fight_stats.get("enemy_count", 0) + 1
-		top_stats["overall"]["enemy_count"] = (
-			top_stats["overall"].get("enemy_count", 0) + 1
-		)
+		if count_by == "enemyPlayer":
+			fight_stats["enemy_count"] = fight_stats.get("enemy_count", 0) + 1
+			top_stats["overall"]["enemy_count"] = (
+				top_stats["overall"].get("enemy_count", 0) + 1
+			)
 
 def get_enemy_downed_and_killed_by_fight(fight_num: int, targets: dict, players: dict, log_type: str) -> None:
 	"""
